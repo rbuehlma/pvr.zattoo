@@ -226,6 +226,7 @@ void ZatData::loadChannels() {
 
 
                 channel.iUniqueId = GetChannelId(cid.c_str());
+                channel.cid = cid;
                 channel.iChannelNumber = ++channelNumber;
 
                 group.channels.insert(group.channels.end(), channel);
@@ -347,7 +348,7 @@ PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio) {
 
             // self referencing so GetLiveStreamURL() gets triggered
             std::string streamURL;
-            streamURL = ("pvr://stream/tv/wurst.ts");
+            streamURL = ("pvr://stream/tv/zattoo.ts");
             strncpy(kodiChannel.strStreamURL, streamURL.c_str(), sizeof(kodiChannel.strStreamURL) - 1);
             //
 
@@ -358,4 +359,77 @@ PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio) {
         }
     }
     return PVR_ERROR_NO_ERROR;
+}
+
+
+std::string ZatData::GetChannelStreamUrl(int uniqueId) {
+/*
+    url: 'http://zattoo.com/zapi/watch',
+            form: {
+        cid: cid,
+                stream_type: 'hls'
+    }*/
+
+    ZatChannel *channel = FindChannel(uniqueId);
+    XBMC->QueueNotification(QUEUE_INFO, "Getting URL for channel %s", XBMC->UnknownToUTF8(channel->name.c_str()));
+
+
+    CURL *curl = curl_easy_init();
+    CURLcode res;
+
+    if(curl) {
+        std::ostringstream stream;
+
+        curl_easy_setopt(curl, CURLOPT_URL, "http://zattoo.com/zapi/watch");
+        //Post Data
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
+        ostringstream dataStream;
+        dataStream << "cid=" << channel->cid << "&stream_type=hls&format=json";
+        string data = dataStream.str();
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "zatCookie.txt");
+        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "zatCookie.txt");
+
+        //Response handling
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
+
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+
+        std::string xmlString = stream.str();
+
+
+
+
+        //Get the Power Hash
+        tinyxml2::XMLDocument xml;
+        xml.Parse(xmlString.c_str());
+        std::string url  = xml.RootElement()->FirstChildElement("stream")->FirstChildElement("url")->GetText();
+        cout << "URL " << url << endl;
+        return url;
+
+    }
+
+    return "";
+}
+
+
+ZatChannel *ZatData::FindChannel(int uniqueId) {
+    std::vector<PVRZattooChannelGroup>::iterator it;
+    for (it = channelGroups.begin(); it != channelGroups.end(); ++it)
+    {
+        std::vector<ZatChannel>::iterator it2;
+        for (it2 = it->channels.begin(); it2 != it->channels.end(); ++it2)
+        {
+            ZatChannel &channel = (*it2);
+            if(channel.iUniqueId == uniqueId) {
+                return &channel;
+            }
+        }
+    }
+    return NULL;
 }

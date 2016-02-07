@@ -41,6 +41,7 @@ struct ZatChannel
     std::string strTvgId;
     std::string strTvgName;
     std::string strTvgLogo;
+    std::string cid;
 };
 
 struct PVRZattooChannelGroup
@@ -64,15 +65,15 @@ public:
 
     virtual int       GetChannelsAmount(void);
     virtual PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
-//    virtual bool      GetChannel(const PVR_CHANNEL &channel, ZatChannel &myChannel);
-      virtual int       GetChannelGroupsAmount(void);
-      virtual PVR_ERROR GetChannelGroups(ADDON_HANDLE handle);
-      virtual PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group);
-//    virtual PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
-//    virtual void      ReaplyChannelsLogos(const char * strNewPath);
-//    virtual void      ReloadPlayList(const char * strNewPath);
-//    virtual void      ReloadEPG(const char * strNewPath);
-
+    //virtual bool      GetChannel(const PVR_CHANNEL &channel, ZatChannel &myChannel);
+    virtual int       GetChannelGroupsAmount(void);
+    virtual PVR_ERROR GetChannelGroups(ADDON_HANDLE handle);
+    virtual PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group);
+    //    virtual PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
+    //    virtual void      ReaplyChannelsLogos(const char * strNewPath);
+    //    virtual void      ReloadPlayList(const char * strNewPath);
+    //    virtual void      ReloadEPG(const char * strNewPath);
+    virtual std::string GetChannelStreamUrl(int uniqueId);
 protected:
 
     virtual void loadAppId();
@@ -84,8 +85,13 @@ protected:
 //    virtual bool                 LoadPlayList(void);
 //    virtual bool                 LoadEPG(time_t iStart, time_t iEnd);
 //    virtual bool                 LoadGenres(void);
-//    virtual ZatChannel*      FindChannel(const std::string &strId, const std::string &strName);
-   virtual PVRZattooChannelGroup* FindGroup(const std::string &strName);
+
+
+
+    virtual ZatChannel*      FindChannel(int uniqueId);
+    virtual PVRZattooChannelGroup* FindGroup(const std::string &strName);
+
+
 //    virtual PVRIptvEpgChannel*   FindEpg(const std::string &strId);
 //    virtual PVRIptvEpgChannel*   FindEpgForChannel(ZatChannel &channel);
 //    virtual bool                 FindEpgGenre(const std::string& strGenre, int& iType, int& iSubType);

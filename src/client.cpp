@@ -296,14 +296,7 @@ PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
 }
 
 const char * GetLiveStreamURL(const PVR_CHANNEL &channel)  {
-
-    std::cout << "Get Live Stream URL" << std::endl;
-
-    XBMC->QueueNotification(QUEUE_INFO, "Get Stream URL for %s", XBMC->UnknownToUTF8(channel.strStreamURL));
-    return "http://daserste_live-lh.akamaihd.net/i/daserste_de@91204/master.m3u8";
-
-
-
+    return XBMC->UnknownToUTF8(zat->GetChannelStreamUrl(channel.iUniqueId).c_str());
 }
 
 
