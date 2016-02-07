@@ -1,0 +1,26 @@
+# build artifacts
+build/
+
+CMakeFiles
+
+
+CMakeCache.txt
+CPackConfig.cmake
+CPackSourceConfig.cmake
+install_manifest.txt
+cmake_install.cmake
+pvr.zattoo.so
+pvr.zattoo.so.0.0.1
+pvr.zattoo.so.17.0
+zatCookie.txt
+LICENSE
+Makefile
+
+
+# clion
+.idea/
+
+# Eclipse/CDT
+.cproject
+.project
+.settings/
