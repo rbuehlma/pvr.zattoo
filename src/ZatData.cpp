@@ -254,9 +254,6 @@ int ZatData::GetChannelGroupsAmount() {
 
 
 ZatData::ZatData(std::string u, std::string p)  {
-
-    cout << "################## Zat Data ###############" << endl;
-
     username = u;
     password = p;
 

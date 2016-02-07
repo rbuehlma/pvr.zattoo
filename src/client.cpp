@@ -39,8 +39,15 @@ int         g_iEPGLogos     = 0;
 extern "C" {
 
 void ADDON_ReadSettings(void) {
-    XBMC->GetSetting("username", &zatUsername);
-    XBMC->GetSetting("password", &zatPassword);
+    char buffer[1024];
+    if (XBMC->GetSetting("username", &buffer))
+    {
+        zatUsername = buffer;
+    }
+    if (XBMC->GetSetting("password", &buffer))
+    {
+        zatPassword = buffer;
+    }
 }
 
 ADDON_STATUS ADDON_Create(void *hdl, void *props) {
