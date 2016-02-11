@@ -134,6 +134,7 @@ const char* GetPVRAPIVersion(void)
 
 const char* GetMininumPVRAPIVersion(void)
 {
+
   static const char *strMinApiVersion = XBMC_PVR_MIN_API_VERSION;
   return strMinApiVersion;
 }

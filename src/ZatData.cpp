@@ -39,7 +39,7 @@ void ZatData::sendHello() {
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
 
-        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "zatCookie.txt");
+        //curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "zatCookie.txt");
         curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "zatCookie.txt");
 
 
@@ -60,7 +60,7 @@ void ZatData::sendHello() {
     }
 }
 
-void ZatData::login() {
+bool ZatData::login() {
     CURL *curl = curl_easy_init();
     CURLcode res;
 
@@ -72,7 +72,7 @@ void ZatData::login() {
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
 
         ostringstream dataStream;
-        dataStream << "login=" << username << "&password=" << password << "&format=xml";
+        dataStream << "login=" << username << "&password=" << password << "&format=json";
         string data = dataStream.str();
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
@@ -89,12 +89,19 @@ void ZatData::login() {
 
         std::string xmlString = stream.str();
 
-
-        //Get the Power Hash
         tinyxml2::XMLDocument xml;
         xml.Parse(xmlString.c_str());
+
+        string succ = xml.RootElement()->FirstChildElement("success")->GetText();
+        if(succ == "False") {
+            return false;
+        }
+
+
+        cout << xmlString << endl;
         powerHash = xml.RootElement()->FirstChildElement("account")->FirstChildElement("power_guide_hash")->GetText();
         cout << "Power Hash: " << powerHash << endl;
+        return true;
     }
 
 }
@@ -260,8 +267,13 @@ ZatData::ZatData(std::string u, std::string p)  {
 
     this->loadAppId();
     this->sendHello();
-    this->login();
-    this->loadChannels();
+    if(this->login()) {
+        this->loadChannels();
+    }
+    else {
+        XBMC->QueueNotification(QUEUE_ERROR, "Zattoo Login fehlgeschlagen!");
+    }
+
 }
 
 ZatData::~ZatData() {

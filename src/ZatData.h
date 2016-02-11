@@ -121,7 +121,7 @@ private:
 
     void sendHello();
 
-    void login();
+    bool login();
 
     void loadChannels();
 };

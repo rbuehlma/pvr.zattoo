@@ -28,6 +28,16 @@ set(DEPLIBS ${kodiplatform_LIBRARIES}
 )
 
 
+if(NOT WIN32 AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX))
+  if(HAS_BUILTIN_SYNC_ADD_AND_FETCH)
+    add_definitions("-DHAS_BUILTIN_SYNC_ADD_AND_FETCH")
+  endif()
+  if(HAS_BUILTIN_SYNC_SUB_AND_FETCH)
+    add_definitions("-DHAS_BUILTIN_SYNC_SUB_AND_FETCH")
+  endif()
+endif()
+
+
 set(ZATTOO_SOURCES
 		lib/tinyxml2/tinyxml2.h
 		lib/tinyxml2/tinyxml2.cpp
