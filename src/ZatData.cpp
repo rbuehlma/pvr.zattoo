@@ -33,14 +33,14 @@ void ZatData::sendHello() {
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
 
         ostringstream dataStream;
-        dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=xml&client_app_token=" << appToken;
+        dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=json&client_app_token=" << appToken;
         string data = dataStream.str();
 
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
 
-        //curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "zatCookie.txt");
-        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "zatCookie.txt");
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookiePath.c_str());
+        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, cookiePath.c_str());
 
 
 
@@ -60,6 +60,78 @@ void ZatData::sendHello() {
     }
 }
 
+
+void dump(const char *text,
+          FILE *stream, unsigned char *ptr, size_t size)
+{
+    size_t i;
+    size_t c;
+    unsigned int width=0x10;
+
+    XBMC->Log(LOG_DEBUG, "%s, %10.10ld bytes (0x%8.8lx)\n",
+            text, (long)size, (long)size);
+
+    for(i=0; i<size; i+= width) {
+        XBMC->Log(LOG_DEBUG, "%4.4lx: ", (long)i);
+
+        /* show hex to the left */
+        for(c = 0; c < width; c++) {
+            if(i+c < size)
+                XBMC->Log(LOG_DEBUG, "%02x ", ptr[i+c]);
+            else
+                XBMC->Log(LOG_DEBUG,"   ");
+        }
+
+        /* show data on the right */
+        for(c = 0; (c < width) && (i+c < size); c++) {
+            char x = (ptr[i+c] >= 0x20 && ptr[i+c] < 0x80) ? ptr[i+c] : '.';
+            //XBMC->Log(LOG_DEBUG,x);
+        }
+
+        fputc('\n', stream); /* newline */
+    }
+}
+
+static
+int my_trace(CURL *handle, curl_infotype type,
+             char *data, size_t size,
+             void *userp)
+{
+    const char *text;
+    (void)handle; /* prevent compiler warning */
+
+    switch (type) {
+        case CURLINFO_TEXT:
+            XBMC->Log(LOG_DEBUG, "== Info: %s", data);
+        default: /* in case a new one is introduced to shock us */
+            return 0;
+
+//        case CURLINFO_HEADER_OUT:
+//            text = "=> Send header";
+//            break;
+//        case CURLINFO_DATA_OUT:
+//            text = "=> Send data";
+//            break;
+//        case CURLINFO_SSL_DATA_OUT:
+//            text = "=> Send SSL data";
+//            break;
+//        case CURLINFO_HEADER_IN:
+//            text = "<= Recv header";
+//            break;
+//        case CURLINFO_DATA_IN:
+//            text = "<= Recv data";
+//            break;
+//        case CURLINFO_SSL_DATA_IN:
+//            text = "<= Recv SSL data";
+//            break;
+    }
+
+    dump(text, stderr, (unsigned char *)data, size);
+    return 0;
+}
+
+
+
 bool ZatData::login() {
     CURL *curl = curl_easy_init();
     CURLcode res;
@@ -76,33 +148,54 @@ bool ZatData::login() {
         string data = dataStream.str();
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
-        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "zatCookie.txt");
-        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "zatCookie.txt");
+
+
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookiePath.c_str());
+        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, cookiePath.c_str());
+
+
+        curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, my_trace);
+
+        /* the DEBUGFUNCTION has no effect until we enable VERBOSE */
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+
 
         //Response handling
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
 
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        curl_easy_perform(curl);
+        //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        CURLcode code = curl_easy_perform(curl);
+        XBMC->Log(LOG_DEBUG, "Login status: %s", curl_easy_strerror(code));
         curl_easy_cleanup(curl);
 
-        std::string xmlString = stream.str();
+        std::string jsonString = stream.str();
+        XBMC->Log(LOG_DEBUG, "Login result: %s", XBMC->UnknownToUTF8(jsonString.c_str()));
 
-        tinyxml2::XMLDocument xml;
-        xml.Parse(xmlString.c_str());
 
-        string succ = xml.RootElement()->FirstChildElement("success")->GetText();
-        if(succ == "False") {
+
+
+        Json::Value json;
+        Json::Reader reader;
+        bool parsingSuccessful = reader.parse(jsonString,json);
+
+        if (!parsingSuccessful){
+            // report to the user the failure and their locations in the document.
+            std::cout  << "Failed to parse login\n"
+            << reader.getFormatedErrorMessages();
             return false;
         }
 
-
-        cout << xmlString << endl;
-        powerHash = xml.RootElement()->FirstChildElement("account")->FirstChildElement("power_guide_hash")->GetText();
+        string succ = json["success"].asString();
+        if(succ == "False") {
+            return false;
+        }
+        powerHash = json["account"]["power_guide_hash"].asString();
         cout << "Power Hash: " << powerHash << endl;
         return true;
     }
+    XBMC->QueueNotification(QUEUE_ERROR, "CURL ERROR!!");
+    return false;
 
 }
 
@@ -144,7 +237,7 @@ void ZatData::loadAppId() {
 
         appToken = token;
 
-        XBMC->Log(LOG_DEBUG, "Loaded App token %s", appToken);
+        XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
 
     }
 
@@ -175,8 +268,8 @@ void ZatData::loadChannels() {
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
         //Post Data
-        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "zatCookie.txt");
-        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "zatCookie.txt");
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookiePath.c_str());
+        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, cookiePath.c_str());
 
         //Response handling
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
@@ -195,7 +288,7 @@ void ZatData::loadChannels() {
         Json::Reader reader;
         bool parsingSuccessful = reader.parse(jsonString,json);
 
-        cout << json << endl;
+
 
         if (!parsingSuccessful){
             // report to the user the failure and their locations in the document.
@@ -223,9 +316,7 @@ void ZatData::loadChannels() {
 
                 channel.name = channels[i]["title"].asString();
 
-                channel.strStreamURL = "http://video3.smoothhd.com/ondemand/Turner_Sports_PGA.ism/Manifest";
-
-
+                channel.strStreamURL = "";
                 cout << channel.name << endl;
 
 
@@ -236,10 +327,21 @@ void ZatData::loadChannels() {
                 channel.cid = cid;
                 channel.iChannelNumber = ++channelNumber;
 
-                group.channels.insert(group.channels.end(), channel);
-            }
 
-            channelGroups.insert(channelGroups.end(),group);
+                channel.strLogoPath = "http://logos.zattic.com";
+
+                Json::Value qualities = channels[i]["qualities"];
+
+                int index = 0;
+                channel.strLogoPath.append(qualities[index]["logo_white_84"].asString());
+
+
+                if(qualities[index]["availability"].asString() == "available") {
+                    group.channels.insert(group.channels.end(), channel);
+                }
+            }
+            if(group.channels.size() > 0)
+                channelGroups.insert(channelGroups.end(),group);
         }
 
     }
@@ -264,6 +366,11 @@ int ZatData::GetChannelGroupsAmount() {
 ZatData::ZatData(std::string u, std::string p)  {
     username = u;
     password = p;
+    m_iLastStart    = 0;
+    m_iLastEnd      = 0;
+
+    cookiePath = GetUserFilePath("zatCookie.txt");
+
 
     this->loadAppId();
     this->sendHello();
@@ -354,7 +461,11 @@ PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio) {
             kodiChannel.iChannelNumber    = channel.iChannelNumber;
             strncpy(kodiChannel.strChannelName, channel.name.c_str(), sizeof(kodiChannel.strChannelName) - 1);
             kodiChannel.iEncryptionSystem = 0;
+
+
             strncpy(kodiChannel.strIconPath, channel.strLogoPath.c_str(), sizeof(kodiChannel.strIconPath) - 1);
+
+
             kodiChannel.bIsHidden         = false;
 
 
@@ -401,8 +512,8 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId) {
         string data = dataStream.str();
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
-        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "zatCookie.txt");
-        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "zatCookie.txt");
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookiePath.c_str());
+        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, cookiePath.c_str());
 
         //Response handling
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
@@ -412,17 +523,26 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId) {
         curl_easy_perform(curl);
         curl_easy_cleanup(curl);
 
-        std::string xmlString = stream.str();
+        std::string jsonString = stream.str();
+
+        Json::Value json;
+        Json::Reader reader;
+        bool parsingSuccessful = reader.parse(jsonString,json);
 
 
+        cout << json << endl;
+
+        string url = json["stream"]["url"].asString();
+        return url;
 
 
+/*
         //Get the Power Hash
         tinyxml2::XMLDocument xml;
         xml.Parse(xmlString.c_str());
         std::string url  = xml.RootElement()->FirstChildElement("stream")->FirstChildElement("url")->GetText();
-        cout << "URL " << url << endl;
-        return url;
+
+        return url;*/
 
     }
 
@@ -444,4 +564,167 @@ ZatChannel *ZatData::FindChannel(int uniqueId) {
         }
     }
     return NULL;
+}
+
+PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd) {
+
+    ZatChannel *zatChannel = FindChannel(channel.iUniqueId);
+
+    if (iStart > m_iLastStart || iEnd > m_iLastEnd)
+    {
+        // reload EPG for new time interval only
+        LoadEPG(iStart, iEnd);
+        {
+            // doesn't matter is epg loaded or not we shouldn't try to load it for same interval
+            m_iLastStart = iStart;
+            m_iLastEnd = iEnd;
+        }
+    }
+
+
+    std::vector<PVRIptvEpgEntry>::iterator it;
+    for (it = zatChannel->epg.begin(); it != zatChannel->epg.end(); ++it)
+    {
+        PVRIptvEpgEntry &epgEntry = (*it);
+
+        EPG_TAG tag;
+        memset(&tag, 0, sizeof(EPG_TAG));
+
+        tag.iUniqueBroadcastId  = epgEntry.iBroadcastId;
+        tag.strTitle            = epgEntry.strTitle.c_str();
+        tag.iChannelNumber      = epgEntry.iChannelId;
+        tag.startTime           = epgEntry.startTime;
+        tag.endTime             = epgEntry.endTime;
+        tag.strPlotOutline      = "";//epgEntry.strPlotOutline.c_str();
+        tag.strPlot             = "";//epgEntry.strPlot.c_str();
+        tag.strOriginalTitle    = NULL;  /* not supported */
+        tag.strCast             = NULL;  /* not supported */
+        tag.strDirector         = NULL;  /* not supported */
+        tag.strWriter           = NULL;  /* not supported */
+        tag.iYear               = 0;     /* not supported */
+        tag.strIMDBNumber       = NULL;  /* not supported */
+        tag.strIconPath         = epgEntry.strIconPath.c_str();
+//        if (FindEpgGenre(myTag->strGenreString, iGenreType, iGenreSubType))
+//        {
+//            tag.iGenreType          = iGenreType;
+//            tag.iGenreSubType       = iGenreSubType;
+//            tag.strGenreDescription = NULL;
+//        }
+//        else
+//        {
+            tag.iGenreType          = EPG_GENRE_USE_STRING;
+            tag.iGenreSubType       = 0;     /* not supported */
+            tag.strGenreDescription = "Wurst";
+//        }
+        tag.iParentalRating     = 0;     /* not supported */
+        tag.iStarRating         = 0;     /* not supported */
+        tag.bNotify             = false; /* not supported */
+        tag.iSeriesNumber       = 0;     /* not supported */
+        tag.iEpisodeNumber      = 0;     /* not supported */
+        tag.iEpisodePartNumber  = 0;     /* not supported */
+        tag.strEpisodeName      = NULL;  /* not supported */
+        tag.iFlags              = EPG_TAG_FLAG_UNDEFINED;
+
+        PVR->TransferEpgEntry(handle, &tag);
+
+    }
+
+
+    return PVR_ERROR_NO_ERROR;
+}
+
+bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
+
+
+    iStart -= (iStart % (3600/2)) - 86400;
+    iEnd = iStart + 3600*3;
+
+    //?end=1456426800&start=1456419600
+    CURL *curl = curl_easy_init();
+    CURLcode res;
+
+    if(curl) {
+        std::ostringstream stream;
+
+        ostringstream urlStream;
+        urlStream << "http://zattoo.com/zapi/v2/cached/program/power_guide/" << powerHash << "?end=" << iEnd << "&start=" << iStart << "&format=json";
+        string url = urlStream.str();
+
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+        //Post Data
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, cookiePath.c_str());
+        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, cookiePath.c_str());
+
+        //Response handling
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
+
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+
+        std::string jsonString = stream.str();
+
+        Json::Value json;
+        Json::Reader reader;
+        bool parsingSuccessful = reader.parse(jsonString,json);
+
+
+
+//t=titel s=start e=end
+
+        cout << json << endl;
+
+        Json::Value channels = json["channels"];
+
+        //Load the channel groups and channels
+        for ( int index = 0; index < channels.size(); ++index ) {
+
+            string cid = channels[index]["cid"].asString();
+            for ( int i = 0; i < channels[index]["programs"].size(); ++i ) {
+
+                Json::Value program = channels[index]["programs"][i];
+                int channelId = GetChannelId(cid.c_str());
+                ZatChannel *channel = FindChannel(channelId);
+
+                if(!channel) {
+                    continue;
+                }
+
+                PVRIptvEpgEntry entry;
+                entry.strTitle = program["t"].asString();
+                entry.startTime = program["s"].asInt();
+                entry.endTime = program["e"].asInt();
+                entry.iBroadcastId = program["id"].asInt();
+                entry.strIconPath = program["i_url"].asString();
+                entry.iChannelId = channel->iChannelNumber;
+                entry.strPlot = program["et"].asString();
+
+                if(channel)
+                    channel->epg.insert(channel->epg.end(),entry);
+
+                cout << cid << " titel=" << program["t"].asString() << endl;
+            }
+
+
+
+
+
+//            cout
+//
+//
+//            PVRIptvEpgEntry entry;
+//            entry.startTime =
+        }
+
+
+
+
+
+
+
+
+    }
+    return true;
 }

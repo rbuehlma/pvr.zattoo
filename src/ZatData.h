@@ -5,6 +5,9 @@
 #include "client.h"
 
 
+
+
+
 struct PVRIptvEpgEntry
 {
     int         iBroadcastId;
@@ -42,6 +45,7 @@ struct ZatChannel
     std::string strTvgName;
     std::string strTvgLogo;
     std::string cid;
+    std::vector<PVRIptvEpgEntry> epg;
 };
 
 struct PVRZattooChannelGroup
@@ -57,7 +61,9 @@ struct PVRIptvEpgGenre
     std::string       strGenre;
 };
 
-class ZatData : public P8PLATFORM::CThread
+
+
+class ZatData : public PLATFORM::CThread
 {
 public:
     ZatData(std::string username, std::string password);
@@ -69,7 +75,8 @@ public:
     virtual int       GetChannelGroupsAmount(void);
     virtual PVR_ERROR GetChannelGroups(ADDON_HANDLE handle);
     virtual PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group);
-    //    virtual PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
+    virtual PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
+
     //    virtual void      ReaplyChannelsLogos(const char * strNewPath);
     //    virtual void      ReloadPlayList(const char * strNewPath);
     //    virtual void      ReloadEPG(const char * strNewPath);
@@ -83,7 +90,7 @@ protected:
 
 //
 //    virtual bool                 LoadPlayList(void);
-//    virtual bool                 LoadEPG(time_t iStart, time_t iEnd);
+    virtual bool                 LoadEPG(time_t iStart, time_t iEnd);
 //    virtual bool                 LoadGenres(void);
 
 
@@ -111,11 +118,13 @@ private:
     bool                              m_bTSOverride;
     int                               m_iEPGTimeShift;
     int                               m_iLastStart;
+    int                               m_iLastEnd;
     int                               channelNumber;
     std::string                       appToken;
     std::string                       powerHash;
     std::string                       username;
     std::string                       password;
+    std::string                         cookiePath;
     std::string                       m_strLogoPath;
     std::vector<PVRZattooChannelGroup> channelGroups;
 

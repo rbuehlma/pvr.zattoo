@@ -23,6 +23,8 @@ ZatChannel currentChannel;
  * Default values are defined inside client.h
  * and exported to the other source files.
  */
+std::string g_strUserPath   = "";
+std::string g_strClientPath = "";
 
 CHelper_libXBMC_addon *XBMC = NULL;
 CHelper_libXBMC_pvr   *PVR  = NULL;
@@ -35,6 +37,30 @@ bool        g_bCacheM3U     = false;
 bool        g_bCacheEPG     = false;
 int         g_iEPGLogos     = 0;
 
+
+
+extern std::string PathCombine(const std::string &strPath, const std::string &strFileName)
+{
+    std::string strResult = strPath;
+    if (strResult.at(strResult.size() - 1) == '\\' ||
+        strResult.at(strResult.size() - 1) == '/')
+    {
+        strResult.append(strFileName);
+    }
+    else
+    {
+        strResult.append("/");
+        strResult.append(strFileName);
+    }
+
+    return strResult;
+}
+
+
+extern std::string GetUserFilePath(const std::string &strFileName)
+{
+    return PathCombine(g_strUserPath, strFileName);
+}
 
 extern "C" {
 
@@ -74,6 +100,20 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
 
     m_CurStatus = ADDON_STATUS_UNKNOWN;
 
+    g_strClientPath = pvrprops->strClientPath;
+    g_strUserPath = pvrprops->strUserPath;
+
+    if (!XBMC->DirectoryExists(g_strUserPath.c_str()))
+    {
+#ifdef TARGET_WINDOWS
+        CreateDirectory(g_strUserPath.c_str(), NULL);
+#else
+        XBMC->CreateDirectory(g_strUserPath.c_str());
+#endif
+    }
+
+    zatUsername = "";
+    zatPassword = "";
     ADDON_ReadSettings();
 
     zat = new ZatData(zatUsername,zatPassword);
@@ -192,8 +232,8 @@ PVR_ERROR GetDriveSpace(long long *iTotal, long long *iUsed)
 
 PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
 {
-//  if (m_data)
-//    return m_data->GetEPGForChannel(handle, channel, iStart, iEnd);
+  if (zat)
+    return zat->GetEPGForChannel(handle, channel, iStart, iEnd);
 
   return PVR_ERROR_SERVER_ERROR;
 }
@@ -225,18 +265,6 @@ bool OpenLiveStream(const PVR_CHANNEL &channel)
     XBMC->Log(LOG_DEBUG, "Open Livestream URL %s", url.c_str());
     return true;
 
-
-
-//  if (m_data)
-//  {
-//    CloseLiveStream();
-//
-//    if (m_data->GetChannel(channel, m_currentChannel))
-//    {
-//      m_bIsPlaying = true;
-//      return true;
-//    }
-//  }
 
 
 }
