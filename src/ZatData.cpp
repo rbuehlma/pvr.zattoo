@@ -8,7 +8,7 @@
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
  #pragma comment(lib, "ws2_32.lib")
-#else
+#endif
 
 
 using namespace ADDON;
