@@ -48,6 +48,12 @@ struct ZatChannel
     std::vector<PVRIptvEpgEntry> epg;
 };
 
+struct httpResponse { ;
+    int status;
+    std::string cookie;
+    std::string body;
+};
+
 struct PVRZattooChannelGroup
 {
     std::string name;
@@ -121,6 +127,7 @@ private:
     int                               m_iLastEnd;
     int                               channelNumber;
     std::string                       appToken;
+    std::string                       cookie;
     std::string                       powerHash;
     std::string                       username;
     std::string                       password;
@@ -133,4 +140,7 @@ private:
     bool login();
 
     void loadChannels();
+
+    httpResponse getRequest(std::string url);
+    httpResponse postRequest(std::string url, std::string params);
 };

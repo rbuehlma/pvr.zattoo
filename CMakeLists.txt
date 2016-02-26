@@ -9,28 +9,26 @@ enable_language(CXX)
 find_package(kodi REQUIRED)
 find_package(kodiplatform REQUIRED)
 find_package(platform REQUIRED)
-find_package(CURL REQUIRED)
 find_package(JsonCpp REQUIRED)
 
 
 include_directories(${kodiplatform_INCLUDE_DIRS}
                     ${platform_INCLUDE_DIRS}
                     ${KODI_INCLUDE_DIR}
-		    ${CURL_INCLUDE_DIRS}
-	           ${JSONCPP_INCLUDE_DIRS}
+					${JSONCPP_INCLUDE_DIRS}
                     ${PROJECT_SOURCE_DIR}/lib)
 
 set(DEPLIBS ${kodiplatform_LIBRARIES} 
 		${platform_LIBRARIES}
-		${CURL_LIBRARIES}
 		${JSONCPP_LIBRARIES}
 )
 
 set(ZATTOO_SOURCES
 		lib/tinyxml2/tinyxml2.h
 		lib/tinyxml2/tinyxml2.cpp
+		src/client.cpp
 		src/ZatData.cpp
-		src/client.cpp )
+		 )
 
 build_addon(pvr.zattoo ZATTOO DEPLIBS)
 
