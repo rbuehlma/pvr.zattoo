@@ -4,7 +4,7 @@
 #include <regex>
 #include "../lib/tinyxml2/tinyxml2.h"
 #include <json/json.h>
-#include <platform/sockets/tcp.h>
+#include "platform/sockets/tcp.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
  #pragma comment(lib, "ws2_32.lib")
