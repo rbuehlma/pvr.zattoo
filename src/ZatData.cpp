@@ -334,21 +334,21 @@ XBMC->Log(LOG_DEBUG, "Begin end");
     socket->Write(line, strlen(line));
 
     XBMC->Log(LOG_DEBUG, "Begin reading");
-    char buf[BUFSIZ];
+    char buf[2048];
 
     ostringstream stream;
 
 stream << "";
 
 XBMC->Log(LOG_DEBUG, "Begin while");
-    while(socket->Read(buf, sizeof buf, 0) > 0) {
+    while(socket->Read(buf, sizeof buf, 0)) {
         stream << buf;
         //buf[BUFSIZ] = '\0';
-        buf[BUFSIZ-1] = '\0';
+        /*buf[BUFSIZ-1] = '\0';
         buf[BUFSIZ-2] = '\0';
         buf[BUFSIZ-3] = '\0';
         buf[BUFSIZ-4] = '\0';
-        buf[BUFSIZ-5] = '\0';
+        buf[BUFSIZ-5] = '\0';*/
         memset(buf, 0, BUFSIZ);
     };
     XBMC->Log(LOG_DEBUG, "socket close");
