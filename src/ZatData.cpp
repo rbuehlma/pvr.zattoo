@@ -37,7 +37,7 @@ bool ZatData::login() {
     httpResponse response = postRequest("/zapi/account/login", dataStream.str());
 
     std::string jsonString = response.body;
-    //XBMC->Log(LOG_DEBUG, "Login result: %s",jsonString.c_str());
+    XBMC->Log(LOG_DEBUG, "Login result: %s",jsonString.c_str());
 
 
 
@@ -67,10 +67,9 @@ bool ZatData::login() {
 void ZatData::loadAppId() {
     appToken = "";
 
-    httpResponse resp = getRequest("/");
+    httpResponse resp = postRequest("/");
 
     std::string html = resp.body;
-    XBMC->Log(LOG_DEBUG, "App ID result: %s", XBMC->UnknownToUTF8(html.c_str()));
 
     std::smatch m;
     std::regex e ("appToken.*\\'(.*)\\'");
