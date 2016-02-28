@@ -402,8 +402,7 @@ ZatData::ZatData(std::string u, std::string p)  {
     m_iLastEnd      = 0;
     cookie = "";
     
-   if((stream = freopen("C:\\Users\\Johannes\\file.txt", "w", stdout)) == NULL)
-      exit(-1);
+ printf("And now back to the console once again\n");
 
     //cookiePath = GetUserFilePath("zatCookie.txt");
 
