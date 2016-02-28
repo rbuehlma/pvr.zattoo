@@ -81,7 +81,7 @@ void ZatData::loadAppId() {
 
     appToken = token;
 
-    XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
+    XBMC->Log(LOG_DEBUG, "Loaded App token. Apptoken is: %s", XBMC->UnknownToUTF8(appToken.c_str()));
 
 }
 
@@ -239,11 +239,12 @@ httpResponse ZatData::postRequest(std::string url, std::string params) {
 
     while(socket->Read(buf, sizeof buf, 0) > 0) {
         stream << buf;
-       /*buf[BUFSIZ] = '\0';
+       //buf[BUFSIZ] = '\0';
         buf[BUFSIZ-1] = '\0';
         buf[BUFSIZ-2] = '\0';
         buf[BUFSIZ-3] = '\0';
-        buf[BUFSIZ-4] = '\0';*/
+        buf[BUFSIZ-4] = '\0';
+        buf[BUFSIZ-5] = '\0';
 
         memset(buf, 0, BUFSIZ);
     };
@@ -338,6 +339,7 @@ XBMC->Log(LOG_DEBUG, "Begin while");
         buf[BUFSIZ-2] = '\0';
         buf[BUFSIZ-3] = '\0';
         buf[BUFSIZ-4] = '\0';
+        buf[BUFSIZ-5] = '\0';
         memset(buf, 0, BUFSIZ);
     };
     XBMC->Log(LOG_DEBUG, "socket close");
