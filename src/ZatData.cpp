@@ -276,6 +276,8 @@ httpResponse ZatData::postRequest(std::string url, std::string params) {
     std::string token = "";
     if (std::regex_search(header, m, e)) {
         cookie = m[1];
+        XBMC->Log(LOG_DEBUG, "Set Post Cookie %s", cookie.c_str());
+        
     }
 
     cout << "BODY:" << endl;
@@ -370,7 +372,7 @@ XBMC->Log(LOG_DEBUG, "Begin while");
     std::regex e ("Set-Cookie:(.*)\r\n");
     std::string token = "";
     if (std::regex_search(header, m, e)) {
-        //cookie = m[1];
+        cookie = m[1];
     }
 
     cout << "BODY:" << endl;
