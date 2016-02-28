@@ -67,7 +67,7 @@ bool ZatData::login() {
 void ZatData::loadAppId() {
     appToken = "";
 
-    httpResponse resp = postRequest("/");
+    httpResponse resp = postRequest("/","");
 
     std::string html = resp.body;
 
