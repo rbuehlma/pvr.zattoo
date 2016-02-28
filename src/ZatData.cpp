@@ -70,7 +70,7 @@ bool ZatData::login() {
 void ZatData::loadAppId() {
     appToken = "";
 
-    httpResponse resp = postRequest("/","");
+    httpResponse resp = getRequest("/");
 
     std::string html = resp.body;
 
@@ -338,6 +338,7 @@ XBMC->Log(LOG_DEBUG, "Begin end");
 
     ostringstream stream;
 
+stream << "";
 
 XBMC->Log(LOG_DEBUG, "Begin while");
     while(socket->Read(buf, sizeof buf, 0) > 0) {
@@ -360,7 +361,7 @@ XBMC->Log(LOG_DEBUG, "Begin while");
 
     string streamStr = stream.str();
 
-
+printf("Stream String: %s", streamStr.c_str());
 
     //strstr(streamStr.c_str(),)
     std::size_t found = streamStr.find("\r\n\r\n");
