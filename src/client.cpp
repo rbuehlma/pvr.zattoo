@@ -66,6 +66,7 @@ extern "C" {
 
 void ADDON_ReadSettings(void) {
     char buffer[1024];
+    XBMC->Log(LOG_DEBUG, "Read settings");
     if (XBMC->GetSetting("username", &buffer))
     {
         zatUsername = buffer;
@@ -74,6 +75,7 @@ void ADDON_ReadSettings(void) {
     {
         zatPassword = buffer;
     }
+    XBMC->Log(LOG_DEBUG, "End Readsettings");
 }
 
 ADDON_STATUS ADDON_Create(void *hdl, void *props) {
@@ -100,17 +102,11 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
 
     m_CurStatus = ADDON_STATUS_UNKNOWN;
 
+
+
+
     g_strClientPath = pvrprops->strClientPath;
     g_strUserPath = pvrprops->strUserPath;
-
-    if (!XBMC->DirectoryExists(g_strUserPath.c_str()))
-    {
-#ifdef TARGET_WINDOWS
-        CreateDirectory(g_strUserPath.c_str(), NULL);
-#else
-        XBMC->CreateDirectory(g_strUserPath.c_str());
-#endif
-    }
 
     zatUsername = "";
     zatPassword = "";
