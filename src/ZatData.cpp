@@ -400,10 +400,8 @@ ZatData::ZatData(std::string u, std::string p)  {
     m_iLastEnd      = 0;
     cookie = "";
     
-      std::ofstream file;
-    file.open ("cout.txt");
-    std::streambuf* sbuf = std::cout.rdbuf();
-    std::cout.rdbuf(file.rdbuf());
+ofstream log("output.log");
+cout = log;
 
     //cookiePath = GetUserFilePath("zatCookie.txt");
 
