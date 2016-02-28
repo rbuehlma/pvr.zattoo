@@ -25,7 +25,7 @@ void ZatData::sendHello() {
    
     httpResponse resp = postRequest("/zapi/session/hello", data);
     std::string jsonString = resp.body;
-    XBMC->Log(LOG_DEBUG, "Hello result: %s", XBMC->UnknownToUTF8(jsonString.c_str()));
+    XBMC->Log(LOG_DEBUG, "Hello result: %s", jsonString.c_str());
 }
 
 bool ZatData::login() {
@@ -37,7 +37,7 @@ bool ZatData::login() {
     httpResponse response = postRequest("/zapi/account/login", dataStream.str());
 
     std::string jsonString = response.body;
-    XBMC->Log(LOG_DEBUG, "Login result: %s", XBMC->UnknownToUTF8(jsonString.c_str()));
+    //XBMC->Log(LOG_DEBUG, "Login result: %s",jsonString.c_str());
 
 
 
