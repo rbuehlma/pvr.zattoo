@@ -231,6 +231,7 @@ httpResponse ZatData::postRequest(std::string url, std::string params) {
     data = dataStream.str();
     socket->Write(&data[0], data.size());
 
+    XBMC->Log(LOG_DEBUG, "Begin reading"");
 
     char buf[BUFSIZ];
     ostringstream stream;
@@ -316,23 +317,26 @@ httpResponse ZatData::getRequest(std::string url) {
     sprintf(line, "\r\n");
     socket->Write(line, strlen(line));
 
-
+    XBMC->Log(LOG_DEBUG, "Begin reading"");
     char buf[BUFSIZ];
 
     ostringstream stream;
 
 
-
+XBMC->Log(LOG_DEBUG, "Begin while"");
     while(socket->Read(buf, sizeof buf, 0) > 0) {
         stream << buf;
+        XBMC->Log(LOG_DEBUG, "Begin 1"");
        /* buf[BUFSIZ] = '\0';
         buf[BUFSIZ-1] = '\0';
         buf[BUFSIZ-2] = '\0';
         buf[BUFSIZ-3] = '\0';
         buf[BUFSIZ-4] = '\0';*/
 
+XBMC->Log(LOG_DEBUG, "Begin 2"");
         memset(buf, 0, BUFSIZ);
     };
+    XBMC->Log(LOG_DEBUG, "socket close"");
     socket->Close();
 
 
