@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "ZatData.h"
 #include <sstream>
 #include <regex>
@@ -398,6 +399,11 @@ ZatData::ZatData(std::string u, std::string p)  {
     m_iLastStart    = 0;
     m_iLastEnd      = 0;
     cookie = "";
+    
+      std::ofstream file;
+    file.open ("cout.txt");
+    std::streambuf* sbuf = std::cout.rdbuf();
+    std::cout.rdbuf(file.rdbuf());
 
     //cookiePath = GetUserFilePath("zatCookie.txt");
 
