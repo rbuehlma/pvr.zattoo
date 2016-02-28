@@ -401,15 +401,15 @@ ZatData::ZatData(std::string u, std::string p)  {
     //httpResponse response = getRequest("zattoo.com/deinemama");
     //cout << response.body;
 
-    this->loadAppId();
+   /* this->loadAppId();
     this->sendHello();
     if(this->login()) {
         this->loadChannels();
     }
     else {
         XBMC->QueueNotification(QUEUE_ERROR, "Zattoo Login fehlgeschlagen!");
-    }
-
+    }*/
+XBMC->QueueNotification(QUEUE_ERROR, "Created!");
 }
 
 ZatData::~ZatData() {
