@@ -239,11 +239,11 @@ httpResponse ZatData::postRequest(std::string url, std::string params) {
 
     while(socket->Read(buf, sizeof buf, 0) > 0) {
         stream << buf;
-       /* buf[BUFSIZ] = '\0';
+       //buf[BUFSIZ] = '\0';
         buf[BUFSIZ-1] = '\0';
         buf[BUFSIZ-2] = '\0';
         buf[BUFSIZ-3] = '\0';
-        buf[BUFSIZ-4] = '\0';*/
+        buf[BUFSIZ-4] = '\0';
 
         memset(buf, 0, BUFSIZ);
     };
@@ -333,11 +333,11 @@ XBMC->Log(LOG_DEBUG, "Begin end");
 XBMC->Log(LOG_DEBUG, "Begin while");
     while(socket->Read(buf, sizeof buf, 0) > 0) {
         stream << buf;
-       /* buf[BUFSIZ] = '\0';
+        buf[BUFSIZ] = '\0';
         buf[BUFSIZ-1] = '\0';
         buf[BUFSIZ-2] = '\0';
         buf[BUFSIZ-3] = '\0';
-        buf[BUFSIZ-4] = '\0';*/
+        buf[BUFSIZ-4] = '\0';
         memset(buf, 0, BUFSIZ);
     };
     XBMC->Log(LOG_DEBUG, "socket close");
@@ -349,7 +349,6 @@ XBMC->Log(LOG_DEBUG, "Begin while");
 
 
     string streamStr = stream.str();
-    XBMC->Log(LOG_DEBUG, "GET REQUEST: %s", XBMC->UnknownToUTF8(streamStr.c_str()));
 
 
 
@@ -369,7 +368,7 @@ XBMC->Log(LOG_DEBUG, "Begin while");
     std::regex e ("Set-Cookie:(.*)\r\n");
     std::string token = "";
     if (std::regex_search(header, m, e)) {
-        cookie = m[1];
+        //cookie = m[1];
     }
 
     cout << "BODY:" << endl;
