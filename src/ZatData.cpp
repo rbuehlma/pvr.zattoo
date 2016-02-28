@@ -341,7 +341,7 @@ XBMC->Log(LOG_DEBUG, "Begin end");
 stream << "";
 
 XBMC->Log(LOG_DEBUG, "Begin while");
-    while(socket->Read(buf, sizeof buf, 0)) {
+    while(socket->Read(buf, sizeof buf, 2000)) {
         stream << buf;
         //buf[BUFSIZ] = '\0';
         /*buf[BUFSIZ-1] = '\0';
