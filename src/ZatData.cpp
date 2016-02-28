@@ -229,6 +229,7 @@ httpResponse ZatData::postRequest(std::string url, std::string params) {
     dataStream.clear();
     dataStream << params;
     data = dataStream.str();
+    
     socket->Write(&data[0], data.size());
 
     XBMC->Log(LOG_DEBUG, "Begin reading"");
@@ -290,30 +291,36 @@ httpResponse ZatData::postRequest(std::string url, std::string params) {
 
 
 httpResponse ZatData::getRequest(std::string url) {
+ XBMC->Log(LOG_DEBUG, "Get Request"");
     PLATFORM::CTcpSocket *socket = new PLATFORM::CTcpSocket("zattoo.com",80);
     socket->Open(1000);
 
     ostringstream dataStream;
     dataStream << "GET " << url << " HTTP/1.1\r\n";
     string data = dataStream.str();
+    XBMC->Log(LOG_DEBUG, "Begin http"");
     socket->Write(&data[0], data.size());
 
     socket->Write(&data[0], data.size());
 
 
     char line[256];
+    XBMC->Log(LOG_DEBUG, "Begin host"");
     sprintf(line, "Host: zattoo.com\r\n");
     socket->Write(line, strlen(line));
 
     dataStream.str( std::string() );
     dataStream.clear();
+    XBMC->Log(LOG_DEBUG, "Begin cookie"");
     dataStream << "Cookie:" << cookie << "\r\n";
     data = dataStream.str();
     socket->Write(&data[0], data.size());
 
+XBMC->Log(LOG_DEBUG, "Begin close"");
     sprintf(line, "Connection: close\r\n");
     socket->Write(line, strlen(line));
 
+XBMC->Log(LOG_DEBUG, "Begin end"");
     sprintf(line, "\r\n");
     socket->Write(line, strlen(line));
 
