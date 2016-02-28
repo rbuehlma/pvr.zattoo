@@ -24,7 +24,7 @@ void ZatData::sendHello() {
     
    
     httpResponse resp = postRequest("/zapi/session/hello", data);
-    std::string jsonString = response.body;
+    std::string jsonString = resp.body;
     XBMC->Log(LOG_DEBUG, "Hello result: %s", XBMC->UnknownToUTF8(jsonString.c_str()));
 }
 
