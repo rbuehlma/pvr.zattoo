@@ -333,14 +333,11 @@ XBMC->Log(LOG_DEBUG, "Begin end");
 XBMC->Log(LOG_DEBUG, "Begin while");
     while(socket->Read(buf, sizeof buf, 0) > 0) {
         stream << buf;
-        XBMC->Log(LOG_DEBUG, "Begin 1");
        /* buf[BUFSIZ] = '\0';
         buf[BUFSIZ-1] = '\0';
         buf[BUFSIZ-2] = '\0';
         buf[BUFSIZ-3] = '\0';
         buf[BUFSIZ-4] = '\0';*/
-
-XBMC->Log(LOG_DEBUG, "Begin 2");
         memset(buf, 0, BUFSIZ);
     };
     XBMC->Log(LOG_DEBUG, "socket close");
@@ -352,6 +349,7 @@ XBMC->Log(LOG_DEBUG, "Begin 2");
 
 
     string streamStr = stream.str();
+    XBMC->Log(LOG_DEBUG, "GET REQUEST: %s", streamStr);
 
 
 
