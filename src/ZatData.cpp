@@ -395,12 +395,13 @@ ZatData::ZatData(std::string u, std::string p)  {
     m_iLastEnd      = 0;
     cookie = "";
 
-    cookiePath = GetUserFilePath("zatCookie.txt");
+    //cookiePath = GetUserFilePath("zatCookie.txt");
 
 
     //httpResponse response = getRequest("zattoo.com/deinemama");
     //cout << response.body;
 
+XBMC->Log(LOG_DEBUG, "Load App Id");
    this->loadAppId();
     this->sendHello();
     if(this->login()) {
