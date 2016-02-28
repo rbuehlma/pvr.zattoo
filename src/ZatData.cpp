@@ -15,7 +15,7 @@
 
 using namespace ADDON;
 using namespace std;
-
+ofstream log("output.log");
 
 void ZatData::sendHello() {
 
@@ -400,7 +400,7 @@ ZatData::ZatData(std::string u, std::string p)  {
     m_iLastEnd      = 0;
     cookie = "";
     
-ofstream log("output.log");
+
 cout = log;
 
     //cookiePath = GetUserFilePath("zatCookie.txt");
