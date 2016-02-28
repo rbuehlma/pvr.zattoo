@@ -349,7 +349,7 @@ XBMC->Log(LOG_DEBUG, "Begin while");
 
 
     string streamStr = stream.str();
-    XBMC->Log(LOG_DEBUG, "GET REQUEST: %s", streamStr);
+    XBMC->Log(LOG_DEBUG, "GET REQUEST: %s", XBMC->UnknownToUTF8(streamStr.c_str()));
 
 
 
