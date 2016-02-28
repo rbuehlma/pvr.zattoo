@@ -21,8 +21,11 @@ void ZatData::sendHello() {
     ostringstream dataStream;
     dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=json&client_app_token=" << appToken;
     string data = dataStream.str();
-
+    
+   
     httpResponse resp = postRequest("/zapi/session/hello", data);
+    std::string jsonString = response.body;
+    XBMC->Log(LOG_DEBUG, "Hello result: %s", XBMC->UnknownToUTF8(jsonString.c_str()));
 }
 
 bool ZatData::login() {
@@ -67,6 +70,7 @@ void ZatData::loadAppId() {
     httpResponse resp = getRequest("/");
 
     std::string html = resp.body;
+    XBMC->Log(LOG_DEBUG, "App ID result: %s", XBMC->UnknownToUTF8(html.c_str()));
 
     std::smatch m;
     std::regex e ("appToken.*\\'(.*)\\'");
