@@ -10,12 +10,14 @@
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
  #pragma comment(lib, "ws2_32.lib")
  #include <stdio.h>
+ #include <stdlib.h>
 #endif
 
 
 using namespace ADDON;
 using namespace std;
-ofstream log("output.log");
+   FILE *stream ;
+
 
 void ZatData::sendHello() {
 
@@ -400,8 +402,8 @@ ZatData::ZatData(std::string u, std::string p)  {
     m_iLastEnd      = 0;
     cookie = "";
     
-
-cout = log;
+   if((stream = freopen("file.txt", "w", stdout)) == NULL)
+      exit(-1);
 
     //cookiePath = GetUserFilePath("zatCookie.txt");
 
