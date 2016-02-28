@@ -237,11 +237,11 @@ httpResponse ZatData::postRequest(std::string url, std::string params) {
 
     while(socket->Read(buf, sizeof buf, 0) > 0) {
         stream << buf;
-        buf[BUFSIZ] = '\0';
+       /* buf[BUFSIZ] = '\0';
         buf[BUFSIZ-1] = '\0';
         buf[BUFSIZ-2] = '\0';
         buf[BUFSIZ-3] = '\0';
-        buf[BUFSIZ-4] = '\0';
+        buf[BUFSIZ-4] = '\0';*/
 
         memset(buf, 0, BUFSIZ);
     };
@@ -325,12 +325,11 @@ httpResponse ZatData::getRequest(std::string url) {
 
     while(socket->Read(buf, sizeof buf, 0) > 0) {
         stream << buf;
-        buf[BUFSIZ] = '\0';
+       /* buf[BUFSIZ] = '\0';
         buf[BUFSIZ-1] = '\0';
         buf[BUFSIZ-2] = '\0';
         buf[BUFSIZ-3] = '\0';
-
-        buf[BUFSIZ-4] = '\0';
+        buf[BUFSIZ-4] = '\0';*/
 
         memset(buf, 0, BUFSIZ);
     };
