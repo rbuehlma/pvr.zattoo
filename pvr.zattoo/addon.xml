@@ -10,7 +10,12 @@
   </requires>
   <extension
     point="xbmc.pvrclient"
-    library_linux="pvr.zattoo.so"/>
+    library_linux="pvr.zattoo.so"
+    library_osx="pvr.zattoo.dylib"
+    library_freebsd="pvr.zattoo.so"
+    library_windx="pvr.zattoo.dll"
+    library_android="pvr.zattoo.so"
+  />
   <extension point="xbmc.addon.metadata">
     <platform>linux</platform>
   </extension>

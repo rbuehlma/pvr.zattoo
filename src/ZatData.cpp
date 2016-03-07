@@ -1,34 +1,45 @@
 #include <iostream>
-#include <fstream>
 #include "ZatData.h"
 #include <sstream>
 #include <regex>
 #include "../lib/tinyxml2/tinyxml2.h"
 #include <json/json.h>
+#include "HTTPSocket.h"
 #include "platform/sockets/tcp.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
  #pragma comment(lib, "ws2_32.lib")
- #include <stdio.h>
+  #include <stdio.h>
  #include <stdlib.h>
 #endif
 
 
 using namespace ADDON;
 using namespace std;
-   FILE *stream ;
 
 
 void ZatData::sendHello() {
 
     ostringstream dataStream;
     dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=json&client_app_token=" << appToken;
-    string data = dataStream.str();
-    
-   
-    httpResponse resp = postRequest("/zapi/session/hello", data);
-    std::string jsonString = resp.body;
-    XBMC->Log(LOG_DEBUG, "Hello result: %s", jsonString.c_str());
+
+    HTTPSocketRaw *socket = new HTTPSocketRaw();
+    Request request;
+    request.url = "zattoo.com/zapi/session/hello";
+    request.method = POST;
+    request.body = dataStream.str();
+    request.AddHeader("Cookie", cookie);
+    Response response;
+    socket->Execute(request, response);
+    cookie = response.cookie;
+
+
+
+
+
+
+    //httpResponse resp = postRequest("/zapi/session/hello", data);
+
 }
 
 bool ZatData::login() {
@@ -37,10 +48,19 @@ bool ZatData::login() {
     ostringstream dataStream;
     dataStream << "login=" << username << "&password=" << password << "&format=json";
 
-    httpResponse response = postRequest("/zapi/account/login", dataStream.str());
+    HTTPSocketRaw *socket = new HTTPSocketRaw();
+    Request request;
+    request.url = "zattoo.com/zapi/account/login";
+    request.method = POST;
+    request.body = dataStream.str();
+    request.AddHeader("Cookie", cookie);
+    Response response;
+    socket->Execute(request, response);
+    cookie = response.cookie;
+
 
     std::string jsonString = response.body;
-    XBMC->Log(LOG_DEBUG, "Login result: %s",jsonString.c_str());
+    XBMC->Log(LOG_DEBUG, "Login result: %s", XBMC->UnknownToUTF8(jsonString.c_str()));
 
 
 
@@ -68,11 +88,17 @@ bool ZatData::login() {
 
 
 void ZatData::loadAppId() {
+
+    HTTPSocket *httpSocket = new HTTPSocketRaw();
+    Request request;
+    request.url = "zattoo.com";
+    Response response;
+    httpSocket->Execute(request, response);
+
+
     appToken = "";
 
-    httpResponse resp = getRequest("/");
-
-    std::string html = resp.body;
+    std::string html = response.body;
 
     std::smatch m;
     std::regex e ("appToken.*\\'(.*)\\'");
@@ -87,7 +113,7 @@ void ZatData::loadAppId() {
 
     appToken = token;
 
-    XBMC->Log(LOG_DEBUG, "Loaded App token. Apptoken is: %s", XBMC->UnknownToUTF8(appToken.c_str()));
+    XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
 
 }
 
@@ -98,11 +124,15 @@ void ZatData::loadChannels() {
 
 
     ostringstream urlStream;
-    urlStream << "/zapi/v2/cached/channels/" << powerHash << "?details=false";
-    string url = urlStream.str();
+    urlStream << "zattoo.com/zapi/v2/cached/channels/" << powerHash << "?details=false";
 
-    httpResponse response = getRequest(url);
-
+    HTTPSocketRaw *socket = new HTTPSocketRaw();
+    Request request;
+    request.url = urlStream.str();
+    request.AddHeader("Cookie", cookie);
+    Response response;
+    socket->Execute(request, response);
+    cookie = response.cookie;
 
 
     std::string jsonString = response.body;
@@ -184,235 +214,20 @@ int ZatData::GetChannelGroupsAmount() {
     return channelGroups.size();
 }
 
-std::string ReplaceAll(std::string str, const std::string& from, const std::string& to) {
-    size_t start_pos = 0;
-    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
-    }
-    return str;
-}
-
-httpResponse ZatData::postRequest(std::string url, std::string params) {
-    PLATFORM::CTcpSocket *socket = new PLATFORM::CTcpSocket("zattoo.com",80);
-    socket->Open(1000);
-
-    ostringstream dataStream;
-    dataStream << "POST " << url << " HTTP/1.1\r\n";
-    string data = dataStream.str();
-    socket->Write(&data[0], data.size());
-
-    char line[256];
-    sprintf(line, "Host: zattoo.com\r\n");
-    socket->Write(line, strlen(line));
-
-    sprintf(line, "Connection: close\r\n");
-    socket->Write(line, strlen(line));
-
-    dataStream.str( std::string() );
-    dataStream.clear();
-    dataStream << "Content-Length: " << params.size() << "\r\n";
-    data = dataStream.str();
-    socket->Write(&data[0], data.size());
-
-    dataStream.str( std::string() );
-    dataStream.clear();
-    dataStream << "Cookie:" << cookie << "\r\n";
-    data = dataStream.str();
-    socket->Write(&data[0], data.size());
-
-
-    dataStream.str( std::string() );
-    dataStream.clear();
-    dataStream << "Content-Type: application/x-www-form-urlencoded\r\n";
-    data = dataStream.str();
-    socket->Write(&data[0], data.size());
-
-    sprintf(line, "\r\n");
-    socket->Write(line, strlen(line));
-
-    dataStream.str( std::string() );
-    dataStream.clear();
-    dataStream << params;
-    data = dataStream.str();
-    
-    socket->Write(&data[0], data.size());
-
-    XBMC->Log(LOG_DEBUG, "Begin reading");
-
-    char buf[BUFSIZ];
-    ostringstream stream;
-
-    while(socket->Read(buf, sizeof buf, 0) > 0) {
-        stream << buf;
-       //buf[BUFSIZ] = '\0';
-        buf[BUFSIZ-1] = '\0';
-        buf[BUFSIZ-2] = '\0';
-        buf[BUFSIZ-3] = '\0';
-        buf[BUFSIZ-4] = '\0';
-        buf[BUFSIZ-5] = '\0';
-
-        memset(buf, 0, BUFSIZ);
-    };
-    socket->Close();
-
-
-
-    //cout << stream.str() << endl;
-
-
-    string streamStr = stream.str();
-
-
-
-    //strstr(streamStr.c_str(),)
-    std::size_t found = streamStr.find("\r\n\r\n");
-
-    string header = streamStr.substr (0,found);
-    string body = streamStr.substr(found+1,streamStr.size());
-
-
-    cout << "HEADER:" << endl;
-    cout << header << endl;
-
-
-    //Try to find cookie
-    std::smatch m;
-    std::regex e ("Set-Cookie:(.*)\r\n");
-    std::string token = "";
-    if (std::regex_search(header, m, e)) {
-        cookie = m[1];
-        XBMC->Log(LOG_DEBUG, "Set Post Cookie %s", cookie.c_str());
-        
-    }
-
-    cout << "BODY:" << endl;
-    cout << body << endl;
-
-
-    httpResponse response;
-    response.body = body;
-
-
-
-    return response;
-}
-
-
-httpResponse ZatData::getRequest(std::string url) {
- XBMC->Log(LOG_DEBUG, "Get Request");
-    PLATFORM::CTcpSocket *socket = new PLATFORM::CTcpSocket("zattoo.com",80);
-    socket->Open(1000);
-
-    ostringstream dataStream;
-    dataStream << "GET " << url << " HTTP/1.1\r\n";
-    string data = dataStream.str();
-    XBMC->Log(LOG_DEBUG, "Begin http");
-    socket->Write(&data[0], data.size());
-
-    socket->Write(&data[0], data.size());
-
-
-    char line[256];
-    XBMC->Log(LOG_DEBUG, "Begin host");
-    sprintf(line, "Host: zattoo.com\r\n");
-    socket->Write(line, strlen(line));
-
-    dataStream.str( std::string() );
-    dataStream.clear();
-    XBMC->Log(LOG_DEBUG, "Begin cookie");
-    dataStream << "Cookie:" << cookie << "\r\n";
-    data = dataStream.str();
-    socket->Write(&data[0], data.size());
-
-XBMC->Log(LOG_DEBUG, "Begin close");
-    sprintf(line, "Connection: close\r\n");
-    socket->Write(line, strlen(line));
-
-XBMC->Log(LOG_DEBUG, "Begin end");
-    sprintf(line, "\r\n");
-    socket->Write(line, strlen(line));
-
-    XBMC->Log(LOG_DEBUG, "Begin reading");
-    char buf[2048];
-
-    ostringstream stream;
-
-stream << "";
-
-XBMC->Log(LOG_DEBUG, "Begin while");
-    while(socket->Read(buf, sizeof buf, 2000)) {
-        stream << buf;
-        //buf[BUFSIZ] = '\0';
-        /*buf[BUFSIZ-1] = '\0';
-        buf[BUFSIZ-2] = '\0';
-        buf[BUFSIZ-3] = '\0';
-        buf[BUFSIZ-4] = '\0';
-        buf[BUFSIZ-5] = '\0';*/
-        memset(buf, 0, BUFSIZ);
-    };
-    XBMC->Log(LOG_DEBUG, "socket close");
-    socket->Close();
-
-
-
-    //cout << stream.str() << endl;
-
-
-    string streamStr = stream.str();
-
-printf("Stream String: %s", streamStr.c_str());
-
-    //strstr(streamStr.c_str(),)
-    std::size_t found = streamStr.find("\r\n\r\n");
-
-    string header = streamStr.substr (0,found);
-    string body = streamStr.substr(found+1,streamStr.size());
-
-
-    cout << "HEADER:" << endl;
-    cout << header << endl;
-
-
-    //Try to find cookie
-    std::smatch m;
-    std::regex e ("Set-Cookie:(.*)\r\n");
-    std::string token = "";
-    if (std::regex_search(header, m, e)) {
-        cookie = m[1];
-    }
-
-    cout << "BODY:" << endl;
-    cout << body << endl;
-
-
-    httpResponse response;
-    response.body = body;
-
-
-
-    return response;
-}
-
-
-
 ZatData::ZatData(std::string u, std::string p)  {
     username = u;
     password = p;
     m_iLastStart    = 0;
     m_iLastEnd      = 0;
     cookie = "";
-    
- printf("And now back to the console once again\n");
 
-    //cookiePath = GetUserFilePath("zatCookie.txt");
+    cookiePath = GetUserFilePath("zatCookie.txt");
 
 
     //httpResponse response = getRequest("zattoo.com/deinemama");
     //cout << response.body;
 
-XBMC->Log(LOG_DEBUG, "Load App Id");
-   this->loadAppId();
+    this->loadAppId();
     this->sendHello();
     if(this->login()) {
         this->loadChannels();
@@ -420,7 +235,7 @@ XBMC->Log(LOG_DEBUG, "Load App Id");
     else {
         XBMC->QueueNotification(QUEUE_ERROR, "Zattoo Login fehlgeschlagen!");
     }
-XBMC->QueueNotification(QUEUE_ERROR, "Created!");
+
 }
 
 ZatData::~ZatData() {
@@ -532,10 +347,17 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId) {
 
     ostringstream dataStream;
     dataStream << "cid=" << channel->cid << "&stream_type=hls&format=json";
-    string data = dataStream.str();
 
+    HTTPSocketRaw *socket = new HTTPSocketRaw();
+    Request request;
+    request.url = "zattoo.com/zapi/watch";
+    request.method = POST;
+    request.body = dataStream.str();
+    request.AddHeader("Cookie", cookie);
+    Response response;
+    socket->Execute(request, response);
+    cookie = response.cookie;
 
-    httpResponse response = postRequest("/zapi/watch", dataStream.str());
 
     std::string jsonString = response.body;
 
@@ -597,11 +419,11 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
         tag.iChannelNumber      = epgEntry.iChannelId;
         tag.startTime           = epgEntry.startTime;
         tag.endTime             = epgEntry.endTime;
-        tag.strPlotOutline      = "";//epgEntry.strPlotOutline.c_str();
-        tag.strPlot             = "";//epgEntry.strPlot.c_str();
+        tag.strPlotOutline      = epgEntry.strPlot.c_str();//epgEntry.strPlotOutline.c_str();
+        tag.strPlot             = epgEntry.strPlot.c_str();
         tag.strOriginalTitle    = NULL;  /* not supported */
         tag.strCast             = NULL;  /* not supported */
-        tag.strDirector         = NULL;  /* not supported */
+        tag.strDirector         = NULL;  /*SA not supported */
         tag.strWriter           = NULL;  /* not supported */
         tag.iYear               = 0;     /* not supported */
         tag.strIMDBNumber       = NULL;  /* not supported */
@@ -643,11 +465,15 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
 
 
     ostringstream urlStream;
-    urlStream << "/zapi/v2/cached/program/power_guide/" << powerHash << "?end=" << iEnd << "&start=" << iStart << "&format=json";
+    urlStream << "zattoo.com/zapi/v2/cached/program/power_guide/" << powerHash << "?end=" << iEnd << "&start=" << iStart << "&format=json";
 
-    httpResponse response = getRequest(urlStream.str());
-
-
+    HTTPSocket *socket = new HTTPSocketRaw();
+    Request request;
+    request.url = urlStream.str();
+    request.AddHeader("Cookie", cookie);
+    Response response;
+    socket->Execute(request,response);
+    cookie = response.cookie;
 
     std::string jsonString = response.body;
 
@@ -655,7 +481,9 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
     Json::Reader reader;
     bool parsingSuccessful = reader.parse(jsonString,json);
 
-    cout << json << endl;
+    //cout << json << endl;
+
+
 
     Json::Value channels = json["channels"];
 
@@ -685,7 +513,8 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
             if (channel)
                 channel->epg.insert(channel->epg.end(), entry);
 
-            cout << cid << " titel=" << program["t"].asString() << endl;
+            if(channel->name == "Das Erste HD")
+                cout << program << endl;
         }
     }
     return true;

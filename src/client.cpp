@@ -86,6 +86,8 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
     PVR_PROPERTIES *pvrprops = (PVR_PROPERTIES *) props;
 
     XBMC = new CHelper_libXBMC_addon;
+    XBMC->RegisterMe(hdl);
+
     if (!XBMC->RegisterMe(hdl)) {
         SAFE_DELETE(XBMC);
         return ADDON_STATUS_PERMANENT_FAILURE;
