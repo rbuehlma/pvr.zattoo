@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon
+  id="pvr.zattoo"
+  version="0.0.1"
+  name="Zattoo PVR Client"
+  provider-name="Johannes Trum">
+  <extension
+    point="xbmc.pvrclient"
+    library_@PLATFORM@="@LIBRARY_FILENAME@"/>
+  <extension point="xbmc.addon.metadata">
+    <platform>@PLATFORM@</platform>
+  </extension>
+</addon>
