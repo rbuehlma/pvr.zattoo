@@ -155,6 +155,8 @@ void ZatData::loadChannels() {
 
     Json::Value groups = json["channel_groups"];
 
+    cout << groups << endl;
+
     //Load the channel groups and channels
     for ( int index = 0; index < groups.size(); ++index ) {
         PVRZattooChannelGroup group;
@@ -239,7 +241,8 @@ ZatData::ZatData(std::string u, std::string p)  {
 }
 
 ZatData::~ZatData() {
-
+    channelGroups.clear();
+    
 }
 
 
