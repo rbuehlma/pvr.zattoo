@@ -121,10 +121,8 @@ void ZatData::loadAppId() {
 
 void ZatData::loadChannels() {
 
-
-
     ostringstream urlStream;
-    urlStream << "zattoo.com/zapi/v2/cached/channels/" << powerHash << "?details=false";
+    urlStream << "zattoo.com/zapi/v2/cached/channels/" << powerHash << "?details=False";
 
     HTTPSocketRaw *socket = new HTTPSocketRaw();
     Request request;
@@ -133,73 +131,48 @@ void ZatData::loadChannels() {
     Response response;
     socket->Execute(request, response);
     cookie = response.cookie;
-
-
     std::string jsonString = response.body;
 
     Json::Value json;
     Json::Reader reader;
-    bool parsingSuccessful = reader.parse(jsonString,json);
-
-
-
-    if (!parsingSuccessful){
+    
+    if (!reader.parse(jsonString,json)){
         // report to the user the failure and their locations in the document.
         std::cout  << "Failed to parse configuration\n"
         << reader.getFormatedErrorMessages();
         return;
     }
 
-
     channelNumber = 1;
-
     Json::Value groups = json["channel_groups"];
-
-    cout << groups << endl;
-
+    //cout << groups << endl;
     //Load the channel groups and channels
     for ( int index = 0; index < groups.size(); ++index ) {
         PVRZattooChannelGroup group;
         group.name = groups[index]["name"].asString();
-
-
-
         Json::Value channels = groups[index]["channels"];
-
         for(int i = 0; i < channels.size(); ++i) {
-            ZatChannel channel;
-
-            channel.name = channels[i]["title"].asString();
-
-            channel.strStreamURL = "";
-            cout << channel.name << endl;
-
-
-            std::string cid =channels[i]["cid"].asString(); //returns std::size_t
-
-
-            channel.iUniqueId = GetChannelId(cid.c_str());
-            channel.cid = cid;
-            channel.iChannelNumber = ++channelNumber;
-
-
-            channel.strLogoPath = "http://logos.zattic.com";
-
             Json::Value qualities = channels[i]["qualities"];
-
-            int index = 0;
-            channel.strLogoPath.append(qualities[index]["logo_white_84"].asString());
-
-
-            if(qualities[index]["availability"].asString() == "available") {
-                group.channels.insert(group.channels.end(), channel);
+            for(int q = 0; q < qualities.size(); ++q) {
+                if(qualities[q]["availability"].asString() == "available") {
+                    ZatChannel channel;
+                    channel.name = qualities[q]["title"].asString();
+                    channel.strStreamURL = "";
+                    //cout << channel.name << endl;
+                    std::string cid = channels[i]["cid"].asString(); //returns std::size_t
+                    channel.iUniqueId = GetChannelId(cid.c_str());
+                    channel.cid = cid;
+                    channel.iChannelNumber = ++channelNumber;
+                    channel.strLogoPath = "http://logos.zattic.com";
+                    channel.strLogoPath.append(qualities[q]["logo_white_84"].asString());
+                    group.channels.insert(group.channels.end(), channel);
+                    break;
+                }   
             }
         }
-        if(group.channels.size() > 0)
+        if (group.channels.size() > 0)
             channelGroups.insert(channelGroups.end(),group);
     }
-
-
 }
 
 int ZatData::GetChannelId(const char * strChannelName)
@@ -346,7 +319,7 @@ PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio) {
 std::string ZatData::GetChannelStreamUrl(int uniqueId) {
 
     ZatChannel *channel = FindChannel(uniqueId);
-    XBMC->QueueNotification(QUEUE_INFO, "Getting URL for channel %s", XBMC->UnknownToUTF8(channel->name.c_str()));
+    //XBMC->QueueNotification(QUEUE_INFO, "Getting URL for channel %s", XBMC->UnknownToUTF8(channel->name.c_str()));
 
     ostringstream dataStream;
     dataStream << "cid=" << channel->cid << "&stream_type=hls&format=json";
@@ -441,7 +414,7 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
 //        {
             tag.iGenreType          = EPG_GENRE_USE_STRING;
             tag.iGenreSubType       = 0;     /* not supported */
-            tag.strGenreDescription = "Wurst";
+            tag.strGenreDescription = "";
 //        }
         tag.iParentalRating     = 0;     /* not supported */
         tag.iStarRating         = 0;     /* not supported */
@@ -516,8 +489,8 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
             if (channel)
                 channel->epg.insert(channel->epg.end(), entry);
 
-            if(channel->name == "Das Erste HD")
-                cout << program << endl;
+            //if(channel->name == "Das Erste HD")
+            //    cout << program << endl;
         }
     }
     return true;
