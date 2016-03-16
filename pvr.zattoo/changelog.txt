@@ -1,3 +1,3 @@
-0.0.3
-*Favoriten werden nun geladen
-*Es werden nun so viele EPG Daten im vorraus geladen wie in Kodi eingestellt
+v0.0.3
+ - Favoriten werden nun geladen
+ - Es werden nun so viele EPG Daten im vorraus geladen wie in Kodi eingestellt

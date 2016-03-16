@@ -181,9 +181,6 @@ void ZatData::loadChannels() {
 
     PVRZattooChannelGroup favGroup;
     favGroup.name = "Favoriten";
-
-
-    //cout << groups << endl;
     //Load the channel groups and channels
     for ( int index = 0; index < groups.size(); ++index ) {
         PVRZattooChannelGroup group;
