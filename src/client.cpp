@@ -6,7 +6,6 @@
 
 
 
-
 using namespace ADDON;
 
 #ifdef TARGET_WINDOWS

@@ -14,8 +14,20 @@
 #endif
 
 
+#define DEBUG
+
+#ifdef DEBUG
+#define D(x) x
+#else
+#define D(x)
+#endif
+
+
+
 using namespace ADDON;
 using namespace std;
+
+
 
 
 void ZatData::sendHello() {
@@ -57,11 +69,7 @@ bool ZatData::login() {
     Response response;
     socket->Execute(request, response);
     cookie = response.cookie;
-
-
     std::string jsonString = response.body;
-    XBMC->Log(LOG_DEBUG, "Login result: %s", XBMC->UnknownToUTF8(jsonString.c_str()));
-
 
 
 
@@ -71,8 +79,7 @@ bool ZatData::login() {
 
     if (!parsingSuccessful){
         // report to the user the failure and their locations in the document.
-        std::cout  << "Failed to parse login\n"
-        << reader.getFormatedErrorMessages();
+        D(cout  << "Failed to parse login\n" << reader.getFormatedErrorMessages());
         return false;
     }
 
@@ -81,7 +88,7 @@ bool ZatData::login() {
         return false;
     }
     powerHash = json["account"]["power_guide_hash"].asString();
-    cout << "Power Hash: " << powerHash << endl;
+    D(cout << "Power Hash: " << powerHash << endl);
     return true;
 }
 
@@ -118,8 +125,34 @@ void ZatData::loadAppId() {
 }
 
 
+Json::Value ZatData::loadFavourites() {
+
+    ostringstream urlStream;
+    urlStream << "zattoo.com/zapi/channels/favorites";
+
+    HTTPSocketRaw *socket = new HTTPSocketRaw();
+    Request request;
+    request.url = urlStream.str();
+    request.AddHeader("Cookie", cookie);
+    Response response;
+    socket->Execute(request, response);
+    cookie = response.cookie;
+    std::string jsonString = response.body;
+
+    cout << jsonString << endl;
+    Json::Value json;
+    Json::Reader reader;
+
+    reader.parse(jsonString,json);
+    return json["favorites"];
+}
+
+
 
 void ZatData::loadChannels() {
+
+
+    Json::Value favs = loadFavourites();
 
     ostringstream urlStream;
     urlStream << "zattoo.com/zapi/v2/cached/channels/" << powerHash << "?details=False";
@@ -145,6 +178,11 @@ void ZatData::loadChannels() {
 
     channelNumber = 1;
     Json::Value groups = json["channel_groups"];
+
+    PVRZattooChannelGroup favGroup;
+    favGroup.name = "Favoriten";
+
+
     //cout << groups << endl;
     //Load the channel groups and channels
     for ( int index = 0; index < groups.size(); ++index ) {
@@ -166,6 +204,12 @@ void ZatData::loadChannels() {
                     channel.strLogoPath = "http://logos.zattic.com";
                     channel.strLogoPath.append(qualities[q]["logo_white_84"].asString());
                     group.channels.insert(group.channels.end(), channel);
+                    //Yeah thats bad performance
+                    for (int fav = 0; fav < favs.size(); fav++) {
+                        if (favs[fav].asString() == cid) {
+                            favGroup.channels.insert(favGroup.channels.end(), channel);
+                        }
+                    }
                     break;
                 }   
             }
@@ -173,6 +217,9 @@ void ZatData::loadChannels() {
         if (group.channels.size() > 0)
             channelGroups.insert(channelGroups.end(),group);
     }
+
+    if (favGroup.channels.size() > 0)
+        channelGroups.insert(channelGroups.end(),favGroup);
 }
 
 int ZatData::GetChannelId(const char * strChannelName)
@@ -300,6 +347,8 @@ PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio) {
             kodiChannel.bIsHidden         = false;
 
 
+
+
             // self referencing so GetLiveStreamURL() gets triggered
             std::string streamURL;
             streamURL = ("pvr://stream/tv/zattoo.ts");
@@ -342,8 +391,6 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId) {
     Json::Reader reader;
     bool parsingSuccessful = reader.parse(jsonString,json);
 
-    cout << json << endl;
-
     string url = json["stream"]["url"].asString();
     return url;
 
@@ -364,6 +411,12 @@ ZatChannel *ZatData::FindChannel(int uniqueId) {
         }
     }
     return NULL;
+}
+
+
+int ZatData::findChannelNumber(int uniqueId) {
+    ZatChannel *channel = FindChannel(uniqueId);
+    return 0;
 }
 
 PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd) {
@@ -414,7 +467,7 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
 //        {
             tag.iGenreType          = EPG_GENRE_USE_STRING;
             tag.iGenreSubType       = 0;     /* not supported */
-            tag.strGenreDescription = "";
+            tag.strGenreDescription = epgEntry.strGenreString.c_str();
 //        }
         tag.iParentalRating     = 0;     /* not supported */
         tag.iStarRating         = 0;     /* not supported */
@@ -433,66 +486,87 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
     return PVR_ERROR_NO_ERROR;
 }
 
+
 bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
 
 
-    iStart -= (iStart % (3600/2)) - 86400;
-    iEnd = iStart + 3600*3;
+//    iStart -= (iStart % (3600/2)) - 86400; // Do s
+//    iEnd = iStart + 3600*3;
 
 
-    ostringstream urlStream;
-    urlStream << "zattoo.com/zapi/v2/cached/program/power_guide/" << powerHash << "?end=" << iEnd << "&start=" << iStart << "&format=json";
+    //Do some time magic that the start date is not to far in the past because zattoo doesnt like that
+    time_t tempStart = iStart - (iStart % (3600/2)) - 86400;
+    time_t tempEnd = tempStart + 3600*5; //Add 5 hours
 
-    HTTPSocket *socket = new HTTPSocketRaw();
-    Request request;
-    request.url = urlStream.str();
-    request.AddHeader("Cookie", cookie);
-    Response response;
-    socket->Execute(request,response);
-    cookie = response.cookie;
+    while(tempEnd < iEnd) {
+        ostringstream urlStream;
+        urlStream << "zattoo.com/zapi/v2/cached/program/power_guide/" << powerHash << "?end=" << tempEnd << "&start=" << tempStart << "&format=json";
 
-    std::string jsonString = response.body;
+        HTTPSocket *socket = new HTTPSocketRaw();
+        Request request;
+        request.url = urlStream.str();
+        request.AddHeader("Cookie", cookie);
+        Response response;
+        socket->Execute(request,response);
+        cookie = response.cookie;
 
-    Json::Value json;
-    Json::Reader reader;
-    bool parsingSuccessful = reader.parse(jsonString,json);
+        std::string jsonString = response.body;
 
-    //cout << json << endl;
+        Json::Value json;
+        Json::Reader reader;
+        bool parsingSuccessful = reader.parse(jsonString,json);
+
+        //D(cout << json << endl);
 
 
 
-    Json::Value channels = json["channels"];
+        Json::Value channels = json["channels"];
 
-    //Load the channel groups and channels
-    for ( int index = 0; index < channels.size(); ++index ) {
+        //Load the channel groups and channels
+        for ( int index = 0; index < channels.size(); ++index ) {
 
-        string cid = channels[index]["cid"].asString();
-        for (int i = 0; i < channels[index]["programs"].size(); ++i) {
+            string cid = channels[index]["cid"].asString();
+            for (int i = 0; i < channels[index]["programs"].size(); ++i) {
 
-            Json::Value program = channels[index]["programs"][i];
-            int channelId = GetChannelId(cid.c_str());
-            ZatChannel *channel = FindChannel(channelId);
+                Json::Value program = channels[index]["programs"][i];
+                int channelId = GetChannelId(cid.c_str());
+                ZatChannel *channel = FindChannel(channelId);
 
-            if (!channel) {
-                continue;
+                if (!channel) {
+                    continue;
+                }
+
+                PVRIptvEpgEntry entry;
+                entry.strTitle = program["t"].asString();
+                entry.startTime = program["s"].asInt();
+                entry.endTime = program["e"].asInt();
+                entry.iBroadcastId = program["id"].asInt();
+                entry.strIconPath = program["i_url"].asString();
+                entry.iChannelId = channel->iChannelNumber;
+                entry.strPlot = program["et"].asString();
+
+                Json::Value genres = program["g"];
+                ostringstream generesStream;
+                for (int genre = 0; genre < genres.size(); genre++) {
+                    generesStream << genres[genre].asString() << " ";
+                }
+                entry.strGenreString = generesStream.str();
+
+                if (channel)
+                    channel->epg.insert(channel->epg.end(), entry);
+
+
             }
-
-            PVRIptvEpgEntry entry;
-            entry.strTitle = program["t"].asString();
-            entry.startTime = program["s"].asInt();
-            entry.endTime = program["e"].asInt();
-            entry.iBroadcastId = program["id"].asInt();
-            entry.strIconPath = program["i_url"].asString();
-            entry.iChannelId = channel->iChannelNumber;
-            entry.strPlot = program["et"].asString();
-
-            if (channel)
-                channel->epg.insert(channel->epg.end(), entry);
-
-            //if(channel->name == "Das Erste HD")
-            //    cout << program << endl;
         }
+
+        tempStart = tempEnd;
+        tempEnd = tempStart + 3600*5; //Add 5 hours
     }
+
+
+
+
+
     return true;
 }
 

@@ -2,6 +2,7 @@
 // Created by johannes on 04.02.16.
 //
 
+#include <json/value.h>
 #include "client.h"
 
 
@@ -143,4 +144,8 @@ private:
 
     httpResponse getRequest(std::string url);
     httpResponse postRequest(std::string url, std::string params);
+
+    int findChannelNumber(int uniqueId);
+
+    Json::Value loadFavourites();
 };
