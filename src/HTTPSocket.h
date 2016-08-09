@@ -25,7 +25,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "platform/sockets/tcp.h"
+#include "p8-platform/sockets/tcp.h"
 
 #define MINIMUM_TIMEOUT 5
 
@@ -109,5 +109,5 @@ protected:
 private:
     std::string               m_host;
     int                       m_port;
-    PLATFORM::CTcpConnection  *m_socket;
+    P8PLATFORM::CTcpConnection  *m_socket;
 };

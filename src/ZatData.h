@@ -70,7 +70,7 @@ struct PVRIptvEpgGenre
 
 
 
-class ZatData : public PLATFORM::CThread
+class ZatData : public P8PLATFORM::CThread
 {
 public:
     ZatData(std::string username, std::string password);
