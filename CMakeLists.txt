@@ -9,18 +9,17 @@ enable_language(CXX)
 find_package(Kodi REQUIRED)
 find_package(kodiplatform REQUIRED)
 find_package(p8-platform REQUIRED)
-find_package(JsonCpp REQUIRED)
-
+find_package(YAJL REQUIRED)
 
 include_directories(${kodiplatform_INCLUDE_DIRS}
                     ${p8-platform_INCLUDE_DIRS}
                     ${KODI_INCLUDE_DIR}
-					${JSONCPP_INCLUDE_DIRS}
+                    ${YAJL_INCLUDE_DIR}
                     ${PROJECT_SOURCE_DIR}/lib)
 
 set(DEPLIBS ${kodiplatform_LIBRARIES} 
-		${p8-platform_LIBRARIES}
-		${JSONCPP_LIBRARIES}
+            ${p8-platform_LIBRARIES}
+            ${YAJL_LIBRARY}
 )
 
 set(ZATTOO_SOURCES
@@ -30,6 +29,7 @@ set(ZATTOO_SOURCES
 		src/HTTPSocket.cpp
 		src/client.cpp
 		src/ZatData.cpp
+		src/JsonParser.cpp
 		 )
 
 build_addon(pvr.zattoo ZATTOO DEPLIBS)

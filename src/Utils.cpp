@@ -89,29 +89,29 @@ std::string Utils::ConcatenateStringList(const std::vector<std::string> &list)
     return oss.str();
 }
 
-int Utils::GetIntFromJsonValue(Json::Value &value, int defaultValue)
+int Utils::GetIntFromJsonValue(yajl_val &value, int defaultValue)
 {
     int iTemp = defaultValue;
 
     // some json responses have have ints formated as strings
-    if (value.isString())
-        iTemp = StringToInt(value.asString());
-    else if (value.isInt())
-        iTemp = value.asInt();
+    if (YAJL_IS_STRING(value))
+        iTemp = StringToInt(YAJL_GET_STRING(value));
+    else if (YAJL_IS_INTEGER(value))
+        iTemp = YAJL_GET_INTEGER(value);
 
     return iTemp;
 }
 
-double Utils::GetDoubleFromJsonValue(Json::Value &value, double defaultValue)
+double Utils::GetDoubleFromJsonValue(yajl_val &value, double defaultValue)
 {
     double dTemp = defaultValue;
 
     /* some json responses have have doubles formated as strings,
     or an expected double is formated as an int */
-    if (value.isString())
-        dTemp = StringToDouble(value.asString());
-    else if (value.isInt() || value.isDouble())
-        dTemp = value.asDouble();
+    if (YAJL_IS_STRING(value))
+        dTemp = StringToDouble(YAJL_GET_STRING(value));
+    else if (YAJL_IS_INTEGER(value) || YAJL_IS_DOUBLE(value))
+        dTemp = YAJL_GET_DOUBLE(value);
 
     return dTemp;
 }

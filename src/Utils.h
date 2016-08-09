@@ -25,8 +25,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include <json/json.h>
+#include "yajl/yajl_tree.h"
 
 class Utils
 {
@@ -36,8 +35,8 @@ public:
     static double StringToDouble(const std::string &value);
     static int StringToInt(const std::string &value);
     static std::string ConcatenateStringList(const std::vector<std::string> &list);
-    static int GetIntFromJsonValue(Json::Value &value, int defaultValue = 0);
-    static double GetDoubleFromJsonValue(Json::Value &value, double defaultValue = 0);
+    static int GetIntFromJsonValue(yajl_val &value, int defaultValue = 0);
+    static double GetDoubleFromJsonValue(yajl_val &value, double defaultValue = 0);
 
     template<typename T> static std::string ToString(const T &value)
     {
