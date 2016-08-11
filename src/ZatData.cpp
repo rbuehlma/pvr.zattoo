@@ -3,9 +3,8 @@
 #include <sstream>
 #include <regex>
 #include "../lib/tinyxml2/tinyxml2.h"
-#include <json/json.h>
 #include "HTTPSocket.h"
-#include "platform/sockets/tcp.h"
+#include "p8-platform/sockets/tcp.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
  #pragma comment(lib, "ws2_32.lib")
@@ -71,23 +70,17 @@ bool ZatData::login() {
     cookie = response.cookie;
     std::string jsonString = response.body;
 
+    yajl_val json = JsonParser::parse(jsonString);
 
-
-    Json::Value json;
-    Json::Reader reader;
-    bool parsingSuccessful = reader.parse(jsonString,json);
-
-    if (!parsingSuccessful){
-        // report to the user the failure and their locations in the document.
-        D(cout  << "Failed to parse login\n" << reader.getFormatedErrorMessages());
+    if (json == NULL){
+        D(cout  << "Failed to parse login\n");
         return false;
     }
-
-    string succ = json["success"].asString();
-    if(succ == "False") {
+    bool succ =  JsonParser::getBoolean(json, 1, "success");
+    if(!succ) {
         return false;
     }
-    powerHash = json["account"]["power_guide_hash"].asString();
+    powerHash = JsonParser::getString(json, 2, "account" , "power_guide_hash");
     D(cout << "Power Hash: " << powerHash << endl);
     return true;
 }
@@ -125,7 +118,7 @@ void ZatData::loadAppId() {
 }
 
 
-Json::Value ZatData::loadFavourites() {
+yajl_val ZatData::loadFavourites() {
 
     ostringstream urlStream;
     urlStream << "zattoo.com/zapi/channels/favorites";
@@ -139,12 +132,9 @@ Json::Value ZatData::loadFavourites() {
     cookie = response.cookie;
     std::string jsonString = response.body;
 
-    cout << jsonString << endl;
-    Json::Value json;
-    Json::Reader reader;
+    yajl_val json = JsonParser::parse(jsonString);
 
-    reader.parse(jsonString,json);
-    return json["favorites"];
+    return JsonParser::getArray(json, 1, "favorites");
 }
 
 
@@ -152,7 +142,7 @@ Json::Value ZatData::loadFavourites() {
 void ZatData::loadChannels() {
 
 
-    Json::Value favs = loadFavourites();
+    yajl_val favs = loadFavourites();
 
     ostringstream urlStream;
     urlStream << "zattoo.com/zapi/v2/cached/channels/" << powerHash << "?details=False";
@@ -166,44 +156,46 @@ void ZatData::loadChannels() {
     cookie = response.cookie;
     std::string jsonString = response.body;
 
-    Json::Value json;
-    Json::Reader reader;
+    yajl_val json = JsonParser::parse(jsonString);
     
-    if (!reader.parse(jsonString,json)){
-        // report to the user the failure and their locations in the document.
-        std::cout  << "Failed to parse configuration\n"
-        << reader.getFormatedErrorMessages();
+    if (json == NULL){
+        std::cout  << "Failed to parse configuration\n";
         return;
     }
 
     channelNumber = 1;
-    Json::Value groups = json["channel_groups"];
+    yajl_val groups = JsonParser::getArray(json, 1, "channel_groups");
 
     PVRZattooChannelGroup favGroup;
     favGroup.name = "Favoriten";
     //Load the channel groups and channels
-    for ( int index = 0; index < groups.size(); ++index ) {
+    for ( int index = 0; index < groups->u.array.len; ++index ) {
         PVRZattooChannelGroup group;
-        group.name = groups[index]["name"].asString();
-        Json::Value channels = groups[index]["channels"];
-        for(int i = 0; i < channels.size(); ++i) {
-            Json::Value qualities = channels[i]["qualities"];
-            for(int q = 0; q < qualities.size(); ++q) {
-                if(qualities[q]["availability"].asString() == "available") {
+        yajl_val groupItem = groups->u.array.values[index];
+        group.name = JsonParser::getString(groupItem, 1, "name");
+        yajl_val channels = JsonParser::getArray(groupItem, 1, "channels");
+        for(int i = 0; i < channels->u.array.len; ++i) {
+			yajl_val channelItem = channels->u.array.values[i];
+            yajl_val qualities = JsonParser::getArray(channelItem, 1, "qualities");
+            for(int q = 0; q < qualities->u.array.len; ++q) {
+				yajl_val qualityItem = qualities->u.array.values[q];
+				std::string avail = JsonParser::getString(qualityItem, 1, "availability");
+                if(avail == "available") {
                     ZatChannel channel;
-                    channel.name = qualities[q]["title"].asString();
+                    channel.name = JsonParser::getString(qualityItem, 1, "title");
                     channel.strStreamURL = "";
-                    //cout << channel.name << endl;
-                    std::string cid = channels[i]["cid"].asString(); //returns std::size_t
+                    std::string cid = JsonParser::getString(channelItem, 1, "cid");
                     channel.iUniqueId = GetChannelId(cid.c_str());
                     channel.cid = cid;
                     channel.iChannelNumber = ++channelNumber;
                     channel.strLogoPath = "http://logos.zattic.com";
-                    channel.strLogoPath.append(qualities[q]["logo_white_84"].asString());
+                    channel.strLogoPath.append(JsonParser::getString(qualityItem, 1, "logo_white_84"));
                     group.channels.insert(group.channels.end(), channel);
                     //Yeah thats bad performance
-                    for (int fav = 0; fav < favs.size(); fav++) {
-                        if (favs[fav].asString() == cid) {
+                    for (int fav = 0; fav < favs->u.array.len; fav++) {
+						yajl_val favItem = favs->u.array.values[fav];
+						string favCid = YAJL_GET_STRING(favItem);
+                        if (favCid == cid) {
                             favGroup.channels.insert(favGroup.channels.end(), channel);
                         }
                     }
@@ -384,11 +376,8 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId) {
     std::string jsonString = response.body;
 
 
-    Json::Value json;
-    Json::Reader reader;
-    bool parsingSuccessful = reader.parse(jsonString,json);
-
-    string url = json["stream"]["url"].asString();
+    yajl_val json = JsonParser::parse(jsonString);
+	string url = JsonParser::getString(json, 2, "stream", "url");
     return url;
 
 }
@@ -509,23 +498,17 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
 
         std::string jsonString = response.body;
 
-        Json::Value json;
-        Json::Reader reader;
-        bool parsingSuccessful = reader.parse(jsonString,json);
+        yajl_val json = JsonParser::parse(jsonString);
 
-        //D(cout << json << endl);
-
-
-
-        Json::Value channels = json["channels"];
+        yajl_val channels = JsonParser::getArray(json, 1, "channels");
 
         //Load the channel groups and channels
-        for ( int index = 0; index < channels.size(); ++index ) {
-
-            string cid = channels[index]["cid"].asString();
-            for (int i = 0; i < channels[index]["programs"].size(); ++i) {
-
-                Json::Value program = channels[index]["programs"][i];
+        for ( int index = 0; index < channels->u.array.len; ++index ) {
+            yajl_val channelItem = channels->u.array.values[index];
+            string cid = JsonParser::getString(channelItem, 1, "cid");
+            yajl_val programs = JsonParser::getArray(channelItem, 1, "programs");
+            for (int i = 0; i < programs->u.array.len; ++i) {
+                yajl_val program = programs->u.array.values[i];
                 int channelId = GetChannelId(cid.c_str());
                 ZatChannel *channel = FindChannel(channelId);
 
@@ -534,18 +517,19 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
                 }
 
                 PVRIptvEpgEntry entry;
-                entry.strTitle = program["t"].asString();
-                entry.startTime = program["s"].asInt();
-                entry.endTime = program["e"].asInt();
-                entry.iBroadcastId = program["id"].asInt();
-                entry.strIconPath = program["i_url"].asString();
+                entry.strTitle = JsonParser::getString(program, 1, "t");
+                entry.startTime = JsonParser::getInt(program, 1, "s");
+                entry.endTime = JsonParser::getInt(program, 1, "e");
+                entry.iBroadcastId = JsonParser::getInt(program, 1, "id");
+                entry.strIconPath = JsonParser::getString(program, 1, "i_url");
                 entry.iChannelId = channel->iChannelNumber;
-                entry.strPlot = program["et"].asString();
+                entry.strPlot = JsonParser::getString(program, 1, "et");
 
-                Json::Value genres = program["g"];
+                yajl_val genres = JsonParser::getArray(program, 1, "g");
                 ostringstream generesStream;
-                for (int genre = 0; genre < genres.size(); genre++) {
-                    generesStream << genres[genre].asString() << " ";
+                for (int genre = 0; genre < genres->u.array.len; genre++) {
+					string genereName = YAJL_GET_STRING(genres->u.array.values[genre]);
+                    generesStream << genereName << " ";
                 }
                 entry.strGenreString = generesStream.str();
 

@@ -2,12 +2,8 @@
 // Created by johannes on 04.02.16.
 //
 
-#include <json/value.h>
 #include "client.h"
-
-
-
-
+#include "JsonParser.h"
 
 struct PVRIptvEpgEntry
 {
@@ -70,7 +66,7 @@ struct PVRIptvEpgGenre
 
 
 
-class ZatData : public PLATFORM::CThread
+class ZatData : public P8PLATFORM::CThread
 {
 public:
     ZatData(std::string username, std::string password);
@@ -147,5 +143,5 @@ private:
 
     int findChannelNumber(int uniqueId);
 
-    Json::Value loadFavourites();
+    yajl_val loadFavourites();
 };
