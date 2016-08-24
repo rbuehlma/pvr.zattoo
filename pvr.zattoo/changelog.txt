@@ -1,3 +1,5 @@
+v0.1.0
+ - Support Kodi v17
 v0.0.3
  - Favoriten werden nun geladen
  - Es werden nun so viele EPG Daten im vorraus geladen wie in Kodi eingestellt
