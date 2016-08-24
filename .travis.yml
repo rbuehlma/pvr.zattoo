@@ -24,7 +24,7 @@ before_install:
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which cmake || brew install cmake ; fi
 before_script:
 - cd $TRAVIS_BUILD_DIR/..
-- git clone https://github.com/trummerjo/xbmc.git
+- git clone -b zattoo https://github.com/rbuehlma/xbmc.git
 - cd xbmc
 - cd ..
 - cd pvr.zattoo && mkdir build && cd build
