@@ -20,6 +20,7 @@ matrix:
 #  - os: osx
 #    osx_image: xcode6.1
 before_install:
+- openssl aes-256-cbc -K $encrypted_d018e275c587_key -iv $encrypted_d018e275c587_iv -in id_travis.enc -out id_travis -d
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which cmake || brew update        ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which cmake || brew install cmake ; fi
 before_script:
@@ -31,13 +32,13 @@ before_script:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$CC" == "gcc" ]]; then export CC=gcc-5; export CXX=g++-5; fi
 - cmake -DADDONS_TO_BUILD=pvr.zattoo -DADDON_SRC_PREFIX=$TRAVIS_BUILD_DIR/.. -DCMAKE_BUILD_TYPE=Debug
   -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/../xbmc/addons -DPACKAGE_ZIP=1 $TRAVIS_BUILD_DIR/../xbmc/project/cmake/addons
-script: make
+script: make package-pvr.zattoo
 env:
   global:
   - secure: LNzQpTOZHav+mP/itjqkNuSrWtdE/c5SmxpwLygZyRn685nDKBJgeson0ISXXuPTzzk1gU9YVBpb7xzeA+6svx2gmSvZ+vhJSzX+Txrj32XekSsCTuvoZ3F0n3gixN/+vuqxkxqA70tvteHdf6rJw1sORW0v17LvIu24uPdkfKeByg+3k0rAHhMduzxhF4cusgsxIlCavFaoz67d/UyFHt+6Su9q89Cp+EygWTtqVo3kfftcypMuyWkxRroTXEzhgxY2SfvzDB2UrwzOoqrhdS0zk76S28UgNKOsCLju3fV1ozaGigHxox4ZBml1+62vh9UJ4u4+9AOkBKa/jVN6fGwueuIj83O/zEZUCcvLaqxwZYvU0Fc/KIQ0wsuwQVz1+paN6NLK5b1tBTowo8tXsT6lN1LuL7iE2qBQHqyZVW4fZGZcUtvs4j3xhHGZZaWFP24CaF/i19yB4gXS5jPAt6UVCJTM17/Xm/YNzAPM5GivQ/mAhuQM9FSIUIUQrqWTcdaPGOokHVnOdf8wOLWEaVWaTDxyOFqvMDYzDv8zaxrfrKMGMIw/izuQfNPiPVMXoF+k1PJcBN4Cz+90gF1L5RxCUvsquCQU+nw0iBCskglAUT/g/fsphvaBiBgjJQaEbnYuOYn3XG4CcEwj2EI9WcNQJdrTI0RyHEkrzhXfyYA=
   - secure: Xy0XJcb2EYDzmre2CbHolOwwoJvb5tLAU/WOsdwvcuM9vPWLuyAIXIIOnsuPW+d8Nv4F6ZFJ3ftA0pvMY+pcZomP1s/eE9ZfpcuQLeD6zGUSdy/GwFTXy9uonpICCW57pxCwg1EpKYr7ZObC7oXY8G7UqGw/Rw+YUZtZ+/6qJk4OI0S4u3N+cKCpbYnSMYNECDSVVwoA7YJdOtbEJ114b1UpSUKc3KvsNfcpwSYYjw59eUrUYIEbmjMn346lwXKCl7BFbVAatpwaexdXZdr9uhMcnDPp/XOwWKl6YIofE8kaNNK78evH2cpCFaU82z00WRvRxNGxbGsua2BRWq6/xlIImFcJ0szbToNDmU1iIvhSv07uqRtm+dRrgGaxVDESLgQ1wiMNvUyWCR4AqnMbJ4SoAiYNADMD167xGzUw3djRTIo8pv3/F+Bo85FKDMLiNQElMqACrHSUT2pyTbowPZVweuAiCrds73g5E2PVybfrnFmltJuaVWFc+RaVFwYCp25EdUR9sBQevRYmx2wlCo+MnPtM/L8+7k20QMHd0AJ4DRLrIn/NVOcwpktptyVr4V2gNYkqxe/g4iGOHoF8/zQWHfpb7MRdsD91sWly4Lb4Ip/7f0bvzudOgJRzXARjPenRLolD/9hZmEJXpGs7Pl5gv7yOII06OTn5d48N95c=
 after_success:
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl --ftp-create-dirs -T $TRAVIS_BUILD_DIR/../xbmc/addons/pvr.zattoo/pvr.zattoo.0.0.1.dylib -u $FTP_USER:$FTP_PASSWORD ftp://die-trums.de/www/die-trums/zattoo/$TRAVIS_OS_NAME/$TRAVIS_BUILD_NUMBER/        ; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl --ftp-create-dirs -T $TRAVIS_BUILD_DIR/../xbmc/addons/pvr.zattoo/pvr.zattoo.so.0.0.1 -u $FTP_USER:$FTP_PASSWORD ftp://die-trums.de/www/die-trums/zattoo/$TRAVIS_OS_NAME/$CC/$TRAVIS_BUILD_NUMBER/        ; fi
-
+- chmod 0600 $TRAVIS_BUILD_DIR/id_travis
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$TRAVIS_BRANCH" == "zattoo" ]]; then echo -e "mkdir pvr.zattoo/osx/$TRAVIS_BUILD_NUMBER\nput $TRAVIS_BUILD_DIR/build/pvr.zattoo-prefix/src/pvr.zattoo-build/addon-pvr.zattoo-*.zip pvr.zattoo/osx/$TRAVIS_BUILD_NUMBER" | $SFTP; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$CC" == "gcc-5" ]] && [[ "$TRAVIS_BRANCH" == "zattoo" ]]; then echo -e "mkdir pvr.zattoo/linux/$TRAVIS_BUILD_NUMBER\nput $TRAVIS_BUILD_DIR/build/pvr.zattoo-prefix/src/pvr.zattoo-build/addon-pvr.zattoo-*.zip pvr.zattoo/linux/$TRAVIS_BUILD_NUMBER" | $SFTP; fi
 
