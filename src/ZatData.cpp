@@ -3,7 +3,6 @@
 #include <sstream>
 #include <regex>
 #include "../lib/tinyxml2/tinyxml2.h"
-#include "HTTPSocket.h"
 #include "p8-platform/sockets/tcp.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
@@ -26,31 +25,82 @@
 using namespace ADDON;
 using namespace std;
 
+static const char *to_base64 =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+abcdefghijklmnopqrstuvwxyz\
+0123456789+/";
 
+std::string ZatData::Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode)
+{
+  std::string ret;
+  int i(3);
+  unsigned char c_3[3];
+  unsigned char c_4[4];
+
+  while (in_len) {
+    i = in_len > 2 ? 3 : in_len;
+    in_len -= i;
+    c_3[0] = *(in++);
+    c_3[1] = i > 1 ? *(in++) : 0;
+    c_3[2] = i > 2 ? *(in++) : 0;
+
+    c_4[0] = (c_3[0] & 0xfc) >> 2;
+    c_4[1] = ((c_3[0] & 0x03) << 4) + ((c_3[1] & 0xf0) >> 4);
+    c_4[2] = ((c_3[1] & 0x0f) << 2) + ((c_3[2] & 0xc0) >> 6);
+    c_4[3] = c_3[2] & 0x3f;
+
+    for (int j = 0; (j < i + 1); ++j)
+    {
+      if (urlEncode && to_base64[c_4[j]] == '+')
+        ret += "%2B";
+      else if (urlEncode && to_base64[c_4[j]] == '/')
+        ret += "%2F";
+      else
+        ret += to_base64[c_4[j]];
+    }
+  }
+  while ((i++ < 3))
+    ret += urlEncode ? "%3D" : "=";
+  return ret;
+}
+
+string ZatData::HttpGet(string url) {
+  return HttpPost(url, "");
+}
+
+string ZatData::HttpPost(string url, string postData) {
+  // open the file
+  void* file = XBMC->CURLCreate(url.c_str());
+  if (!file)
+    return NULL;
+  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "acceptencoding", "gzip");
+  if (postData.size() != 0) {
+    string base64 = Base64Encode((const unsigned char *)postData.c_str(), postData.size(), false);
+    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "postdata", base64.c_str());
+  }
+  XBMC->CURLOpen(file, 0);
+
+  // read the file
+  static const unsigned int CHUNKSIZE = 16384;
+  char buf[CHUNKSIZE + 1];
+  size_t nbRead;
+  string body = "";
+  while ((nbRead = XBMC->ReadFile(file, buf, CHUNKSIZE)) > 0 && ~nbRead) {
+    buf[nbRead] = 0x0;
+    body += buf;
+  }
+
+  XBMC->CloseFile(file);
+
+  return body;
+}
 
 
 void ZatData::sendHello() {
 
     ostringstream dataStream;
     dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=json&client_app_token=" << appToken;
-
-    HTTPSocketRaw *socket = new HTTPSocketRaw();
-    Request request;
-    request.url = "zattoo.com/zapi/session/hello";
-    request.method = POST;
-    request.body = dataStream.str();
-    request.AddHeader("Cookie", cookie);
-    Response response;
-    socket->Execute(request, response);
-    cookie = response.cookie;
-
-
-
-
-
-
-    //httpResponse resp = postRequest("/zapi/session/hello", data);
-
+    HttpPost("http://zattoo.com/zapi/session/hello", dataStream.str());
 }
 
 bool ZatData::login() {
@@ -58,17 +108,7 @@ bool ZatData::login() {
 
     ostringstream dataStream;
     dataStream << "login=" << username << "&password=" << password << "&format=json";
-
-    HTTPSocketRaw *socket = new HTTPSocketRaw();
-    Request request;
-    request.url = "zattoo.com/zapi/account/login";
-    request.method = POST;
-    request.body = dataStream.str();
-    request.AddHeader("Cookie", cookie);
-    Response response;
-    socket->Execute(request, response);
-    cookie = response.cookie;
-    std::string jsonString = response.body;
+    string jsonString = HttpPost("http://zattoo.com/zapi/account/login", dataStream.str());
 
     yajl_val json = JsonParser::parse(jsonString);
 
@@ -89,16 +129,7 @@ bool ZatData::login() {
 
 void ZatData::loadAppId() {
 
-    HTTPSocket *httpSocket = new HTTPSocketRaw();
-    Request request;
-    request.url = "zattoo.com";
-    Response response;
-    httpSocket->Execute(request, response);
-
-
-    appToken = "";
-
-    std::string html = response.body;
+    string html = HttpGet("http://zattoo.com");
 
     std::smatch m;
     std::regex e ("appToken.*\\'(.*)\\'");
@@ -120,18 +151,7 @@ void ZatData::loadAppId() {
 
 yajl_val ZatData::loadFavourites() {
 
-    ostringstream urlStream;
-    urlStream << "zattoo.com/zapi/channels/favorites";
-
-    HTTPSocketRaw *socket = new HTTPSocketRaw();
-    Request request;
-    request.url = urlStream.str();
-    request.AddHeader("Cookie", cookie);
-    Response response;
-    socket->Execute(request, response);
-    cookie = response.cookie;
-    std::string jsonString = response.body;
-
+    string jsonString = HttpGet("http://zattoo.com/zapi/channels/favorites");
     yajl_val json = JsonParser::parse(jsonString);
 
     return JsonParser::getArray(json, 1, "favorites");
@@ -145,16 +165,8 @@ void ZatData::loadChannels() {
     yajl_val favs = loadFavourites();
 
     ostringstream urlStream;
-    urlStream << "zattoo.com/zapi/v2/cached/channels/" << powerHash << "?details=False";
-
-    HTTPSocketRaw *socket = new HTTPSocketRaw();
-    Request request;
-    request.url = urlStream.str();
-    request.AddHeader("Cookie", cookie);
-    Response response;
-    socket->Execute(request, response);
-    cookie = response.cookie;
-    std::string jsonString = response.body;
+    urlStream << "http://zattoo.com/zapi/v2/cached/channels/" << powerHash << "?details=False";
+    string jsonString = HttpGet(urlStream.str());
 
     yajl_val json = JsonParser::parse(jsonString);
     
@@ -230,10 +242,6 @@ ZatData::ZatData(std::string u, std::string p)  {
     password = p;
     m_iLastStart    = 0;
     m_iLastEnd      = 0;
-    cookie = "";
-
-    cookiePath = GetUserFilePath("zatCookie.txt");
-
 
     //httpResponse response = getRequest("zattoo.com/deinemama");
     //cout << response.body;
@@ -362,19 +370,7 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId) {
     ostringstream dataStream;
     dataStream << "cid=" << channel->cid << "&stream_type=hls&format=json";
 
-    HTTPSocketRaw *socket = new HTTPSocketRaw();
-    Request request;
-    request.url = "zattoo.com/zapi/watch";
-    request.method = POST;
-    request.body = dataStream.str();
-    request.AddHeader("Cookie", cookie);
-    Response response;
-    socket->Execute(request, response);
-    cookie = response.cookie;
-
-
-    std::string jsonString = response.body;
-
+    string jsonString = HttpPost("http://zattoo.com/zapi/watch", dataStream.str());
 
     yajl_val json = JsonParser::parse(jsonString);
 	string url = JsonParser::getString(json, 2, "stream", "url");
@@ -486,17 +482,9 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
 
     while(tempEnd < iEnd) {
         ostringstream urlStream;
-        urlStream << "zattoo.com/zapi/v2/cached/program/power_guide/" << powerHash << "?end=" << tempEnd << "&start=" << tempStart << "&format=json";
+        urlStream << "http://zattoo.com/zapi/v2/cached/program/power_guide/" << powerHash << "?end=" << tempEnd << "&start=" << tempStart << "&format=json";
 
-        HTTPSocket *socket = new HTTPSocketRaw();
-        Request request;
-        request.url = urlStream.str();
-        request.AddHeader("Cookie", cookie);
-        Response response;
-        socket->Execute(request,response);
-        cookie = response.cookie;
-
-        std::string jsonString = response.body;
+        string jsonString = HttpGet(urlStream.str());
 
         yajl_val json = JsonParser::parse(jsonString);
 
