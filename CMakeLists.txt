@@ -26,7 +26,6 @@ set(ZATTOO_SOURCES
 		lib/tinyxml2/tinyxml2.h
 		lib/tinyxml2/tinyxml2.cpp
 		src/Utils.cpp
-		src/HTTPSocket.cpp
 		src/client.cpp
 		src/ZatData.cpp
 		src/JsonParser.cpp

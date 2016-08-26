@@ -112,7 +112,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
     zatUsername = "";
     zatPassword = "";
     ADDON_ReadSettings();
-XBMC->Log(LOG_DEBUG, "Create zat");
+    XBMC->Log(LOG_DEBUG, "Create zat");
     zat = new ZatData(zatUsername,zatPassword);
     XBMC->Log(LOG_DEBUG, "zat created");
     m_CurStatus = ADDON_STATUS_OK;
