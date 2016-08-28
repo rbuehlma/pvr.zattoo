@@ -1,3 +1,5 @@
+v0.1.2
+ - Support watching recordings
 v0.1.1
  - Replace own HTTP implementation with Curl from Kodi
 v0.1.0
