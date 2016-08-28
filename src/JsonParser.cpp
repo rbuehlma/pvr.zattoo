@@ -51,6 +51,22 @@ string JsonParser::getString(yajl_val json, int path_len, ...) {
 	return str;
 }
 
+time_t JsonParser::getTime(yajl_val json, int path_len, ...) {
+  va_list args;
+    va_start(args, path_len);
+    const char **path = getPath(path_len, args);
+  char *str = YAJL_GET_STRING(yajl_tree_get(json, path, yajl_t_string));
+  va_end(args);
+  delete [] path;
+  if (str == NULL) {
+    return 0;
+  }
+  struct tm tm;
+  strptime(str, "%Y-%m-%dT%H:%M:%SZ", &tm);
+  time_t t = mktime(&tm);
+  return t;
+}
+
 int JsonParser::getInt(yajl_val json, int path_len, ...) {
 	va_list args;
     va_start(args, path_len);

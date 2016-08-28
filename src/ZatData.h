@@ -5,6 +5,12 @@
 #include "client.h"
 #include "JsonParser.h"
 
+/*!
+ * @brief PVR macros for string exchange
+ */
+#define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); dest[sizeof(dest)-1] = '\0'; } while(0)
+#define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
+
 struct PVRIptvEpgEntry
 {
     int         iBroadcastId;
@@ -78,36 +84,21 @@ public:
     //    virtual void      ReloadPlayList(const char * strNewPath);
     //    virtual void      ReloadEPG(const char * strNewPath);
     virtual std::string GetChannelStreamUrl(int uniqueId);
+    virtual void GetRecordings(ADDON_HANDLE handle);
+    virtual int GetRecordingsAmount();
+    virtual std::string GetRecordingStreamUrl(string recordingId);
+
 protected:
     virtual std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
     virtual std::string HttpGet(string url);
     virtual std::string HttpPost(string url, string postData);
     virtual void loadAppId();
 
-
-
-
-//
-//    virtual bool                 LoadPlayList(void);
     virtual bool                 LoadEPG(time_t iStart, time_t iEnd);
-//    virtual bool                 LoadGenres(void);
-
-
 
     virtual ZatChannel*      FindChannel(int uniqueId);
     virtual PVRZattooChannelGroup* FindGroup(const std::string &strName);
 
-
-//    virtual PVRIptvEpgChannel*   FindEpg(const std::string &strId);
-//    virtual PVRIptvEpgChannel*   FindEpgForChannel(ZatChannel &channel);
-//    virtual bool                 FindEpgGenre(const std::string& strGenre, int& iType, int& iSubType);
-//    virtual int                  ParseDateTime(std::string& strDate, bool iDateFormat = true);
-//    virtual bool                 GzipInflate( const std::string &compressedBytes, std::string &uncompressedBytes);
-//    virtual int                  GetCachedFileContents(const std::string &strCachedName, const std::string &strFilePath,
-//                                                       std::string &strContent, const bool bUseCache = false);
-//    virtual void                 ApplyChannelsLogos();
-//    virtual void                 ApplyChannelsLogosFromEPG();
-//    virtual std::string          ReadMarkerValue(std::string &strLine, const char * strMarkerName);
     virtual int                  GetChannelId(const char * strChannelName);
 
 protected:

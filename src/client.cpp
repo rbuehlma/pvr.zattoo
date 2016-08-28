@@ -200,7 +200,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsTV              = true;
   pCapabilities->bSupportsRadio           = true;
   pCapabilities->bSupportsChannelGroups   = true;
-  pCapabilities->bSupportsRecordings      = false;
+  pCapabilities->bSupportsRecordings      = true;
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -333,11 +333,30 @@ const char * GetLiveStreamURL(const PVR_CHANNEL &channel)  {
     return XBMC->UnknownToUTF8(zat->GetChannelStreamUrl(channel.iUniqueId).c_str());
 }
 
+/** Recording API **/
+int GetRecordingsAmount(bool deleted) {
+  if (deleted) {
+    return 0;
+  }
+  if (!zat) {
+    return 0;
+  }
+  return zat->GetRecordingsAmount();
+}
+
+PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool deleted) {
+  if (deleted) {
+    return PVR_ERROR_NO_ERROR;
+  }
+  if (!zat) {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  zat->GetRecordings(handle);
+  return PVR_ERROR_NO_ERROR;
+}
 
 /** UNUSED API FUNCTIONS */
 bool CanPauseStream(void) { return false; }
-int GetRecordingsAmount(bool deleted) { return -1; }
-PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool deleted) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR OpenDialogChannelScan(void) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR CallMenuHook(const PVR_MENUHOOK &menuhook, const PVR_MENUHOOK_DATA &item) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteChannel(const PVR_CHANNEL &channel) { return PVR_ERROR_NOT_IMPLEMENTED; }
