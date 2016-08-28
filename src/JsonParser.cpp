@@ -63,7 +63,7 @@ time_t JsonParser::getTime(yajl_val json, int path_len, ...) {
   }
   struct tm tm;
   strptime(str, "%Y-%m-%dT%H:%M:%SZ", &tm);
-  time_t t = mktime(&tm);
+  time_t t = timegm(&tm);
   return t;
 }
 

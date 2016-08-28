@@ -517,7 +517,7 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
                 yajl_val genres = JsonParser::getArray(program, 1, "g");
                 ostringstream generesStream;
                 for (int genre = 0; genre < genres->u.array.len; genre++) {
-					string genereName = YAJL_GET_STRING(genres->u.array.values[genre]);
+                    string genereName = YAJL_GET_STRING(genres->u.array.values[genre]);
                     generesStream << genereName << " ";
                 }
                 entry.strGenreString = generesStream.str();
@@ -546,8 +546,18 @@ void ZatData::GetRecordings(ADDON_HANDLE handle) {
   yajl_val json = JsonParser::parse(jsonString);
   yajl_val recordings = JsonParser::getArray(json, 1, "recordings");
 
+  time_t current_time;
+  time(&current_time);
+
   for ( int index = 0; index < recordings->u.array.len; ++index ) {
     yajl_val recording = recordings->u.array.values[index];
+
+    time_t startTime  = JsonParser::getTime(recording, 1, "start");
+    if (startTime > current_time) {
+      //Recording did not yet start
+      continue;
+    }
+
 
     PVR_RECORDING tag;
     memset(&tag, 0, sizeof(PVR_RECORDING));
@@ -555,8 +565,8 @@ void ZatData::GetRecordings(ADDON_HANDLE handle) {
 
     PVR_STRCPY(tag.strRecordingId, to_string(JsonParser::getInt(recording, 1, "id")).c_str());
     PVR_STRCPY(tag.strTitle, JsonParser::getString(recording, 1, "title").c_str());
+    PVR_STRCPY(tag.strEpisodeName, JsonParser::getString(recording, 1, "episode_title").c_str());
     PVR_STRCPY(tag.strIconPath, JsonParser::getString(recording, 1, "image_url").c_str());
-    time_t startTime  = JsonParser::getTime(recording, 1, "start");
     time_t endTime  = JsonParser::getTime(recording, 1, "end");
     tag.recordingTime = startTime;
     tag.iDuration = endTime -  startTime;
@@ -576,13 +586,31 @@ int ZatData::GetRecordingsAmount() {
 std::string ZatData::GetRecordingStreamUrl(string recordingId) {
     ostringstream dataStream;
     dataStream << "recording_id=" << recordingId <<"&stream_type=hls";
-    std::cout << "dataStream: " << dataStream.str() << "\n";
 
     string jsonString = HttpPost("http://zattoo.com/zapi/watch", dataStream.str());
 
     yajl_val json = JsonParser::parse(jsonString);
     string url = JsonParser::getString(json, 2, "stream", "url");
-    std::cout << "Recording URL: " << url << "\n";
     return url;
 
 }
+
+bool ZatData::Record(int programId) {
+  ostringstream dataStream;
+  dataStream << "program_id=" << programId;
+
+  string jsonString = HttpPost("http://zattoo.com/zapi/playlist/program", dataStream.str());
+  yajl_val json = JsonParser::parse(jsonString);
+  return JsonParser::getBoolean(json, 1, "success");
+}
+
+bool ZatData::DeleteRecording(string recordingId) {
+  ostringstream dataStream;
+  dataStream << "recording_id=" << recordingId <<"";
+
+  string jsonString = HttpPost("http://zattoo.com/zapi/playlist/remove", dataStream.str());
+
+  yajl_val json = JsonParser::parse(jsonString);
+  return JsonParser::getBoolean(json, 1, "success");
+}
+

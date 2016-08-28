@@ -87,6 +87,8 @@ public:
     virtual void GetRecordings(ADDON_HANDLE handle);
     virtual int GetRecordingsAmount();
     virtual std::string GetRecordingStreamUrl(string recordingId);
+    virtual bool Record(int programId);
+    virtual bool DeleteRecording(string recordingId);
 
 protected:
     virtual std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
