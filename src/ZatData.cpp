@@ -5,6 +5,7 @@
 #include <regex>
 #include "../lib/tinyxml2/tinyxml2.h"
 #include "p8-platform/sockets/tcp.h"
+#include <map>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
  #pragma comment(lib, "ws2_32.lib")
@@ -140,7 +141,7 @@ yajl_val ZatData::loadFavourites() {
 
 void ZatData::loadChannels() {
 
-
+    std::map<std::string, ZatChannel> allChannels;
     yajl_val favs = loadFavourites();
 
     ostringstream urlStream;
@@ -154,11 +155,9 @@ void ZatData::loadChannels() {
         return;
     }
 
-    channelNumber = 1;
+    channelNumber = favs->u.array.len + 1;
     yajl_val groups = JsonParser::getArray(json, 1, "channel_groups");
 
-    PVRZattooChannelGroup favGroup;
-    favGroup.name = "Favoriten";
     //Load the channel groups and channels
     for ( int index = 0; index < groups->u.array.len; ++index ) {
         PVRZattooChannelGroup group;
@@ -166,11 +165,11 @@ void ZatData::loadChannels() {
         group.name = JsonParser::getString(groupItem, 1, "name");
         yajl_val channels = JsonParser::getArray(groupItem, 1, "channels");
         for(int i = 0; i < channels->u.array.len; ++i) {
-			yajl_val channelItem = channels->u.array.values[i];
+            yajl_val channelItem = channels->u.array.values[i];
             yajl_val qualities = JsonParser::getArray(channelItem, 1, "qualities");
             for(int q = 0; q < qualities->u.array.len; ++q) {
-				yajl_val qualityItem = qualities->u.array.values[q];
-				std::string avail = JsonParser::getString(qualityItem, 1, "availability");
+                yajl_val qualityItem = qualities->u.array.values[q];
+                std::string avail = JsonParser::getString(qualityItem, 1, "availability");
                 if(avail == "available") {
                     ZatChannel channel;
                     channel.name = JsonParser::getString(qualityItem, 1, "title");
@@ -182,20 +181,26 @@ void ZatData::loadChannels() {
                     channel.strLogoPath = "http://logos.zattic.com";
                     channel.strLogoPath.append(JsonParser::getString(qualityItem, 1, "logo_white_84"));
                     group.channels.insert(group.channels.end(), channel);
-                    //Yeah thats bad performance
-                    for (int fav = 0; fav < favs->u.array.len; fav++) {
-						yajl_val favItem = favs->u.array.values[fav];
-						string favCid = YAJL_GET_STRING(favItem);
-                        if (favCid == cid) {
-                            favGroup.channels.insert(favGroup.channels.end(), channel);
-                        }
-                    }
+                    allChannels[cid] = channel;
                     break;
-                }   
+                }
             }
         }
         if (group.channels.size() > 0)
             channelGroups.insert(channelGroups.end(),group);
+    }
+
+    PVRZattooChannelGroup favGroup;
+    favGroup.name = "Favoriten";
+
+    for (int fav = 0; fav < favs->u.array.len; fav++) {
+      yajl_val favItem = favs->u.array.values[fav];
+      string favCid = YAJL_GET_STRING(favItem);
+      if (allChannels.find(favCid) != allChannels.end()) {
+        ZatChannel channel = allChannels[favCid];
+        channel.iChannelNumber = favGroup.channels.size() + 1;
+        favGroup.channels.insert(favGroup.channels.end(), channel);
+      }
     }
 
     if (favGroup.channels.size() > 0)
