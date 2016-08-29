@@ -412,7 +412,7 @@ ZatData::ZatData(std::string u, std::string p, bool favoritesOnly, bool alternat
   this->favoritesOnly = favoritesOnly;
   m_iLastStart = 0;
   m_iLastEnd = 0;
-  streamType = "hls";
+  streamType = "dash";
 }
 
 ZatData::~ZatData() {

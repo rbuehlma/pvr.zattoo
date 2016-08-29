@@ -520,7 +520,7 @@ int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) {
 
 
 /** UNUSED API FUNCTIONS */
-bool CanPauseStream(void) { return false; }
+bool CanPauseStream(void) { return true; }
 PVR_ERROR OpenDialogChannelScan(void) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR CallMenuHook(const PVR_MENUHOOK &menuhook, const PVR_MENUHOOK_DATA &item) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteChannel(const PVR_CHANNEL &channel) { return PVR_ERROR_NOT_IMPLEMENTED; }
@@ -549,7 +549,7 @@ unsigned int GetChannelSwitchDelay(void) { return 0; }
 bool IsTimeshifting(void) { return false; }
 bool IsRealTimeStream(void) { return true; }
 void PauseStream(bool bPaused) {}
-bool CanSeekStream(void) { return false; }
+bool CanSeekStream(void) { return true; }
 bool SeekTime(double,bool,double*) { return false; }
 void SetSpeed(int) {};
 time_t GetPlayingTime() { return 0; }
