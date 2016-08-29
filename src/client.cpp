@@ -200,8 +200,10 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsTV              = true;
   pCapabilities->bSupportsRadio           = true;
   pCapabilities->bSupportsChannelGroups   = true;
-  pCapabilities->bSupportsRecordings      = true;
-  pCapabilities->bSupportsTimers          = true;
+
+  if (zat) {
+    zat->GetAddonCapabilities(pCapabilities);
+  }
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -342,7 +344,7 @@ int GetRecordingsAmount(bool deleted) {
   if (!zat) {
     return 0;
   }
-  return zat->GetRecordingsAmount();
+  return zat->GetRecordingsAmount(false);
 }
 
 PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool deleted) {
@@ -352,7 +354,22 @@ PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool deleted) {
   if (!zat) {
     return PVR_ERROR_SERVER_ERROR;
   }
-  zat->GetRecordings(handle);
+  zat->GetRecordings(handle, false);
+  return PVR_ERROR_NO_ERROR;
+}
+
+int GetTimersAmount(void) {
+  if (!zat) {
+    return 0;
+  }
+  return zat->GetRecordingsAmount(true);
+}
+
+PVR_ERROR GetTimers(ADDON_HANDLE handle) {
+  if (!zat) {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  zat->GetRecordings(handle, true);
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -366,6 +383,7 @@ PVR_ERROR AddTimer(const PVR_TIMER &timer) {
   if (!zat->Record(timer.iEpgUid)) {
     return PVR_ERROR_REJECTED;
   }
+  PVR->TriggerTimerUpdate();
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -376,6 +394,34 @@ PVR_ERROR DeleteRecording(const PVR_RECORDING &recording) {
   if (!zat->DeleteRecording(recording.strRecordingId)) {
     return PVR_ERROR_REJECTED;
   }
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete) {
+  if (!zat) {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  if (!zat->DeleteRecording(to_string(timer.iClientIndex))) {
+    return PVR_ERROR_REJECTED;
+  }
+  PVR->TriggerTimerUpdate();
+  return PVR_ERROR_NO_ERROR;
+}
+
+void addTimerType(PVR_TIMER_TYPE types[], int idx, int attributes) {
+  types[idx].iId = idx + 1;
+  types[idx].iAttributes = attributes;
+  types[idx].iPrioritiesSize = 0;
+  types[idx].iLifetimesSize = 0;
+  types[idx].iPreventDuplicateEpisodesSize = 0;
+  types[idx].iRecordingGroupSize = 0;
+  types[idx].iMaxRecordingsSize = 0;
+}
+
+PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size) {
+  addTimerType(types, 0, PVR_TIMER_TYPE_ATTRIBUTE_NONE);
+  addTimerType(types, 1, PVR_TIMER_TYPE_IS_MANUAL);
+  *size = 2;
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -407,10 +453,6 @@ PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count) { ret
 PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition) { return PVR_ERROR_NOT_IMPLEMENTED; }
 int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) { return -1; }
 PVR_ERROR GetRecordingEdl(const PVR_RECORDING&, PVR_EDL_ENTRY[], int*) { return PVR_ERROR_NOT_IMPLEMENTED; };
-PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size) { return PVR_ERROR_NOT_IMPLEMENTED; }
-int GetTimersAmount(void) { return -1; }
-PVR_ERROR GetTimers(ADDON_HANDLE handle) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR UpdateTimer(const PVR_TIMER &timer) { return PVR_ERROR_NOT_IMPLEMENTED; }
 void DemuxAbort(void) {}
 DemuxPacket* DemuxRead(void) { return NULL; }

@@ -72,6 +72,7 @@ public:
     ZatData(std::string username, std::string password);
     virtual ~ZatData();
 
+    virtual void      GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
     virtual int       GetChannelsAmount(void);
     virtual PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
     //virtual bool      GetChannel(const PVR_CHANNEL &channel, ZatChannel &myChannel);
@@ -84,8 +85,8 @@ public:
     //    virtual void      ReloadPlayList(const char * strNewPath);
     //    virtual void      ReloadEPG(const char * strNewPath);
     virtual std::string GetChannelStreamUrl(int uniqueId);
-    virtual void GetRecordings(ADDON_HANDLE handle);
-    virtual int GetRecordingsAmount();
+    virtual void GetRecordings(ADDON_HANDLE handle, bool future);
+    virtual int GetRecordingsAmount(bool future);
     virtual std::string GetRecordingStreamUrl(string recordingId);
     virtual bool Record(int programId);
     virtual bool DeleteRecording(string recordingId);
@@ -94,7 +95,6 @@ protected:
     virtual std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
     virtual std::string HttpGet(string url);
     virtual std::string HttpPost(string url, string postData);
-    virtual void loadAppId();
 
     virtual bool                 LoadEPG(time_t iStart, time_t iEnd);
 
@@ -114,12 +114,12 @@ private:
     int                               channelNumber;
     std::string                       appToken;
     std::string                       powerHash;
+    bool                              recallEnabled;
+    bool                              recordingEnabled;
     std::string                       username;
     std::string                       password;
     std::string                       m_strLogoPath;
     std::vector<PVRZattooChannelGroup> channelGroups;
-
-    void sendHello();
 
     bool login();
 

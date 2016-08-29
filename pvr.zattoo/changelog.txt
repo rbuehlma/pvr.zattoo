@@ -1,3 +1,6 @@
+v0.1.4
+ - Support deletion of timer (planned recording)
+ - Refresh timers after change 
 v0.1.3
  - Support creating timers (for recordings)
  - Support deletion of recordings
