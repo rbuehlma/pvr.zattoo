@@ -442,6 +442,7 @@ PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete) {
     return PVR_ERROR_REJECTED;
   }
   PVR->TriggerTimerUpdate();
+  PVR->TriggerRecordingUpdate();
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -459,6 +460,15 @@ PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size) {
   addTimerType(types, 0, PVR_TIMER_TYPE_ATTRIBUTE_NONE);
   addTimerType(types, 1, PVR_TIMER_TYPE_IS_MANUAL);
   *size = 2;
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR IsRecordable(const EPG_TAG& tag, bool* isRecordable) {
+
+  time_t current_time;
+  time(&current_time);
+
+  *isRecordable = true; //tag.endTime > current_time - 60 * 60 * 24 *7;
   return PVR_ERROR_NO_ERROR;
 }
 
