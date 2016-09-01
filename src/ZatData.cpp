@@ -96,6 +96,35 @@ string ZatData::HttpPost(string url, string postData) {
   return body;
 }
 
+void ZatData::loadAppId() {
+
+    string html = HttpGet("http://zattoo.com");
+
+
+    appToken = "";
+
+    std::smatch m;
+    std::regex e ("appToken.*\\'(.*)\\'");
+
+    std::string token = "";
+
+    if (std::regex_search(html, m, e)) {
+        token = m[1];
+    }
+
+    appToken = token;
+
+    XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
+}
+
+void ZatData::sendHello() {
+
+    ostringstream dataStream;
+    dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=json&client_app_token=" << appToken;
+
+    string jsonString = HttpPost("http://zattoo.com/zapi/session/hello", dataStream.str());
+}
+
 bool ZatData::login() {
 
 
@@ -225,6 +254,8 @@ ZatData::ZatData(std::string u, std::string p)  {
     //httpResponse response = getRequest("zattoo.com/deinemama");
     //cout << response.body;
 
+    this->loadAppId();
+    this->sendHello();
     if(this->login()) {
         this->loadChannels();
     }

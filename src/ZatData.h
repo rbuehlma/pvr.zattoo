@@ -121,6 +121,10 @@ private:
     std::string                       m_strLogoPath;
     std::vector<PVRZattooChannelGroup> channelGroups;
 
+    void loadAppId();
+
+    void sendHello();
+
     bool login();
 
     void loadChannels();
