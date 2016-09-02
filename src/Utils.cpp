@@ -31,6 +31,11 @@
 
 #include "client.h"
 
+//Fix an error in libyajl 2.0.1
+//These lines can be removed after the upgrade to 2.1.0
+#define YAJL_IS_DOUBLE_FIX(v) (YAJL_IS_NUMBER(v) && ((v)->u.number.flags & YAJL_NUMBER_DOUBLE_VALID))
+#define YAJL_IS_INTEGER_FIX(v) (YAJL_IS_NUMBER(v) && ((v)->u.number.flags & YAJL_NUMBER_INT_VALID))
+
 std::string Utils::GetFilePath(std::string strPath, bool bUserPath)
 {
     return (bUserPath ? g_strUserPath : g_strClientPath) + PATH_SEPARATOR_CHAR + strPath;
@@ -96,7 +101,7 @@ int Utils::GetIntFromJsonValue(yajl_val &value, int defaultValue)
     // some json responses have have ints formated as strings
     if (YAJL_IS_STRING(value))
         iTemp = StringToInt(YAJL_GET_STRING(value));
-    else if (YAJL_IS_INTEGER(value))
+    else if (YAJL_IS_INTEGER_FIX(value))
         iTemp = YAJL_GET_INTEGER(value);
 
     return iTemp;
@@ -110,7 +115,7 @@ double Utils::GetDoubleFromJsonValue(yajl_val &value, double defaultValue)
     or an expected double is formated as an int */
     if (YAJL_IS_STRING(value))
         dTemp = StringToDouble(YAJL_GET_STRING(value));
-    else if (YAJL_IS_INTEGER(value) || YAJL_IS_DOUBLE(value))
+    else if (YAJL_IS_INTEGER_FIX(value) || YAJL_IS_DOUBLE_FIX(value))
         dTemp = YAJL_GET_DOUBLE(value);
 
     return dTemp;
