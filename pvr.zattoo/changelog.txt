@@ -1,3 +1,5 @@
+v0.1.6
+ - Fix linking of libYajl for OSX (and maybe also for other environments)
 v0.1.5
  - Fix sorting of favourites by using the first n channel numbers for them
  - Offset the remaining channels by the number of favourites to prevent overlaps
