@@ -1,3 +1,6 @@
+v0.1.5
+ - Fix sorting of favourites by using the first n channel numbers for them
+ - Offset the remaining channels by the number of favourites to prevent overlaps
 v0.1.4
  - Support deletion of timer (planned recording)
  - Refresh timers after change 

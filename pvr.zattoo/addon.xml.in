@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.zattoo"
-  version="0.1.4"
+  version="0.1.5"
   name="Zattoo PVR Client"
   provider-name="Johannes Trum">
   <extension
