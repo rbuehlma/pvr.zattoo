@@ -2,7 +2,6 @@
 #include <string>
 #include "ZatData.h"
 #include <sstream>
-#include <regex>
 #include "../lib/tinyxml2/tinyxml2.h"
 #include "p8-platform/sockets/tcp.h"
 
@@ -96,25 +95,20 @@ string ZatData::HttpPost(string url, string postData) {
   return body;
 }
 
-void ZatData::loadAppId() {
+bool ZatData::loadAppId() {
 
-    string html = HttpGet("http://zattoo.com");
-
-
+    string html = HttpGet("https://zattoo.com");
     appToken = "";
-
-    std::smatch m;
-    std::regex e ("appToken.*\\'(.*)\\'");
-
-    std::string token = "";
-
-    if (std::regex_search(html, m, e)) {
-        token = m[1];
+    //There seems to be a problem with old gcc and osx with regex. Do it the dirty way:
+    int basePos = html.find("window.appToken = '") + 19;
+    if (basePos > 19) {
+      int endPos = html.find("'", basePos);
+      appToken = html.substr(basePos, endPos-basePos);
     }
 
-    appToken = token;
-
     XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
+
+    return !appToken.empty();
 }
 
 void ZatData::sendHello() {
@@ -254,8 +248,9 @@ ZatData::ZatData(std::string u, std::string p)  {
     //httpResponse response = getRequest("zattoo.com/deinemama");
     //cout << response.body;
 
-    this->loadAppId();
-    this->sendHello();
+    if (this->loadAppId()) {
+      this->sendHello();
+    }
     if(this->login()) {
         this->loadChannels();
     }
