@@ -4,6 +4,7 @@
 
 #include "client.h"
 #include "JsonParser.h"
+#include <map>
 
 /*!
  * @brief PVR macros for string exchange
