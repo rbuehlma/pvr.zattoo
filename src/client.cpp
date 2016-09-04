@@ -12,11 +12,9 @@ using namespace ADDON;
 #define snprintf _snprintf
 #endif
 
-bool           m_bCreated       = false;
 ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
 ZatData   *zat           = NULL;
 bool           m_bIsPlaying     = false;
-ZatChannel currentChannel;
 
 /* User adjustable settings are saved here.
  * Default values are defined inside client.h
@@ -99,12 +97,9 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
         return ADDON_STATUS_PERMANENT_FAILURE;
     }
 
-    XBMC->Log(LOG_DEBUG, "%s - Creating the PVR Zattoo Simple add-on", __FUNCTION__);
+    XBMC->Log(LOG_DEBUG, "%s - Creating the PVR Zattoo add-on", __FUNCTION__);
 
-    m_CurStatus = ADDON_STATUS_UNKNOWN;
-
-
-
+    m_CurStatus = ADDON_STATUS_NEED_SETTINGS;
 
     g_strClientPath = pvrprops->strClientPath;
     g_strUserPath = pvrprops->strUserPath;
@@ -112,11 +107,14 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
     zatUsername = "";
     zatPassword = "";
     ADDON_ReadSettings();
-    XBMC->Log(LOG_DEBUG, "Create zat");
-    zat = new ZatData(zatUsername,zatPassword);
-    XBMC->Log(LOG_DEBUG, "zat created");
-    m_CurStatus = ADDON_STATUS_OK;
-    m_bCreated = true;
+    if (!zatUsername.empty() && !zatPassword.empty()) {
+      XBMC->Log(LOG_DEBUG, "Create Zat");
+      zat = new ZatData(zatUsername,zatPassword);
+      XBMC->Log(LOG_DEBUG, "Zat created");
+      if (zat->Initialize()) {
+        m_CurStatus = ADDON_STATUS_OK;
+      }
+    }
 
     return m_CurStatus;
 }
@@ -127,7 +125,6 @@ ADDON_STATUS ADDON_GetStatus() {
 
 void ADDON_Destroy() {
     delete zat;
-    m_bCreated = false;
     m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
 
@@ -140,8 +137,8 @@ unsigned int ADDON_GetSettings(ADDON_StructSetting ***sSet) {
 }
 
 ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue) {
-
-    return ADDON_STATUS_NEED_RESTART;
+  ADDON_ReadSettings();
+  return !zatUsername.empty() && !zatPassword.empty() ? ADDON_STATUS_OK : ADDON_STATUS_NEED_SETTINGS;
 }
 
 void ADDON_Stop() {

@@ -72,7 +72,7 @@ class ZatData : public P8PLATFORM::CThread
 public:
     ZatData(std::string username, std::string password);
     virtual ~ZatData();
-
+    virtual bool Initialize();
     virtual void      GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
     virtual int       GetChannelsAmount(void);
     virtual PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);

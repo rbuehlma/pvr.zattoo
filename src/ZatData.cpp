@@ -254,25 +254,24 @@ ZatData::ZatData(std::string u, std::string p)  {
     m_iLastStart    = 0;
     m_iLastEnd      = 0;
     streamType = "dash";
-
-    //httpResponse response = getRequest("zattoo.com/deinemama");
-    //cout << response.body;
-
-    if (this->loadAppId()) {
-      this->sendHello();
-    }
-    if(this->login()) {
-        this->loadChannels();
-    }
-    else {
-        XBMC->QueueNotification(QUEUE_ERROR, "Zattoo Login fehlgeschlagen!");
-    }
-
 }
 
 ZatData::~ZatData() {
     channelGroups.clear();
     
+}
+
+bool ZatData::Initialize() {
+  if (this->loadAppId()) {
+    this->sendHello();
+  }
+  if(this->login()) {
+      this->loadChannels();
+      return true;
+  }
+
+  XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
+  return false;
 }
 
 void ZatData::GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities) {
