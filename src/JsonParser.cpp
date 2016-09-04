@@ -1,4 +1,5 @@
 #include "JsonParser.h"
+#include <string>
 
 #define DEBUG
 
@@ -6,6 +7,10 @@
 #define D(x) x
 #else
 #define D(x)
+#endif
+
+#ifdef WIN32
+  #define timegm _mkgmtime
 #endif
 
 using namespace std;
@@ -61,10 +66,21 @@ time_t JsonParser::getTime(yajl_val json, int path_len, ...) {
   if (str == NULL) {
     return 0;
   }
-  struct tm tm;
-  strptime(str, "%Y-%m-%dT%H:%M:%SZ", &tm);
-  time_t t = timegm(&tm);
-  return t;
+  struct tm *tm;
+  time_t current_time;
+  time(&current_time);
+  tm = localtime(&current_time);
+
+  int year, month, day, h, m, s;
+  sscanf(str, "%d-%d-%dT%d:%d:%dZ", &year, &month, &day, &h, &m, &s);
+  tm->tm_year = year-1900;
+  tm->tm_mon = month -1;
+  tm->tm_mday = day;
+  tm->tm_hour = h;
+  tm->tm_min = m;
+  tm->tm_sec = s;
+
+  return timegm(tm);
 }
 
 int JsonParser::getInt(yajl_val json, int path_len, ...) {
