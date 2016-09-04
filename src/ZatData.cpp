@@ -402,7 +402,7 @@ PVR_ERROR ZatData::GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL
 }
 
 int ZatData::GetChannelsAmount(void) {
-    return channelNumber-1;
+    return channelsByCid.size();
 }
 
 PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio) {
@@ -423,8 +423,15 @@ PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio) {
             strncpy(kodiChannel.strChannelName, channel.name.c_str(), sizeof(kodiChannel.strChannelName) - 1);
             kodiChannel.iEncryptionSystem = 0;
 
+            ostringstream iconStream;
+            iconStream << "special://home/addons/pvr.zattoo/resources/media/channel_logo/" << channel.cid << ".png";
+            std::string iconPath = iconStream.str();
+            if (!XBMC->FileExists(iconPath.c_str(), true)) {
+              XBMC->Log(LOG_INFO, "No logo found for channel '%s'. Fallback to Zattoo-Logo.", channel.cid.c_str());
+              iconPath = channel.strLogoPath;
+            }
 
-            strncpy(kodiChannel.strIconPath, channel.strLogoPath.c_str(), sizeof(kodiChannel.strIconPath) - 1);
+            strncpy(kodiChannel.strIconPath, iconPath.c_str(), sizeof(kodiChannel.strIconPath) - 1);
 
 
             kodiChannel.bIsHidden         = false;
