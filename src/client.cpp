@@ -472,7 +472,21 @@ PVR_ERROR IsRecordable(const EPG_TAG& tag, bool* isRecordable) {
   return PVR_ERROR_NO_ERROR;
 }
 
+bool IsPlayable(const EPG_TAG &tag) {
+  if (!zat) {
+    return false;
+  }
+  return zat->IsPlayable(tag);
+}
 
+int GetEpgTagUrl(const EPG_TAG &tag, char *url, int urlLen) {
+  if (!zat) {
+    return -1;
+  }
+  string strUrl = zat->GetEpgTagUrl(tag);
+  strncpy(url, strUrl.c_str(), urlLen);
+  return urlLen;
+}
 
 PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count) {
   if (!zat) {
