@@ -121,6 +121,8 @@ private:
     std::string                       password;
     std::string                       m_strLogoPath;
     std::vector<PVRZattooChannelGroup> channelGroups;
+    std::map<int, ZatChannel>         channelsByNumber;
+    std::map<std::string, ZatChannel> channelsByCid;
 
     bool loadAppId();
 

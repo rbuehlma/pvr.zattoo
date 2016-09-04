@@ -205,6 +205,8 @@ void ZatData::loadChannels() {
                     channel.strLogoPath.append(JsonParser::getString(qualityItem, 1, "logo_white_84"));
                     group.channels.insert(group.channels.end(), channel);
                     allChannels[cid] = channel;
+                    channelsByNumber[channel.iChannelNumber] = channel;
+                    channelsByCid[channel.cid] = channel;
                     break;
                 }
             }
@@ -223,6 +225,8 @@ void ZatData::loadChannels() {
         ZatChannel channel = allChannels[favCid];
         channel.iChannelNumber = favGroup.channels.size() + 1;
         favGroup.channels.insert(favGroup.channels.end(), channel);
+        channelsByNumber[channel.iChannelNumber] = channel;
+        channelsByCid[channel.cid] = channel;
       }
     }
 
@@ -578,6 +582,8 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       tag.state = PVR_TIMER_STATE_SCHEDULED;
       tag.iTimerType = 1;
       tag.iEpgUid = JsonParser::getInt(recording, 1, "program_id");
+      ZatChannel channel = channelsByCid[JsonParser::getString(recording, 1, "cid").c_str()];
+      tag.iClientChannelUid = channel.iUniqueId;
       PVR->TransferTimerEntry(handle, &tag);
     } else if (!future && startTime <= current_time) {
       PVR_RECORDING tag;
