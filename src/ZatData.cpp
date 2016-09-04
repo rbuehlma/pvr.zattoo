@@ -145,7 +145,7 @@ bool ZatData::login() {
         return false;
     }
 
-    recallEnabled = JsonParser::getBoolean(json, 2, "session" , "recall_eligible");
+    recallEnabled = streamType == "dash" && JsonParser::getBoolean(json, 2, "session" , "recall_eligible");
     recordingEnabled = JsonParser::getBoolean(json, 2, "session" , "recording_eligible");
 
     return true;
@@ -249,6 +249,7 @@ ZatData::ZatData(std::string u, std::string p)  {
     password = p;
     m_iLastStart    = 0;
     m_iLastEnd      = 0;
+    streamType = "dash";
 
     //httpResponse response = getRequest("zattoo.com/deinemama");
     //cout << response.body;
@@ -380,7 +381,7 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId) {
     //XBMC->QueueNotification(QUEUE_INFO, "Getting URL for channel %s", XBMC->UnknownToUTF8(channel->name.c_str()));
 
     ostringstream dataStream;
-    dataStream << "cid=" << channel->cid << "&stream_type=hls&format=json";
+    dataStream << "cid=" << channel->cid << "&stream_type=" << streamType << "&format=json";
 
     string jsonString = HttpPost("http://zattoo.com/zapi/watch", dataStream.str());
 
@@ -617,7 +618,7 @@ int ZatData::GetRecordingsAmount(bool future) {
 
 std::string ZatData::GetRecordingStreamUrl(string recordingId) {
     ostringstream dataStream;
-    dataStream << "recording_id=" << recordingId <<"&stream_type=hls";
+    dataStream << "recording_id=" << recordingId <<"&stream_type=" << streamType;
 
     string jsonString = HttpPost("http://zattoo.com/zapi/watch", dataStream.str());
 

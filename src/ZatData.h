@@ -116,6 +116,7 @@ private:
     std::string                       powerHash;
     bool                              recallEnabled;
     bool                              recordingEnabled;
+    std::string                       streamType;
     std::string                       username;
     std::string                       password;
     std::string                       m_strLogoPath;
