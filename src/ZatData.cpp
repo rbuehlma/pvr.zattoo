@@ -955,3 +955,29 @@ bool ZatData::DeleteRecording(string recordingId) {
   return ret;
 }
 
+bool ZatData::IsPlayable(const EPG_TAG &tag) {
+  if (!recallEnabled) {
+    return false;
+  }
+  time_t current_time;
+  time(&current_time);
+  return current_time - tag.endTime < maxRecallSeconds && tag.endTime < current_time;
+}
+
+string ZatData::GetEpgTagUrl(const EPG_TAG &tag) {
+  ostringstream dataStream;
+  ZatChannel channel = channelsByNumber[tag.iChannelNumber];
+  char timeStart[sizeof "2011-10-08T07:07:09Z"];
+  strftime(timeStart, sizeof timeStart, "%FT%TZ", gmtime(&tag.startTime));
+  char timeEnd[sizeof "2011-10-08T07:07:09Z"];
+  strftime(timeEnd, sizeof timeEnd, "%FT%TZ", gmtime(&tag.endTime));
+
+  dataStream << "cid=" << channel.cid << "&start=" << timeStart << "&end=" << timeEnd << "&stream_type=" << streamType;
+
+  string jsonString = HttpPost("http://zattoo.com/zapi/watch", dataStream.str());
+
+  yajl_val json = JsonParser::parse(jsonString);
+  string url = JsonParser::getString(json, 2, "stream", "url");
+  yajl_tree_free(json);
+  return url;
+}

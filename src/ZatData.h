@@ -109,6 +109,8 @@ public:
     virtual void SetRecordingPlayCount(const PVR_RECORDING &recording, int count);
     virtual void SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition);
     virtual int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording);
+    virtual bool IsPlayable(const EPG_TAG &tag);
+    virtual std::string GetEpgTagUrl(const EPG_TAG &tag);
 
 protected:
     virtual std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
