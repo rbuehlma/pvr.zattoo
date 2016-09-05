@@ -381,6 +381,7 @@ PVR_ERROR AddTimer(const PVR_TIMER &timer) {
     return PVR_ERROR_REJECTED;
   }
   PVR->TriggerTimerUpdate();
+  PVR->TriggerRecordingUpdate();
   return PVR_ERROR_NO_ERROR;
 }
 
