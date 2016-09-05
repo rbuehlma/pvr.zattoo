@@ -253,7 +253,7 @@ ZatData::ZatData(std::string u, std::string p)  {
     password = p;
     m_iLastStart    = 0;
     m_iLastEnd      = 0;
-    streamType = "dash";
+    streamType = "hls";
 }
 
 ZatData::~ZatData() {
