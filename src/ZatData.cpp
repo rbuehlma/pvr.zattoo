@@ -551,13 +551,17 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
     time_t tempStart = iStart - (iStart % (3600/2)) - 86400;
     time_t tempEnd = tempStart + 3600*5; //Add 5 hours
 
-    while(tempEnd < iEnd) {
+    while(tempEnd <= iEnd) {
         ostringstream urlStream;
         urlStream << "http://zattoo.com/zapi/v2/cached/program/power_guide/" << powerHash << "?end=" << tempEnd << "&start=" << tempStart << "&format=json";
 
         string jsonString = HttpGet(urlStream.str());
 
         yajl_val json = JsonParser::parse(jsonString);
+
+        if(!JsonParser::getBoolean(json, 1, "success")) {
+            return false;
+        }
 
         yajl_val channels = JsonParser::getArray(json, 1, "channels");
 
@@ -594,18 +598,12 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
 
                 if (channel)
                     channel->epg.insert(channel->epg.end(), entry);
-
-
             }
         }
 
         tempStart = tempEnd;
         tempEnd = tempStart + 3600*5; //Add 5 hours
     }
-
-
-
-
 
     return true;
 }
