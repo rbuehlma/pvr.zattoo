@@ -1,5 +1,7 @@
+v0.1.11
+ - Reuse session if possible
 v0.1.10
- - Revert to using hls stream
+ - Preserve application token
 v0.1.9
  - Revert to using hls stream
 v0.1.8

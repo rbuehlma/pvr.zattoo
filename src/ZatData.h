@@ -124,12 +124,15 @@ private:
     std::vector<PVRZattooChannelGroup> channelGroups;
     std::map<int, ZatChannel>         channelsByNumber;
     std::map<std::string, ZatChannel> channelsByCid;
+    int64_t                           maxRecallSeconds;
 
     bool loadAppId();
 
     bool sendHello();
 
     bool login();
+
+    bool initSession();
 
     bool loadChannels();
 

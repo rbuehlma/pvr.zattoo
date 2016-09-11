@@ -166,18 +166,27 @@ bool ZatData::login() {
         return false;
     }
 
-    powerHash = JsonParser::getString(json, 2, "account" , "power_guide_hash");
+    return initSession();
+}
 
-    jsonString = HttpGet("http://zattoo.com/zapi/v2/session");
-    json = JsonParser::parse(jsonString);
-    if(!JsonParser::getBoolean(json, 1, "success")) {
-        return false;
-    }
+bool ZatData::initSession() {
+  string jsonString = HttpGet("http://zattoo.com/zapi/v2/session");
+  yajl_val json = JsonParser::parse(jsonString);
+  if(!JsonParser::getBoolean(json, 1, "success")) {
+    return false;
+  }
 
-    recallEnabled = streamType == "dash" && JsonParser::getBoolean(json, 2, "session" , "recall_eligible");
-    recordingEnabled = JsonParser::getBoolean(json, 2, "session" , "recording_eligible");
+  if (!JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
+    return false;
+  }
 
-    return true;
+  recallEnabled = streamType == "dash" && JsonParser::getBoolean(json, 2, "session" , "recall_eligible");
+  recordingEnabled = JsonParser::getBoolean(json, 2, "session" , "recording_eligible");
+  if (recallEnabled) {
+    maxRecallSeconds = JsonParser::getInt(json, 2, "session" , "recall_seconds");
+  }
+  powerHash = JsonParser::getString(json, 2, "session" , "power_guide_hash");
+  return true;
 }
 
 
@@ -293,6 +302,10 @@ ZatData::~ZatData() {
 }
 
 bool ZatData::Initialize() {
+
+  if (initSession() && this->loadChannels()) {
+    return true;
+  }
 
   if (!this->loadAppId()) {
     XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
