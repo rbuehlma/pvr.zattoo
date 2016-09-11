@@ -31,6 +31,8 @@ static const char *to_base64 =
 abcdefghijklmnopqrstuvwxyz\
 0123456789+/";
 
+static const string app_token_file = "special://profile/addon_data/pvr.zattoo/app_token";
+
 std::string ZatData::Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode)
 {
   std::string ret;
@@ -97,27 +99,54 @@ string ZatData::HttpPost(string url, string postData) {
 }
 
 bool ZatData::loadAppId() {
-
-    string html = HttpGet("https://zattoo.com");
-    appToken = "";
-    //There seems to be a problem with old gcc and osx with regex. Do it the dirty way:
-    int basePos = html.find("window.appToken = '") + 19;
-    if (basePos > 19) {
-      int endPos = html.find("'", basePos);
-      appToken = html.substr(basePos, endPos-basePos);
+  void* file;
+  char buf[256];
+  size_t nbRead;
+  file = XBMC->CURLCreate(app_token_file.c_str());
+  if (file && XBMC->CURLOpen(file, 0)) {
+    nbRead = XBMC->ReadFile(file, buf, 255);
+    XBMC->CloseFile(file);
+    if (nbRead > 0) {
+      appToken = buf;
+      XBMC->Log(LOG_DEBUG, "Loaded App token from file: %s", XBMC->UnknownToUTF8(appToken.c_str()));
+      return true;
     }
+  }
 
-    XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
+  string html = HttpGet("https://zattoo.com");
+  appToken = "";
+  //There seems to be a problem with old gcc and osx with regex. Do it the dirty way:
+  int basePos = html.find("window.appToken = '") + 19;
+  if (basePos > 19) {
+    int endPos = html.find("'", basePos);
+    appToken = html.substr(basePos, endPos-basePos);
+  }
 
-    return !appToken.empty();
+
+
+  if(appToken.empty()) {
+    XBMC->Log(LOG_ERROR, "Could not load App token.");
+    return false;
+  }
+
+  XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
+  file = XBMC->OpenFileForWrite(app_token_file.c_str(), true);
+  XBMC->WriteFile(file, appToken.c_str(), appToken.length());
+  XBMC->CloseFile(file);
+  return true;
+
 }
 
-void ZatData::sendHello() {
+bool ZatData::sendHello() {
 
     ostringstream dataStream;
     dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=json&client_app_token=" << appToken;
 
     string jsonString = HttpPost("http://zattoo.com/zapi/session/hello", dataStream.str());
+
+    yajl_val json = JsonParser::parse(jsonString);
+
+    return json != NULL && JsonParser::getBoolean(json, 1, "success");
 }
 
 bool ZatData::login() {
@@ -162,7 +191,7 @@ yajl_val ZatData::loadFavourites() {
 
 
 
-void ZatData::loadChannels() {
+bool ZatData::loadChannels() {
 
     std::map<std::string, ZatChannel> allChannels;
     yajl_val favs = loadFavourites();
@@ -173,9 +202,9 @@ void ZatData::loadChannels() {
 
     yajl_val json = JsonParser::parse(jsonString);
     
-    if (json == NULL){
+    if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
         std::cout  << "Failed to parse configuration\n";
-        return;
+        return false;
     }
 
     channelNumber = favs->u.array.len + 1;
@@ -232,6 +261,8 @@ void ZatData::loadChannels() {
 
     if (favGroup.channels.size() > 0)
         channelGroups.insert(channelGroups.end(),favGroup);
+
+    return true;
 }
 
 int ZatData::GetChannelId(const char * strChannelName)
@@ -262,11 +293,33 @@ ZatData::~ZatData() {
 }
 
 bool ZatData::Initialize() {
-  if (this->loadAppId()) {
-    this->sendHello();
+
+  if (!this->loadAppId()) {
+    XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
+    return false;
   }
-  if(this->login()) {
-      this->loadChannels();
+
+  if (!this->sendHello()) {
+    XBMC->Log(LOG_NOTICE, "Initialize session faild. Try to get a new app token.");
+    if (!XBMC->DeleteFile(app_token_file.c_str())) {
+      XBMC->Log(LOG_ERROR, "Deletion of old app token failed");
+      XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
+      return false;
+    }
+
+    if (!this->loadAppId()) {
+      XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
+      return false;
+    }
+
+    if (!this->sendHello()) {
+      XBMC->Log(LOG_NOTICE, "Initialize session still failed.");
+      XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
+      return false;
+    }
+  }
+
+  if(this->login() && this->loadChannels()) {
       return true;
   }
 
@@ -424,11 +477,13 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
     if (iStart > m_iLastStart || iEnd > m_iLastEnd)
     {
         // reload EPG for new time interval only
-        LoadEPG(iStart, iEnd);
-        {
-            // doesn't matter is epg loaded or not we shouldn't try to load it for same interval
-            m_iLastStart = iStart;
-            m_iLastEnd = iEnd;
+        // doesn't matter is epg loaded or not we shouldn't try to load it for same interval
+        m_iLastStart = iStart;
+        m_iLastEnd = iEnd;
+
+        if (!LoadEPG(iStart, iEnd)) {
+          XBMC->Log(LOG_NOTICE, "Loading epg faild for channel '%s' from %lu to %lu", channel.strChannelName, iStart, iEnd);
+          return PVR_ERROR_SERVER_ERROR;
         }
     }
 

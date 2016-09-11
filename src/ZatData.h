@@ -127,11 +127,11 @@ private:
 
     bool loadAppId();
 
-    void sendHello();
+    bool sendHello();
 
     bool login();
 
-    void loadChannels();
+    bool loadChannels();
 
     int findChannelNumber(int uniqueId);
 

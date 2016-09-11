@@ -1,3 +1,5 @@
+v0.1.10
+ - Revert to using hls stream
 v0.1.9
  - Revert to using hls stream
 v0.1.8
