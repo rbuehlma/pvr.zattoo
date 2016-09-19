@@ -1,3 +1,5 @@
+v0.1.13
+ - Refactor login and session handling
 v0.1.12
  - Always check that json is returned
 v0.1.11

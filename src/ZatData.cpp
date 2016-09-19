@@ -98,7 +98,7 @@ string ZatData::HttpPost(string url, string postData) {
   return body;
 }
 
-bool ZatData::loadAppId() {
+bool ZatData::loadAppIdFromFile() {
   void* file;
   char buf[256];
   size_t nbRead;
@@ -112,7 +112,10 @@ bool ZatData::loadAppId() {
       return true;
     }
   }
+  return false;
+}
 
+bool ZatData::loadAppId() {
   string html = HttpGet("https://zattoo.com");
   appToken = "";
   //There seems to be a problem with old gcc and osx with regex. Do it the dirty way:
@@ -122,15 +125,13 @@ bool ZatData::loadAppId() {
     appToken = html.substr(basePos, endPos-basePos);
   }
 
-
-
   if(appToken.empty()) {
-    XBMC->Log(LOG_ERROR, "Could not load App token.");
-    return false;
+    XBMC->Log(LOG_ERROR, "Could not load App token. Try to get from file.");
+    return loadAppIdFromFile();
   }
 
   XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
-  file = XBMC->OpenFileForWrite(app_token_file.c_str(), true);
+  void *file = XBMC->OpenFileForWrite(app_token_file.c_str(), true);
   XBMC->WriteFile(file, appToken.c_str(), appToken.length());
   XBMC->CloseFile(file);
   return true;
@@ -138,42 +139,57 @@ bool ZatData::loadAppId() {
 }
 
 bool ZatData::sendHello() {
+  XBMC->Log(LOG_DEBUG, "Send hello.");
+  ostringstream dataStream;
+  dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=json&client_app_token=" << appToken;
 
-    ostringstream dataStream;
-    dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=json&client_app_token=" << appToken;
+  string jsonString = HttpPost("http://zattoo.com/zapi/session/hello", dataStream.str());
 
-    string jsonString = HttpPost("http://zattoo.com/zapi/session/hello", dataStream.str());
+  yajl_val json = JsonParser::parse(jsonString);
 
-    yajl_val json = JsonParser::parse(jsonString);
-
-    return json != NULL && JsonParser::getBoolean(json, 1, "success");
+  if (json != NULL && JsonParser::getBoolean(json, 1, "success")) {
+    XBMC->Log(LOG_DEBUG, "Hello was successful-");
+    return true;
+  } else {
+    XBMC->Log(LOG_NOTICE, "Hello failed.");
+    return false;
+  }
 }
 
 bool ZatData::login() {
+  XBMC->Log(LOG_DEBUG, "Try to login.");
 
+  ostringstream dataStream;
+  dataStream << "login=" << username << "&password=" << password << "&format=json";
+  string jsonString = HttpPost("http://zattoo.com/zapi/account/login", dataStream.str());
 
-    ostringstream dataStream;
-    dataStream << "login=" << username << "&password=" << password << "&format=json";
-    string jsonString = HttpPost("http://zattoo.com/zapi/account/login", dataStream.str());
+  yajl_val json = JsonParser::parse(jsonString);
 
-    yajl_val json = JsonParser::parse(jsonString);
+  if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
+    XBMC->Log(LOG_NOTICE, "Login failed.");
+    return false;
+  }
 
-    if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
-        return false;
-    }
-
-    return initSession();
+  XBMC->Log(LOG_DEBUG, "Login was successful.");
+  return true;
 }
 
 bool ZatData::initSession() {
   string jsonString = HttpGet("http://zattoo.com/zapi/v2/session");
   yajl_val json = JsonParser::parse(jsonString);
   if(json == NULL || !JsonParser::getBoolean(json, 1, "success")) {
+    XBMC->Log(LOG_NOTICE, "Initialize session failed.");
     return false;
   }
 
   if (!JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
-    return false;
+    login();
+    jsonString = HttpGet("http://zattoo.com/zapi/v2/session");
+    json = JsonParser::parse(jsonString);
+    if (json == NULL || !JsonParser::getBoolean(json, 1, "success") || !JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
+      XBMC->Log(LOG_NOTICE, "Initialize session failed.");
+      return false;
+    }
   }
 
   recallEnabled = streamType == "dash" && JsonParser::getBoolean(json, 2, "session" , "recall_eligible");
@@ -307,40 +323,24 @@ ZatData::~ZatData() {
 
 bool ZatData::Initialize() {
 
+  if (!this->loadAppId()) {
+    XBMC->Log(LOG_ERROR, "Could not get an app id.");
+    return false;
+  }
+
   if (initSession() && this->loadChannels()) {
     return true;
   }
 
-  if (!this->loadAppId()) {
-    XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
+  if (!this->sendHello()) {
+    XBMC->Log(LOG_NOTICE, "Initialize session failed. Try to re-init session.");
     return false;
   }
 
-  if (!this->sendHello()) {
-    XBMC->Log(LOG_NOTICE, "Initialize session faild. Try to get a new app token.");
-    if (!XBMC->DeleteFile(app_token_file.c_str())) {
-      XBMC->Log(LOG_ERROR, "Deletion of old app token failed");
-      XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
-      return false;
-    }
-
-    if (!this->loadAppId()) {
-      XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
-      return false;
-    }
-
-    if (!this->sendHello()) {
-      XBMC->Log(LOG_NOTICE, "Initialize session still failed.");
-      XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
-      return false;
-    }
+  if (initSession() && this->loadChannels()) {
+    return true;
   }
 
-  if(this->login() && this->loadChannels()) {
-      return true;
-  }
-
-  XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
   return false;
 }
 

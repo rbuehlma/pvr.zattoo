@@ -128,6 +128,8 @@ private:
 
     bool loadAppId();
 
+    bool loadAppIdFromFile();
+
     bool sendHello();
 
     bool login();

@@ -113,6 +113,8 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
       XBMC->Log(LOG_DEBUG, "Zat created");
       if (zat->Initialize()) {
         m_CurStatus = ADDON_STATUS_OK;
+      } else {
+        XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
       }
     }
 
