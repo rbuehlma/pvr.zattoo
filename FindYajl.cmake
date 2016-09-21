@@ -23,7 +23,7 @@ endif()
 
 find_path(YAJL_INCLUDE_DIR NAMES yajl/yajl_common.h
                            PATHS ${PC_YAJL_INCLUDEDIR})
-find_library(YAJL_LIBRARY NAMES yajl_s
+find_library(YAJL_LIBRARY NAMES yajl
                           PATHS ${PC_YAJL_LIBDIR})
 
 if(PC_YAJL_VERSION)
