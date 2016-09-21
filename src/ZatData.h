@@ -5,6 +5,7 @@
 #include "client.h"
 #include "JsonParser.h"
 #include <map>
+#include "../lib/cpr/include/cpr.h"
 
 /*!
  * @brief PVR macros for string exchange
