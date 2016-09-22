@@ -38,7 +38,7 @@ string ZatData::HttpReq(const cpr::Url &url, const cpr::Payload* const postData,
 
   if (enSession) {
     session.SetUrl(url);
-    if (postData != NULL) {
+    if (postData) {
       session.SetPayload(*postData);
       res = session.Post();
     }
@@ -47,7 +47,7 @@ string ZatData::HttpReq(const cpr::Url &url, const cpr::Payload* const postData,
     }
   }
   else {
-    if (postData != NULL) {
+    if (postData) {
       res = cpr::Post(url, *postData, cpr::Header{{"acceptencoding", "gzip"}});
     }
     else {
@@ -55,14 +55,18 @@ string ZatData::HttpReq(const cpr::Url &url, const cpr::Payload* const postData,
     }
   }
 
-  if (res.status_code == 200) {
+  if (res.status_code < 400) {
     return res.text;
   }
-  else if (res.status_code == 403 && enSession > 0 /*&& relogin()*/) {
+  else if (res.status_code == 403 && enSession > 0 && renewSession()) {
     return HttpReq(url, postData, -1);
   }
 
   return NULL;
+}
+
+bool ZatData::renewSession() {
+  return sendHello() && login();
 }
 
 bool ZatData::loadAppIdFromFile() {
@@ -108,6 +112,10 @@ bool ZatData::loadAppId() {
 bool ZatData::sendHello() {
   XBMC->Log(LOG_DEBUG, "Send hello.");
 
+  if (!loadAppId()) {
+    return false;
+  }
+
   cpr::Payload payload = cpr::Payload{{"uuid", "888b4f54-c127-11e5-9912-ba0be0483c18"}, {"lang", "en"}, {"format", "json"}, {"client_app_token", appToken}};
   string jsonString = HttpReq(cpr::Url{"http://zattoo.com/zapi/session/hello"}, &payload);
   yajl_val json = JsonParser::parse(jsonString);
@@ -140,19 +148,9 @@ bool ZatData::login() {
 bool ZatData::initSession() {
   string jsonString = HttpReq(cpr::Url{"http://zattoo.com/zapi/v2/session"});
   yajl_val json = JsonParser::parse(jsonString);
-  if(json == NULL || !JsonParser::getBoolean(json, 1, "success")) {
+  if(json == NULL || !JsonParser::getBoolean(json, 1, "success") || !JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
     XBMC->Log(LOG_NOTICE, "Initialize session failed.");
     return false;
-  }
-
-  if (!JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
-    login();
-    jsonString = HttpReq(cpr::Url{"http://zattoo.com/zapi/v2/session"});
-    json = JsonParser::parse(jsonString);
-    if (json == NULL || !JsonParser::getBoolean(json, 1, "success") || !JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
-      XBMC->Log(LOG_NOTICE, "Initialize session failed.");
-      return false;
-    }
   }
 
   recallEnabled = streamType == "dash" && JsonParser::getBoolean(json, 2, "session" , "recall_eligible");
@@ -286,17 +284,14 @@ ZatData::~ZatData() {
 
 bool ZatData::Initialize() {
 
-  if (!this->loadAppId()) {
-    XBMC->Log(LOG_ERROR, "Could not get an app id.");
+  string html = HttpReq(cpr::Url{"https://zattoo.com"});
+  if (html.empty()) {
+    XBMC->QueueNotification(QUEUE_ERROR, "Zattoo network error!");
     return false;
   }
 
-  if (initSession() && this->loadChannels()) {
-    return true;
-  }
-
-  if (!this->sendHello()) {
-    XBMC->Log(LOG_NOTICE, "Initialize session failed. Try to re-init session.");
+  if (!renewSession()) {
+    XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
     return false;
   }
 

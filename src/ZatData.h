@@ -127,6 +127,8 @@ private:
     int64_t                           maxRecallSeconds;
     cpr::Session                      session;
 
+    bool renewSession();
+
     bool loadAppId();
 
     bool loadAppIdFromFile();
