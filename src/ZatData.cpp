@@ -28,6 +28,7 @@ using namespace std;
 
 
 static const string app_token_file = "special://profile/addon_data/pvr.zattoo/app_token";
+static const string session_cookie_file = "special://profile/addon_data/pvr.zattoo/session_cookie";
 
 string ZatData::HttpReq(const cpr::Url &url, int enSession) {
   return HttpReq(url, NULL, enSession);
@@ -55,6 +56,10 @@ string ZatData::HttpReq(const cpr::Url &url, const cpr::Payload* const postData,
     }
   }
 
+  if (enSession) {
+    saveSession(res.cookies);
+  }
+
   if (res.status_code < 400) {
     return res.text;
   }
@@ -65,6 +70,15 @@ string ZatData::HttpReq(const cpr::Url &url, const cpr::Payload* const postData,
   return NULL;
 }
 
+void ZatData::saveSession(cpr::Cookies cookies) {
+  string sessionId = cookies["beaker.session.id"];
+  if (!sessionId.empty()) {
+    void *file = XBMC->OpenFileForWrite(session_cookie_file.c_str(), true);
+    XBMC->WriteFile(file, sessionId.c_str(), sessionId.length());
+    XBMC->CloseFile(file);
+  }
+}
+
 bool ZatData::renewSession() {
   return sendHello() && login();
 }
@@ -73,8 +87,8 @@ bool ZatData::loadAppIdFromFile() {
   void* file;
   char buf[256];
   size_t nbRead;
-  file = XBMC->CURLCreate(app_token_file.c_str());
-  if (file && XBMC->CURLOpen(file, 0)) {
+  file = XBMC->OpenFile(app_token_file.c_str(), 0);
+  if (file) {
     nbRead = XBMC->ReadFile(file, buf, 255);
     XBMC->CloseFile(file);
     if (nbRead > 0) {
@@ -85,6 +99,33 @@ bool ZatData::loadAppIdFromFile() {
   }
   return false;
 }
+
+bool ZatData::initSessionCookie() {
+  void* file;
+  char buf[4097];
+  size_t nbRead;
+  string value;
+
+  file = XBMC->OpenFile(session_cookie_file.c_str(), 0);
+  if (file) {
+    nbRead = XBMC->ReadFile(file, buf, 4096);
+    XBMC->CloseFile(file);
+    if (nbRead > 0) {
+      value = buf;
+      XBMC->Log(LOG_DEBUG, "Loaded Session cookie from file: %s", XBMC->UnknownToUTF8(session_cookie_file.c_str()));
+      session.SetCookies(cpr::Cookies{{"beaker.session.id", value}});
+      return true;
+    }
+  }
+
+  value = HttpReq(cpr::Url{"https://zattoo.com"});
+  if (!value.empty()) {
+    return true;
+  }
+
+  return false;
+}
+
 
 bool ZatData::loadAppId() {
   string html = HttpReq(cpr::Url{"https://zattoo.com"}, false);
@@ -284,8 +325,7 @@ ZatData::~ZatData() {
 
 bool ZatData::Initialize() {
 
-  string html = HttpReq(cpr::Url{"https://zattoo.com"});
-  if (html.empty()) {
+  if (!initSessionCookie()) {
     XBMC->QueueNotification(QUEUE_ERROR, "Zattoo network error!");
     return false;
   }

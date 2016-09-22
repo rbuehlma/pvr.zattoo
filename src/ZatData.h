@@ -127,11 +127,15 @@ private:
     int64_t                           maxRecallSeconds;
     cpr::Session                      session;
 
+    void saveSession(cpr::Cookies cookies);
+
     bool renewSession();
 
     bool loadAppId();
 
     bool loadAppIdFromFile();
+
+    bool initSessionCookie();
 
     bool sendHello();
 
