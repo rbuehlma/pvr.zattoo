@@ -158,7 +158,7 @@ bool ZatData::sendHello() {
   }
 
   cpr::Payload payload = cpr::Payload{{"uuid", "888b4f54-c127-11e5-9912-ba0be0483c18"}, {"lang", "en"}, {"format", "json"}, {"client_app_token", appToken}};
-  string jsonString = HttpReq(cpr::Url{"http://zattoo.com/zapi/session/hello"}, &payload);
+  string jsonString = HttpReq(cpr::Url{"http://zattoo.com/zapi/session/hello"}, &payload, -1);
   yajl_val json = JsonParser::parse(jsonString);
 
   if (json != NULL && JsonParser::getBoolean(json, 1, "success")) {
@@ -174,7 +174,7 @@ bool ZatData::login() {
   XBMC->Log(LOG_DEBUG, "Try to login.");
 
   cpr::Payload payload = cpr::Payload{{"login", username}, {"password", password}, {"format", "json"}};
-  string jsonString = HttpReq(cpr::Url{"http://zattoo.com/zapi/account/login"}, &payload);
+  string jsonString = HttpReq(cpr::Url{"http://zattoo.com/zapi/account/login"}, &payload, -1);
   yajl_val json = JsonParser::parse(jsonString);
 
   if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
