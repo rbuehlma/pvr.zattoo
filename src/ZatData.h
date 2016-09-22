@@ -98,6 +98,9 @@ protected:
     virtual std::string HttpGet(string url);
     virtual std::string HttpPost(string url, string postData);
 
+    virtual std::string HttpReq(const cpr::Url &url, int enSession = true);
+    virtual std::string HttpReq(const cpr::Url &url, const cpr::Payload* const postData, int enSession = true);
+
     virtual bool                 LoadEPG(time_t iStart, time_t iEnd);
 
     virtual ZatChannel*      FindChannel(int uniqueId);
@@ -126,6 +129,7 @@ private:
     std::map<int, ZatChannel>         channelsByNumber;
     std::map<std::string, ZatChannel> channelsByCid;
     int64_t                           maxRecallSeconds;
+    cpr::Session                      session;
 
     bool loadAppId();
 
