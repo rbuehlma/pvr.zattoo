@@ -94,10 +94,6 @@ public:
     virtual bool DeleteRecording(string recordingId);
 
 protected:
-    virtual std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
-    virtual std::string HttpGet(string url);
-    virtual std::string HttpPost(string url, string postData);
-
     virtual std::string HttpReq(const cpr::Url &url, int enSession = true);
     virtual std::string HttpReq(const cpr::Url &url, const cpr::Payload* const postData, int enSession = true);
 
