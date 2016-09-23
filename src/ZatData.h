@@ -125,17 +125,13 @@ private:
     std::map<int, ZatChannel>         channelsByNumber;
     std::map<std::string, ZatChannel> channelsByCid;
     int64_t                           maxRecallSeconds;
-    cpr::Session                      session;
+    cpr::Cookies                      lastCookies;
 
-    void saveSession(cpr::Cookies cookies);
-
-    bool renewSession();
+    void saveSession();
 
     bool loadAppId();
 
-    bool loadAppIdFromFile();
-
-    bool initSessionCookie();
+    bool loadCookieFromFile();
 
     bool sendHello();
 

@@ -27,7 +27,6 @@ using namespace ADDON;
 using namespace std;
 
 
-static const string app_token_file = "special://profile/addon_data/pvr.zattoo/app_token";
 static const string session_cookie_file = "special://profile/addon_data/pvr.zattoo/session_cookie";
 
 string ZatData::HttpReq(const cpr::Url &url, int enSession) {
@@ -38,13 +37,11 @@ string ZatData::HttpReq(const cpr::Url &url, const cpr::Payload* const postData,
   cpr::Response res;
 
   if (enSession) {
-    session.SetUrl(url);
     if (postData) {
-      session.SetPayload(*postData);
-      res = session.Post();
+      res = cpr::Post(url, *postData, cpr::Header{{"acceptencoding", "gzip"}}, lastCookies);
     }
     else {
-      res = session.Get();
+      res = cpr::Get(url, cpr::Header{{"acceptencoding", "gzip"}}, lastCookies);
     }
   }
   else {
@@ -56,22 +53,21 @@ string ZatData::HttpReq(const cpr::Url &url, const cpr::Payload* const postData,
     }
   }
 
-  if (enSession) {
-    saveSession(res.cookies);
-  }
+  lastCookies = res.cookies;
+  saveSession();
 
   if (res.status_code < 400) {
     return res.text;
   }
-  else if (res.status_code == 403 && enSession > 0 && renewSession()) {
+  else if (res.status_code == 403 && enSession > 0 && login()) {
     return HttpReq(url, postData, -1);
   }
 
-  return NULL;
+  return "";
 }
 
-void ZatData::saveSession(cpr::Cookies cookies) {
-  string sessionId = cookies["beaker.session.id"];
+void ZatData::saveSession() {
+  string sessionId = lastCookies["beaker.session.id"];
   if (!sessionId.empty()) {
     void *file = XBMC->OpenFileForWrite(session_cookie_file.c_str(), true);
     XBMC->WriteFile(file, sessionId.c_str(), sessionId.length());
@@ -79,48 +75,25 @@ void ZatData::saveSession(cpr::Cookies cookies) {
   }
 }
 
-bool ZatData::renewSession() {
-  return sendHello() && login();
-}
-
-bool ZatData::loadAppIdFromFile() {
+bool ZatData::loadCookieFromFile() {
   void* file;
-  char buf[256];
+  char buf[1025];
   size_t nbRead;
-  file = XBMC->OpenFile(app_token_file.c_str(), 0);
-  if (file) {
-    nbRead = XBMC->ReadFile(file, buf, 255);
-    XBMC->CloseFile(file);
-    if (nbRead > 0) {
-      appToken = buf;
-      XBMC->Log(LOG_DEBUG, "Loaded App token from file: %s", XBMC->UnknownToUTF8(appToken.c_str()));
-      return true;
-    }
-  }
-  return false;
-}
-
-bool ZatData::initSessionCookie() {
-  void* file;
-  char buf[4097];
-  size_t nbRead;
-  string value;
+  string cookie = "";
 
   file = XBMC->OpenFile(session_cookie_file.c_str(), 0);
   if (file) {
-    nbRead = XBMC->ReadFile(file, buf, 4096);
+    while ((nbRead = XBMC->ReadFile(file, buf, 1024)) > 0 && ~nbRead) {
+      buf[nbRead] = 0x0;
+      cookie += buf;
+    }
     XBMC->CloseFile(file);
-    if (nbRead > 0) {
-      value = buf;
-      XBMC->Log(LOG_DEBUG, "Loaded Session cookie from file: %s", XBMC->UnknownToUTF8(session_cookie_file.c_str()));
-      session.SetCookies(cpr::Cookies{{"beaker.session.id", value}});
+
+    if (!cookie.empty()) {
+      XBMC->Log(LOG_DEBUG, "Loaded Session cookie: %s", XBMC->UnknownToUTF8(cookie.c_str()));
+      lastCookies = cpr::Cookies{{"beaker.session.id", cookie}};
       return true;
     }
-  }
-
-  value = HttpReq(cpr::Url{"https://zattoo.com"});
-  if (!value.empty()) {
-    return true;
   }
 
   return false;
@@ -138,16 +111,12 @@ bool ZatData::loadAppId() {
   }
 
   if(appToken.empty()) {
-    XBMC->Log(LOG_ERROR, "Could not load App token. Try to get from file.");
-    return loadAppIdFromFile();
+    XBMC->Log(LOG_ERROR, "Could not load App token.");
+    return false;
   }
 
   XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
-  void *file = XBMC->OpenFileForWrite(app_token_file.c_str(), true);
-  XBMC->WriteFile(file, appToken.c_str(), appToken.length());
-  XBMC->CloseFile(file);
   return true;
-
 }
 
 bool ZatData::sendHello() {
@@ -173,6 +142,8 @@ bool ZatData::sendHello() {
 bool ZatData::login() {
   XBMC->Log(LOG_DEBUG, "Try to login.");
 
+  sendHello();
+
   cpr::Payload payload = cpr::Payload{{"login", username}, {"password", password}, {"format", "json"}};
   string jsonString = HttpReq(cpr::Url{"http://zattoo.com/zapi/account/login"}, &payload, -1);
   yajl_val json = JsonParser::parse(jsonString);
@@ -190,7 +161,17 @@ bool ZatData::initSession() {
   string jsonString = HttpReq(cpr::Url{"http://zattoo.com/zapi/v2/session"});
   yajl_val json = JsonParser::parse(jsonString);
   if(json == NULL || !JsonParser::getBoolean(json, 1, "success") || !JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
-    XBMC->Log(LOG_NOTICE, "Initialize session failed.");
+    XBMC->Log(LOG_DEBUG, "Initialize session failed - try to relogin");
+    if (!login()) {
+      XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
+      return false;
+    }
+  }
+
+  jsonString = HttpReq(cpr::Url{"http://zattoo.com/zapi/v2/session"});
+  json = JsonParser::parse(jsonString);
+  if(json == NULL || !JsonParser::getBoolean(json, 1, "success") || !JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
+    XBMC->Log(LOG_DEBUG, "Initialize session failed");
     return false;
   }
 
@@ -325,17 +306,9 @@ ZatData::~ZatData() {
 
 bool ZatData::Initialize() {
 
-  if (!initSessionCookie()) {
-    XBMC->QueueNotification(QUEUE_ERROR, "Zattoo network error!");
-    return false;
-  }
+  loadCookieFromFile();
 
-  if (!renewSession()) {
-    XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
-    return false;
-  }
-
-  if (initSession() && this->loadChannels()) {
+  if (initSession() && loadChannels()) {
     return true;
   }
 
