@@ -470,9 +470,9 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
 
     ZatChannel *zatChannel = FindChannel(channel.iUniqueId);
 
-    if (iStart > m_iLastStart || iEnd > m_iLastEnd)
+    if (iStart > m_iLastStart + 60 || iEnd > m_iLastEnd + 60)
     {
-        // reload EPG for new time interval only
+        // reload EPG for new time interval only (with 1 min buffer)
         // doesn't matter is epg loaded or not we shouldn't try to load it for same interval
         m_iLastStart = iStart;
         m_iLastEnd = iEnd;
