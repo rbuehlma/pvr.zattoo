@@ -94,8 +94,8 @@ public:
     virtual bool DeleteRecording(string recordingId);
 
 protected:
-    virtual std::string HttpReq(const cpr::Url &url, int enSession = true);
-    virtual std::string HttpReq(const cpr::Url &url, const cpr::Payload* const postData, int enSession = true);
+    virtual std::string HttpReq(const cpr::Url &url, bool checkSession = true);
+    virtual std::string HttpReq(const cpr::Url &url, const cpr::Payload* const postData, bool checkSession = true);
 
     virtual bool                 LoadEPG(time_t iStart, time_t iEnd);
 
@@ -125,15 +125,16 @@ private:
     std::map<int, ZatChannel>         channelsByNumber;
     std::map<std::string, ZatChannel> channelsByCid;
     int64_t                           maxRecallSeconds;
-    cpr::Cookies                      lastCookies;
+    std::string                       pzuidCookie;
+    cpr::Session                      session;
 
     void saveSession();
 
-    bool loadAppId();
+    bool renewSession();
 
     bool loadCookieFromFile();
 
-    bool sendHello();
+    bool sendHello(bool checkLogin = false);
 
     bool login();
 
