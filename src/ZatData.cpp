@@ -278,6 +278,8 @@ ZatData::~ZatData() {
 
 bool ZatData::Initialize() {
 
+  pzuidCookie = "";
+
   if (!loadCookieFromFile()) {
     sendHello();
     login();
