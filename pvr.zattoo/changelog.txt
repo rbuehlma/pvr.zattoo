@@ -1,3 +1,5 @@
+v0.1.15
+ - Fix memory leaks
 v0.1.14
  - Add channel logos to addon (thanks to yattaah)
 v0.1.13

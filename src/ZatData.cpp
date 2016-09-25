@@ -1,10 +1,12 @@
 #include <iostream>
 #include <string>
 #include "ZatData.h"
+#include "yajl/yajl_tree.h"
 #include <sstream>
 #include "../lib/tinyxml2/tinyxml2.h"
 #include "p8-platform/sockets/tcp.h"
 #include <map>
+#include <time.h>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
  #pragma comment(lib, "ws2_32.lib")
@@ -126,7 +128,7 @@ bool ZatData::loadAppId() {
   }
 
   if(appToken.empty()) {
-    XBMC->Log(LOG_ERROR, "Could not load App token. Try to get from file.");
+    XBMC->Log(LOG_DEBUG, "Could not load App token. Try to get from file.");
     return loadAppIdFromFile();
   }
 
@@ -148,9 +150,11 @@ bool ZatData::sendHello() {
   yajl_val json = JsonParser::parse(jsonString);
 
   if (json != NULL && JsonParser::getBoolean(json, 1, "success")) {
-    XBMC->Log(LOG_DEBUG, "Hello was successful-");
+    yajl_tree_free(json);
+    XBMC->Log(LOG_DEBUG, "Hello was successful.");
     return true;
   } else {
+    yajl_tree_free(json);
     XBMC->Log(LOG_NOTICE, "Hello failed.");
     return false;
   }
@@ -166,10 +170,12 @@ bool ZatData::login() {
   yajl_val json = JsonParser::parse(jsonString);
 
   if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
+    yajl_tree_free(json);
     XBMC->Log(LOG_NOTICE, "Login failed.");
     return false;
   }
 
+  yajl_tree_free(json);
   XBMC->Log(LOG_DEBUG, "Login was successful.");
   return true;
 }
@@ -178,15 +184,18 @@ bool ZatData::initSession() {
   string jsonString = HttpGet("http://zattoo.com/zapi/v2/session");
   yajl_val json = JsonParser::parse(jsonString);
   if(json == NULL || !JsonParser::getBoolean(json, 1, "success")) {
+    yajl_tree_free(json);
     XBMC->Log(LOG_NOTICE, "Initialize session failed.");
     return false;
   }
 
   if (!JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
+    yajl_tree_free(json);
     login();
     jsonString = HttpGet("http://zattoo.com/zapi/v2/session");
     json = JsonParser::parse(jsonString);
     if (json == NULL || !JsonParser::getBoolean(json, 1, "success") || !JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
+      yajl_tree_free(json);
       XBMC->Log(LOG_NOTICE, "Initialize session failed.");
       return false;
     }
@@ -198,6 +207,7 @@ bool ZatData::initSession() {
     maxRecallSeconds = JsonParser::getInt(json, 2, "session" , "recall_seconds");
   }
   powerHash = JsonParser::getString(json, 2, "session" , "power_guide_hash");
+  yajl_tree_free(json);
   return true;
 }
 
@@ -208,10 +218,12 @@ yajl_val ZatData::loadFavourites() {
     yajl_val json = JsonParser::parse(jsonString);
     
     if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
-        return NULL;
+      yajl_tree_free(json);
+      return NULL;
     }
 
-    return JsonParser::getArray(json, 1, "favorites");
+    yajl_val favs = JsonParser::getArray(json, 1, "favorites");
+    return favs;
 }
 
 
@@ -233,6 +245,7 @@ bool ZatData::loadChannels() {
     
     if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
         std::cout  << "Failed to parse configuration\n";
+        yajl_tree_free(json);
         return false;
     }
 
@@ -291,6 +304,8 @@ bool ZatData::loadChannels() {
     if (favGroup.channels.size() > 0)
         channelGroups.insert(channelGroups.end(),favGroup);
 
+    yajl_tree_free(json);
+    yajl_tree_free(favs);
     return true;
 }
 
@@ -467,9 +482,11 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId) {
 
     yajl_val json = JsonParser::parse(jsonString);
     if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
-        return "";
+      yajl_tree_free(json);
+      return "";
     }
     string url = JsonParser::getString(json, 2, "stream", "url");
+    yajl_tree_free(json);
     return url;
 
 }
@@ -587,11 +604,8 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
         yajl_val json = JsonParser::parse(jsonString);
         
         if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
-            return false;
-        }
-
-        if(!JsonParser::getBoolean(json, 1, "success")) {
-            return false;
+          yajl_tree_free(json);
+          return false;
         }
 
         yajl_val channels = JsonParser::getArray(json, 1, "channels");
@@ -631,11 +645,10 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
                     channel->epg.insert(channel->epg.end(), entry);
             }
         }
-
+        yajl_tree_free(json);
         tempStart = tempEnd;
         tempEnd = tempStart + 3600*5; //Add 5 hours
     }
-
     return true;
 }
 
@@ -645,6 +658,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
   yajl_val json = JsonParser::parse(jsonString);
   
   if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
+    yajl_tree_free(json);
     return;
   }
   
@@ -689,6 +703,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       PVR->TransferRecordingEntry(handle, &tag);
     }
   }
+  yajl_tree_free(json);
 }
 
 int ZatData::GetRecordingsAmount(bool future) {
@@ -700,10 +715,12 @@ int ZatData::GetRecordingsAmount(bool future) {
   yajl_val json = JsonParser::parse(jsonString);
   
   if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
+    yajl_tree_free(json);
     return 0;
   }
   
   yajl_val recordings = JsonParser::getArray(json, 1, "recordings");
+
   int count = 0;
   for ( int index = 0; index < recordings->u.array.len; ++index ) {
     yajl_val recording = recordings->u.array.values[index];
@@ -712,6 +729,7 @@ int ZatData::GetRecordingsAmount(bool future) {
       count++;
     }
   }
+  yajl_tree_free(json);
   return count;
 }
 
@@ -724,10 +742,12 @@ std::string ZatData::GetRecordingStreamUrl(string recordingId) {
     yajl_val json = JsonParser::parse(jsonString);
     
     if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
-        return "";
+      yajl_tree_free(json);
+      return "";
     }
     
     string url = JsonParser::getString(json, 2, "stream", "url");
+    yajl_tree_free(json);
     return url;
 
 }
@@ -738,7 +758,9 @@ bool ZatData::Record(int programId) {
 
   string jsonString = HttpPost("http://zattoo.com/zapi/playlist/program", dataStream.str());
   yajl_val json = JsonParser::parse(jsonString);
-  return json != NULL && JsonParser::getBoolean(json, 1, "success");
+  bool ret = json != NULL && JsonParser::getBoolean(json, 1, "success");
+  yajl_tree_free(json);
+  return ret;
 }
 
 bool ZatData::DeleteRecording(string recordingId) {
@@ -748,6 +770,8 @@ bool ZatData::DeleteRecording(string recordingId) {
   string jsonString = HttpPost("http://zattoo.com/zapi/playlist/remove", dataStream.str());
 
   yajl_val json = JsonParser::parse(jsonString);
-  return json != NULL && JsonParser::getBoolean(json, 1, "success");
+  bool ret = json != NULL && JsonParser::getBoolean(json, 1, "success");
+  yajl_tree_free(json);
+  return ret;
 }
 
