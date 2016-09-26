@@ -1,5 +1,6 @@
 v0.1.16
  - Fix another memory leak
+ - Add option to only load favorites
 v0.1.15
  - Fix memory leaks
 v0.1.14

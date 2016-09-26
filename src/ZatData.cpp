@@ -284,7 +284,7 @@ bool ZatData::loadChannels() {
                 }
             }
         }
-        if (group.channels.size() > 0)
+        if (!favoritesOnly && group.channels.size() > 0)
             channelGroups.insert(channelGroups.end(),group);
     }
 
@@ -325,9 +325,10 @@ int ZatData::GetChannelGroupsAmount() {
     return channelGroups.size();
 }
 
-ZatData::ZatData(std::string u, std::string p)  {
+ZatData::ZatData(std::string u, std::string p, bool favoritesOnly)  {
     username = u;
     password = p;
+    this->favoritesOnly = favoritesOnly;
     m_iLastStart    = 0;
     m_iLastEnd      = 0;
     streamType = "hls";

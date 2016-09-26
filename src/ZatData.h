@@ -70,7 +70,7 @@ struct PVRIptvEpgGenre
 class ZatData : public P8PLATFORM::CThread
 {
 public:
-    ZatData(std::string username, std::string password);
+    ZatData(std::string username, std::string password, bool favoritesOnly);
     virtual ~ZatData();
     virtual bool Initialize();
     virtual void      GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
@@ -120,6 +120,7 @@ private:
     std::string                       streamType;
     std::string                       username;
     std::string                       password;
+    bool                              favoritesOnly;
     std::string                       m_strLogoPath;
     std::vector<PVRZattooChannelGroup> channelGroups;
     std::map<int, ZatChannel>         channelsByNumber;

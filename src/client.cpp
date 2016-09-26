@@ -28,6 +28,7 @@ CHelper_libXBMC_pvr   *PVR  = NULL;
 
 std::string zatUsername    = "";
 std::string zatPassword    = "";
+bool      zatFavoritesOnly = false;
 int         g_iStartNumber  = 1;
 bool        g_bTSOverride   = true;
 bool        g_bCacheM3U     = false;
@@ -63,6 +64,7 @@ extern "C" {
 
 void ADDON_ReadSettings(void) {
     char buffer[1024];
+    bool boolBuffer;
     XBMC->Log(LOG_DEBUG, "Read settings");
     if (XBMC->GetSetting("username", &buffer))
     {
@@ -71,6 +73,10 @@ void ADDON_ReadSettings(void) {
     if (XBMC->GetSetting("password", &buffer))
     {
         zatPassword = buffer;
+    }
+    if (XBMC->GetSetting("favoritesonly", &boolBuffer))
+    {
+        zatFavoritesOnly = boolBuffer;
     }
     XBMC->Log(LOG_DEBUG, "End Readsettings");
 }
@@ -109,7 +115,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
     ADDON_ReadSettings();
     if (!zatUsername.empty() && !zatPassword.empty()) {
       XBMC->Log(LOG_DEBUG, "Create Zat");
-      zat = new ZatData(zatUsername,zatPassword);
+      zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly);
       XBMC->Log(LOG_DEBUG, "Zat created");
       if (zat->Initialize()) {
         m_CurStatus = ADDON_STATUS_OK;
@@ -139,7 +145,31 @@ unsigned int ADDON_GetSettings(ADDON_StructSetting ***sSet) {
 }
 
 ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue) {
-  ADDON_ReadSettings();
+  string name = settingName;
+
+  if (name == "username") {
+    string username = (const char*)settingValue;
+    if (username != zatUsername) {
+      zatUsername = username;
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+
+  if (name == "password") {
+    string password = (const char*)settingValue;
+    if (password != zatPassword) {
+      zatPassword = password;
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+
+  if (name == "favoritesonly") {
+    bool favOnly = *(bool *)settingValue;
+    if (favOnly != zatFavoritesOnly) {
+      zatFavoritesOnly = favOnly;
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
   return !zatUsername.empty() && !zatPassword.empty() ? ADDON_STATUS_OK : ADDON_STATUS_NEED_SETTINGS;
 }
 
