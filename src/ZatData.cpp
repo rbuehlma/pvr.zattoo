@@ -222,8 +222,7 @@ yajl_val ZatData::loadFavourites() {
       return NULL;
     }
 
-    yajl_val favs = JsonParser::getArray(json, 1, "favorites");
-    return favs;
+    return json;
 }
 
 
@@ -231,11 +230,13 @@ yajl_val ZatData::loadFavourites() {
 bool ZatData::loadChannels() {
 
     std::map<std::string, ZatChannel> allChannels;
-    yajl_val favs = loadFavourites();
+    yajl_val favsJson = loadFavourites();
     
-    if (favs == NULL) {
+    if (favsJson == NULL) {
         return false;
     }
+
+    yajl_val favs = JsonParser::getArray(favsJson, 1, "favorites");
 
     ostringstream urlStream;
     urlStream << "http://zattoo.com/zapi/v2/cached/channels/" << powerHash << "?details=False";
@@ -246,6 +247,7 @@ bool ZatData::loadChannels() {
     if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
         std::cout  << "Failed to parse configuration\n";
         yajl_tree_free(json);
+        yajl_tree_free(favsJson);
         return false;
     }
 
@@ -305,7 +307,7 @@ bool ZatData::loadChannels() {
         channelGroups.insert(channelGroups.end(),favGroup);
 
     yajl_tree_free(json);
-    yajl_tree_free(favs);
+    yajl_tree_free(favsJson);
     return true;
 }
 
