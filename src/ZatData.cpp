@@ -4,6 +4,7 @@
 #include <sstream>
 #include "../lib/tinyxml2/tinyxml2.h"
 #include "p8-platform/sockets/tcp.h"
+#include "p8-platform/util/timeutils.h"
 #include <map>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
@@ -52,11 +53,16 @@ string ZatData::HttpReq(const cpr::Url &url, const cpr::Payload* const postData,
     pzuidCookie = res.cookies["pzuid"];
   }
 
-  if (res.status_code < 400) {
+  if (res.status_code < 400 && res.status_code != 0) {
     return res.text;
   }
   else if (res.status_code == 403 && checkSession && renewSession()) {
     return HttpReq(url, postData, false);
+  }
+  else if (res.status_code == 0) {
+    XBMC->Log(LOG_DEBUG, "Sleeping 100ms");
+    usleep(100 * 1000);
+    return HttpReq(url, postData);
   }
 
   return "";
