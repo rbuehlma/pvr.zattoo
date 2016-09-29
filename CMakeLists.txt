@@ -30,6 +30,7 @@ set(ZATTOO_SOURCES
 		src/client.cpp
 		src/ZatData.cpp
 		src/JsonParser.cpp
+		src/UpdateThread.cpp
 		 )
 
 if(WIN32)

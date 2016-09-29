@@ -325,13 +325,14 @@ int ZatData::GetChannelGroupsAmount() {
     return channelGroups.size();
 }
 
-ZatData::ZatData(std::string u, std::string p, bool favoritesOnly)  {
-    username = u;
-    password = p;
-    this->favoritesOnly = favoritesOnly;
-    m_iLastStart    = 0;
-    m_iLastEnd      = 0;
-    streamType = "hls";
+ZatData::ZatData(UpdateThread *updateThread, std::string u, std::string p, bool favoritesOnly)  {
+  username = u;
+  password = p;
+  this->updateThread = updateThread;
+  this->favoritesOnly = favoritesOnly;
+  m_iLastStart = 0;
+  m_iLastEnd = 0;
+  streamType = "hls";
 }
 
 ZatData::~ZatData() {
@@ -690,6 +691,8 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       ZatChannel channel = channelsByCid[JsonParser::getString(recording, 1, "cid").c_str()];
       tag.iClientChannelUid = channel.iUniqueId;
       PVR->TransferTimerEntry(handle, &tag);
+
+      updateThread->SetNextRecordingUpdate(startTime);
     } else if (!future && startTime <= current_time) {
       PVR_RECORDING tag;
       memset(&tag, 0, sizeof(PVR_RECORDING));

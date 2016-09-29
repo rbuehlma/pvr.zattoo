@@ -4,6 +4,7 @@
 
 #include "client.h"
 #include "JsonParser.h"
+#include "UpdateThread.h"
 #include <map>
 
 /*!
@@ -70,7 +71,7 @@ struct PVRIptvEpgGenre
 class ZatData : public P8PLATFORM::CThread
 {
 public:
-    ZatData(std::string username, std::string password, bool favoritesOnly);
+    ZatData(UpdateThread *updateThread, std::string username, std::string password, bool favoritesOnly);
     virtual ~ZatData();
     virtual bool Initialize();
     virtual void      GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
@@ -126,6 +127,7 @@ private:
     std::map<int, ZatChannel>         channelsByNumber;
     std::map<std::string, ZatChannel> channelsByCid;
     int64_t                           maxRecallSeconds;
+    UpdateThread *updateThread;
 
     bool loadAppId();
 
