@@ -6,6 +6,7 @@
 #include "JsonParser.h"
 #include "UpdateThread.h"
 #include <map>
+#include "../lib/cpr/include/cpr.h"
 
 /*!
  * @brief PVR macros for string exchange
@@ -94,9 +95,8 @@ public:
     virtual bool DeleteRecording(string recordingId);
 
 protected:
-    virtual std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
-    virtual std::string HttpGet(string url);
-    virtual std::string HttpPost(string url, string postData);
+    virtual std::string HttpReq(const cpr::Url &url, bool checkSession = true);
+    virtual std::string HttpReq(const cpr::Url &url, const cpr::Payload* const postData, bool checkSession = true);
 
     virtual bool                 LoadEPG(time_t iStart, time_t iEnd);
 
@@ -128,12 +128,16 @@ private:
     std::map<std::string, ZatChannel> channelsByCid;
     int64_t                           maxRecallSeconds;
     UpdateThread *updateThread;
+    std::string                       pzuidCookie;
+    cpr::Session                      session;
 
-    bool loadAppId();
+    void saveSession();
 
-    bool loadAppIdFromFile();
+    bool renewSession();
 
-    bool sendHello();
+    bool loadCookieFromFile();
+
+    bool sendHello(bool checkLogin = false);
 
     bool login();
 
