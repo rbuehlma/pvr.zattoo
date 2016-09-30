@@ -1,6 +1,8 @@
+v0.1.18
+ - Replace Kodi CURL implementation with C++ Requests
+ - Revrited login/session management
 v0.1.17
-- Replace Kodi CURL implementation with C++ Requests
-- Revrited login/session management
+ - Update timers & recordings every 10 minutes or if a timer has reacht its start time
 v0.1.16
  - Fix another memory leak
  - Add option to only load favorites
