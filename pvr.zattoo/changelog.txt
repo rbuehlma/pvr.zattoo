@@ -1,3 +1,6 @@
+v0.1.18
+ - Improve login handling
+ - Re-init session if we get errors on loading pages
 v0.1.17
  - Update timers & recordings every 10 minutes or if a timer has reacht its start time
 v0.1.16

@@ -69,21 +69,39 @@ std::string ZatData::Base64Encode(unsigned char const* in, unsigned int in_len, 
   return ret;
 }
 
-string ZatData::HttpGet(string url) {
-  return HttpPost(url, "");
+string ZatData::HttpGet(string url, bool isInit) {
+  return HttpPost(url, "", isInit);
 }
 
-string ZatData::HttpPost(string url, string postData) {
+string ZatData::HttpPost(string url, string postData, bool isInit) {
   // open the file
   void* file = XBMC->CURLCreate(url.c_str());
-  if (!file)
-    return NULL;
+  if (!file) {
+    return "";
+  }
+
   XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "acceptencoding", "gzip");
   if (postData.size() != 0) {
     string base64 = Base64Encode((const unsigned char *)postData.c_str(), postData.size(), false);
     XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "postdata", base64.c_str());
   }
-  XBMC->CURLOpen(file, 0);
+
+  if (!XBMC->CURLOpen(file, 0)) {
+    if (isInit) {
+      XBMC->Log(LOG_ERROR, "Open URL failed during init.");
+      return "";
+    }
+    XBMC->Log(LOG_DEBUG, "Open URL failed. Try to re-init session.");
+    if (!initSession()) {
+      XBMC->Log(LOG_ERROR, "Re-init of session. Failed.");
+      return "";
+    }
+
+    if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE)) {
+      XBMC->Log(LOG_ERROR, "Open URL failed on second try. Something with your session is wrong.");
+      return "";
+    }
+  }
 
   // read the file
   static const unsigned int CHUNKSIZE = 16384;
@@ -118,7 +136,7 @@ bool ZatData::loadAppIdFromFile() {
 }
 
 bool ZatData::loadAppId() {
-  string html = HttpGet("https://zattoo.com");
+  string html = HttpGet("https://zattoo.com", true);
   appToken = "";
   //There seems to be a problem with old gcc and osx with regex. Do it the dirty way:
   int basePos = html.find("window.appToken = '") + 19;
@@ -145,7 +163,7 @@ bool ZatData::sendHello() {
   ostringstream dataStream;
   dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=json&client_app_token=" << appToken;
 
-  string jsonString = HttpPost("http://zattoo.com/zapi/session/hello", dataStream.str());
+  string jsonString = HttpPost("http://zattoo.com/zapi/session/hello", dataStream.str(), true);
 
   yajl_val json = JsonParser::parse(jsonString);
 
@@ -155,7 +173,7 @@ bool ZatData::sendHello() {
     return true;
   } else {
     yajl_tree_free(json);
-    XBMC->Log(LOG_NOTICE, "Hello failed.");
+    XBMC->Log(LOG_ERROR, "Hello failed.");
     return false;
   }
 }
@@ -165,13 +183,13 @@ bool ZatData::login() {
 
   ostringstream dataStream;
   dataStream << "login=" << username << "&password=" << password << "&format=json";
-  string jsonString = HttpPost("http://zattoo.com/zapi/account/login", dataStream.str());
+  string jsonString = HttpPost("http://zattoo.com/zapi/account/login", dataStream.str(), true);
 
   yajl_val json = JsonParser::parse(jsonString);
 
   if (json == NULL || !JsonParser::getBoolean(json, 1, "success")){
     yajl_tree_free(json);
-    XBMC->Log(LOG_NOTICE, "Login failed.");
+    XBMC->Log(LOG_ERROR, "Login failed.");
     return false;
   }
 
@@ -181,22 +199,26 @@ bool ZatData::login() {
 }
 
 bool ZatData::initSession() {
-  string jsonString = HttpGet("http://zattoo.com/zapi/v2/session");
+  string jsonString = HttpGet("http://zattoo.com/zapi/v2/session", true);
   yajl_val json = JsonParser::parse(jsonString);
   if(json == NULL || !JsonParser::getBoolean(json, 1, "success")) {
     yajl_tree_free(json);
-    XBMC->Log(LOG_NOTICE, "Initialize session failed.");
+    XBMC->Log(LOG_ERROR, "Initialize session failed.");
     return false;
   }
 
   if (!JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
     yajl_tree_free(json);
-    login();
-    jsonString = HttpGet("http://zattoo.com/zapi/v2/session");
+    XBMC->Log(LOG_DEBUG, "Need to login.");
+
+    if (!sendHello() || !login()) {
+      return false;
+    }
+    jsonString = HttpGet("http://zattoo.com/zapi/v2/session", true);
     json = JsonParser::parse(jsonString);
     if (json == NULL || !JsonParser::getBoolean(json, 1, "success") || !JsonParser::getBoolean(json, 2, "session" , "loggedin")) {
       yajl_tree_free(json);
-      XBMC->Log(LOG_NOTICE, "Initialize session failed.");
+      XBMC->Log(LOG_ERROR, "Initialize session failed.");
       return false;
     }
   }
@@ -205,6 +227,9 @@ bool ZatData::initSession() {
   recordingEnabled = JsonParser::getBoolean(json, 2, "session" , "recording_eligible");
   if (recallEnabled) {
     maxRecallSeconds = JsonParser::getInt(json, 2, "session" , "recall_seconds");
+  }
+  if (recordingEnabled && updateThread == NULL) {
+    updateThread = new UpdateThread();
   }
   powerHash = JsonParser::getString(json, 2, "session" , "power_guide_hash");
   yajl_tree_free(json);
@@ -226,9 +251,7 @@ yajl_val ZatData::loadFavourites() {
 }
 
 
-
-bool ZatData::loadChannels() {
-
+bool ZatData::LoadChannels() {
     std::map<std::string, ZatChannel> allChannels;
     yajl_val favsJson = loadFavourites();
     
@@ -251,7 +274,7 @@ bool ZatData::loadChannels() {
         return false;
     }
 
-    channelNumber = favs->u.array.len + 1;
+    int channelNumber = favs->u.array.len + 1;
     yajl_val groups = JsonParser::getArray(json, 1, "channel_groups");
 
     //Load the channel groups and channels
@@ -325,10 +348,14 @@ int ZatData::GetChannelGroupsAmount() {
     return channelGroups.size();
 }
 
-ZatData::ZatData(UpdateThread *updateThread, std::string u, std::string p, bool favoritesOnly)  {
+ZatData::ZatData(std::string u, std::string p, bool favoritesOnly) :
+  maxRecallSeconds(0),
+  recallEnabled(false),
+  recordingEnabled(false),
+  updateThread(NULL)
+{
   username = u;
   password = p;
-  this->updateThread = updateThread;
   this->favoritesOnly = favoritesOnly;
   m_iLastStart = 0;
   m_iLastEnd = 0;
@@ -336,31 +363,25 @@ ZatData::ZatData(UpdateThread *updateThread, std::string u, std::string p, bool 
 }
 
 ZatData::~ZatData() {
-    channelGroups.clear();
-    
+  if (updateThread != NULL) {
+    updateThread->StopThread(1000);
+    delete updateThread;
+  }
+  channelGroups.clear();
 }
 
 bool ZatData::Initialize() {
 
-  if (!this->loadAppId()) {
-    XBMC->Log(LOG_ERROR, "Could not get an app id.");
+  if (!loadAppId()) {
+    XBMC->Log(LOG_ERROR, "Could not get an app id. You may want to delete cookies.dat in your Kodi data folder.");
     return false;
   }
 
-  if (initSession() && this->loadChannels()) {
-    return true;
-  }
-
-  if (!this->sendHello()) {
-    XBMC->Log(LOG_NOTICE, "Initialize session failed. Try to re-init session.");
+  if (!initSession()) {
     return false;
   }
 
-  if (initSession() && this->loadChannels()) {
-    return true;
-  }
-
-  return false;
+  return true;
 }
 
 void ZatData::GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities) {
@@ -692,7 +713,9 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       tag.iClientChannelUid = channel.iUniqueId;
       PVR->TransferTimerEntry(handle, &tag);
 
-      updateThread->SetNextRecordingUpdate(startTime);
+      if (updateThread != NULL) {
+        updateThread->SetNextRecordingUpdate(startTime);
+      }
     } else if (!future && startTime <= current_time) {
       PVR_RECORDING tag;
       memset(&tag, 0, sizeof(PVR_RECORDING));

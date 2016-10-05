@@ -17,6 +17,9 @@ using namespace std;
 
 yajl_val JsonParser::parse(string jsonString) {
 	char errbuf[1024];
+	if (jsonString.empty()) {
+	  return NULL;
+	}
 	yajl_val json = yajl_tree_parse(jsonString.c_str(), errbuf, sizeof(errbuf));
 	if (json == NULL) {
 		D(cout  << "Error parsing json:\n" << jsonString << "\nMessage:\n" << errbuf << "\n");

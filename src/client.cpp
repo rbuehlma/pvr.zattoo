@@ -3,7 +3,6 @@
 #include "kodi/xbmc_pvr_dll.h"
 #include "kodi/libKODI_guilib.h"
 #include <iostream>
-#include "UpdateThread.h"
 
 
 
@@ -16,7 +15,6 @@ using namespace ADDON;
 ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
 ZatData *zat = NULL;
 bool m_bIsPlaying = false;
-UpdateThread *updateThread = NULL;
 
 /* User adjustable settings are saved here.
  * Default values are defined inside client.h
@@ -117,10 +115,9 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
     ADDON_ReadSettings();
     if (!zatUsername.empty() && !zatPassword.empty()) {
       XBMC->Log(LOG_DEBUG, "Create Zat");
-      updateThread = new UpdateThread();
-      zat = new ZatData(updateThread, zatUsername, zatPassword, zatFavoritesOnly);
+      zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly);
       XBMC->Log(LOG_DEBUG, "Zat created");
-      if (zat->Initialize()) {
+      if (zat->Initialize() && zat->LoadChannels()) {
         m_CurStatus = ADDON_STATUS_OK;
       } else {
         XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
@@ -135,11 +132,6 @@ ADDON_STATUS ADDON_GetStatus() {
 }
 
 void ADDON_Destroy() {
-  if (updateThread != NULL) {
-    updateThread->StopThread(1000);
-    delete updateThread;
-  }
-
   delete zat;
   m_CurStatus = ADDON_STATUS_UNKNOWN;
 }

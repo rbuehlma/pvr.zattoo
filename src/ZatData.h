@@ -71,9 +71,10 @@ struct PVRIptvEpgGenre
 class ZatData : public P8PLATFORM::CThread
 {
 public:
-    ZatData(UpdateThread *updateThread, std::string username, std::string password, bool favoritesOnly);
+    ZatData(std::string username, std::string password, bool favoritesOnly);
     virtual ~ZatData();
     virtual bool Initialize();
+    virtual bool LoadChannels();
     virtual void      GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
     virtual int       GetChannelsAmount(void);
     virtual PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
@@ -95,8 +96,8 @@ public:
 
 protected:
     virtual std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
-    virtual std::string HttpGet(string url);
-    virtual std::string HttpPost(string url, string postData);
+    virtual std::string HttpGet(string url, bool isInit = false);
+    virtual std::string HttpPost(string url, string postData, bool isInit = false);
 
     virtual bool                 LoadEPG(time_t iStart, time_t iEnd);
 
@@ -109,11 +110,8 @@ protected:
     virtual void *Process(void);
 
 private:
-    bool                              m_bTSOverride;
-    int                               m_iEPGTimeShift;
     int                               m_iLastStart;
     int                               m_iLastEnd;
-    int                               channelNumber;
     std::string                       appToken;
     std::string                       powerHash;
     bool                              recallEnabled;
@@ -122,7 +120,6 @@ private:
     std::string                       username;
     std::string                       password;
     bool                              favoritesOnly;
-    std::string                       m_strLogoPath;
     std::vector<PVRZattooChannelGroup> channelGroups;
     std::map<int, ZatChannel>         channelsByNumber;
     std::map<std::string, ZatChannel> channelsByCid;
@@ -138,8 +135,6 @@ private:
     bool login();
 
     bool initSession();
-
-    bool loadChannels();
 
     int findChannelNumber(int uniqueId);
 
