@@ -125,12 +125,17 @@ private:
     std::map<std::string, ZatChannel> channelsByCid;
     int64_t                           maxRecallSeconds;
     UpdateThread *updateThread;
+    std::string uuid;
 
     bool loadAppId();
 
+    string getUUID();
+
+    string generateUUID();
+
     bool loadAppIdFromFile();
 
-    bool sendHello();
+    bool sendHello(string uuid);
 
     bool login();
 

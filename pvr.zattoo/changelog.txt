@@ -1,3 +1,6 @@
+v0.1.19
+ - Generate and store a unique UUID for every installation
+ - Ignore if hello failes
 v0.1.18
  - Improve login handling
  - Re-init session if we get errors on loading pages

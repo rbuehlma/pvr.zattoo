@@ -7,6 +7,7 @@
 #include "p8-platform/sockets/tcp.h"
 #include <map>
 #include <time.h>
+#include <random>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
  #pragma comment(lib, "ws2_32.lib")
@@ -34,6 +35,7 @@ abcdefghijklmnopqrstuvwxyz\
 0123456789+/";
 
 static const string app_token_file = "special://profile/addon_data/pvr.zattoo/app_token";
+static const string uuid_file = "special://profile/addon_data/pvr.zattoo/uuid_file";
 
 std::string ZatData::Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode)
 {
@@ -135,6 +137,63 @@ bool ZatData::loadAppIdFromFile() {
   return false;
 }
 
+string ZatData::getUUID() {
+  void* file;
+  char buf[37];
+  size_t nbRead;
+
+  if (!uuid.empty()) {
+    return uuid;
+  }
+
+  if (!XBMC->FileExists(uuid_file.c_str(), true)) {
+    XBMC->Log(LOG_DEBUG, "No UUID available. Generate a new one.");
+    uuid = generateUUID();
+    XBMC->Log(LOG_DEBUG, "UUID: %s", uuid.c_str());
+    file = XBMC->OpenFileForWrite(uuid_file.c_str(), true);
+    XBMC->WriteFile(file, uuid.c_str(), uuid.length());
+    XBMC->CloseFile(file);
+    return uuid;
+  }
+  XBMC->Log(LOG_DEBUG, "Load UUID from file.");
+  file = XBMC->CURLCreate(uuid_file.c_str());
+  if (file && XBMC->CURLOpen(file, 0)) {
+    nbRead = XBMC->ReadFile(file, buf, 37);
+    XBMC->CloseFile(file);
+    if (nbRead > 0) {
+      buf[36] = 0;
+      uuid = buf;
+      XBMC->Log(LOG_DEBUG, "UUID: [%s]", uuid.c_str());
+      return uuid;
+    }
+  }
+  XBMC->Log(LOG_ERROR, "Failed to get an UUID.");
+  return "";
+}
+
+string ZatData::generateUUID() {
+  std::random_device rd;
+  std::mt19937 rng(rd());
+  std::uniform_int_distribution<int> uni(0,15);
+  ostringstream uuid;
+
+  uuid << std::hex;
+
+  for (int i = 0; i<32; i++) {
+    if (i == 8 || i == 12 || i == 16 || i == 20) {
+      uuid << "-";
+    }
+    if (i == 12) {
+      uuid << 4;
+    } else if (i == 16) {
+      uuid << ((uni(rng) % 4) + 8);
+    } else {
+      uuid << uni(rng);
+    }
+  }
+  return uuid.str();
+}
+
 bool ZatData::loadAppId() {
   string html = HttpGet("https://zattoo.com", true);
   appToken = "";
@@ -158,10 +217,10 @@ bool ZatData::loadAppId() {
 
 }
 
-bool ZatData::sendHello() {
+bool ZatData::sendHello(string uuid) {
   XBMC->Log(LOG_DEBUG, "Send hello.");
   ostringstream dataStream;
-  dataStream << "uuid=888b4f54-c127-11e5-9912-ba0be0483c18&lang=en&format=json&client_app_token=" << appToken;
+  dataStream << "uuid=" << uuid << "&lang=en&format=json&client_app_token=" << appToken;
 
   string jsonString = HttpPost("http://zattoo.com/zapi/session/hello", dataStream.str(), true);
 
@@ -199,6 +258,7 @@ bool ZatData::login() {
 }
 
 bool ZatData::initSession() {
+  getUUID();
   string jsonString = HttpGet("http://zattoo.com/zapi/v2/session", true);
   yajl_val json = JsonParser::parse(jsonString);
   if(json == NULL || !JsonParser::getBoolean(json, 1, "success")) {
@@ -211,7 +271,15 @@ bool ZatData::initSession() {
     yajl_tree_free(json);
     XBMC->Log(LOG_DEBUG, "Need to login.");
 
-    if (!sendHello() || !login()) {
+    string uuid = getUUID();
+    if (uuid.empty()) {
+      return false;
+    }
+
+    sendHello(uuid);
+    //Ignore if hello failes
+
+    if (!login()) {
       return false;
     }
     jsonString = HttpGet("http://zattoo.com/zapi/v2/session", true);
@@ -352,7 +420,8 @@ ZatData::ZatData(std::string u, std::string p, bool favoritesOnly) :
   maxRecallSeconds(0),
   recallEnabled(false),
   recordingEnabled(false),
-  updateThread(NULL)
+  updateThread(NULL),
+  uuid("")
 {
   username = u;
   password = p;
