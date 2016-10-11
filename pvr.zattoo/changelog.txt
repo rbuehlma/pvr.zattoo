@@ -1,6 +1,8 @@
+v0.1.20
+ - Do not store app token and uuid anymore as Kodi does not store cookies since v17 beta 3
 v0.1.19
  - Generate and store a unique UUID for every installation
- - Ignore if hello failes
+ - Ignore if hello fails
 v0.1.18
  - Improve login handling
  - Re-init session if we get errors on loading pages

@@ -133,8 +133,6 @@ private:
 
     string generateUUID();
 
-    bool loadAppIdFromFile();
-
     bool sendHello(string uuid);
 
     bool login();

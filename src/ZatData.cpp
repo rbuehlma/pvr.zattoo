@@ -34,9 +34,6 @@ static const char *to_base64 =
 abcdefghijklmnopqrstuvwxyz\
 0123456789+/";
 
-static const string app_token_file = "special://profile/addon_data/pvr.zattoo/app_token";
-static const string uuid_file = "special://profile/addon_data/pvr.zattoo/uuid_file";
-
 std::string ZatData::Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode)
 {
   std::string ret;
@@ -120,23 +117,6 @@ string ZatData::HttpPost(string url, string postData, bool isInit) {
   return body;
 }
 
-bool ZatData::loadAppIdFromFile() {
-  void* file;
-  char buf[256];
-  size_t nbRead;
-  file = XBMC->CURLCreate(app_token_file.c_str());
-  if (file && XBMC->CURLOpen(file, 0)) {
-    nbRead = XBMC->ReadFile(file, buf, 255);
-    XBMC->CloseFile(file);
-    if (nbRead > 0) {
-      appToken = buf;
-      XBMC->Log(LOG_DEBUG, "Loaded App token from file: %s", XBMC->UnknownToUTF8(appToken.c_str()));
-      return true;
-    }
-  }
-  return false;
-}
-
 string ZatData::getUUID() {
   void* file;
   char buf[37];
@@ -146,29 +126,8 @@ string ZatData::getUUID() {
     return uuid;
   }
 
-  if (!XBMC->FileExists(uuid_file.c_str(), true)) {
-    XBMC->Log(LOG_DEBUG, "No UUID available. Generate a new one.");
-    uuid = generateUUID();
-    XBMC->Log(LOG_DEBUG, "UUID: %s", uuid.c_str());
-    file = XBMC->OpenFileForWrite(uuid_file.c_str(), true);
-    XBMC->WriteFile(file, uuid.c_str(), uuid.length());
-    XBMC->CloseFile(file);
-    return uuid;
-  }
-  XBMC->Log(LOG_DEBUG, "Load UUID from file.");
-  file = XBMC->CURLCreate(uuid_file.c_str());
-  if (file && XBMC->CURLOpen(file, 0)) {
-    nbRead = XBMC->ReadFile(file, buf, 37);
-    XBMC->CloseFile(file);
-    if (nbRead > 0) {
-      buf[36] = 0;
-      uuid = buf;
-      XBMC->Log(LOG_DEBUG, "UUID: [%s]", uuid.c_str());
-      return uuid;
-    }
-  }
-  XBMC->Log(LOG_ERROR, "Failed to get an UUID.");
-  return "";
+  uuid = generateUUID();
+  return uuid;
 }
 
 string ZatData::generateUUID() {
@@ -205,14 +164,11 @@ bool ZatData::loadAppId() {
   }
 
   if(appToken.empty()) {
-    XBMC->Log(LOG_DEBUG, "Could not load App token. Try to get from file.");
-    return loadAppIdFromFile();
+    XBMC->Log(LOG_ERROR, "Error getting app token");
+    return false;
   }
 
   XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
-  void *file = XBMC->OpenFileForWrite(app_token_file.c_str(), true);
-  XBMC->WriteFile(file, appToken.c_str(), appToken.length());
-  XBMC->CloseFile(file);
   return true;
 
 }
