@@ -398,7 +398,7 @@ ZatData::~ZatData() {
 bool ZatData::Initialize() {
 
   if (!loadAppId()) {
-    XBMC->Log(LOG_ERROR, "Could not get an app id. You may want to delete cookies.dat in your Kodi data folder.");
+    XBMC->Log(LOG_ERROR, "Could not get an app id.");
     return false;
   }
 
