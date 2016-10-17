@@ -126,6 +126,7 @@ private:
     int64_t                           maxRecallSeconds;
     UpdateThread *updateThread;
     std::string uuid;
+    std::string cookie;
 
     bool loadAppId();
 

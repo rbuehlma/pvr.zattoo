@@ -1,3 +1,5 @@
+v0.1.21
+ - Re-add own HTTP implementation to allow access to cookies
 v0.1.20
  - Do not store app token and uuid anymore as Kodi does not store cookies since v17 beta 3
 v0.1.19

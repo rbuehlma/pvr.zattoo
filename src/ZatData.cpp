@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include "ZatData.h"
+#include "HTTPSocket.h"
 #include "yajl/yajl_tree.h"
 #include <sstream>
 #include "../lib/tinyxml2/tinyxml2.h"
@@ -73,48 +74,34 @@ string ZatData::HttpGet(string url, bool isInit) {
 }
 
 string ZatData::HttpPost(string url, string postData, bool isInit) {
-  // open the file
-  void* file = XBMC->CURLCreate(url.c_str());
-  if (!file) {
+  HTTPSocketRaw *socket = new HTTPSocketRaw();
+  Request request;
+  XBMC->Log(LOG_DEBUG, "Http-Request: %s.", url.c_str());
+  request.url = url;
+  if (!postData.empty()) {
+    request.method = POST;
+    request.body = postData;
+  }
+  request.AddHeader("Cookie", cookie);
+  Response response;
+  if (!socket->Execute(request, response)) {
+    XBMC->Log(LOG_DEBUG, "Http request failed");
     return "";
   }
-
-  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "acceptencoding", "gzip");
-  if (postData.size() != 0) {
-    string base64 = Base64Encode((const unsigned char *)postData.c_str(), postData.size(), false);
-    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "postdata", base64.c_str());
-  }
-
-  if (!XBMC->CURLOpen(file, 0)) {
-    if (isInit) {
-      XBMC->Log(LOG_ERROR, "Open URL failed during init.");
-      return "";
-    }
+  if (response.statusCode == "403" && !isInit) {
     XBMC->Log(LOG_DEBUG, "Open URL failed. Try to re-init session.");
     if (!initSession()) {
       XBMC->Log(LOG_ERROR, "Re-init of session. Failed.");
       return "";
     }
-
-    if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE)) {
-      XBMC->Log(LOG_ERROR, "Open URL failed on second try. Something with your session is wrong.");
-      return "";
-    }
+    socket->Execute(request, response);
   }
-
-  // read the file
-  static const unsigned int CHUNKSIZE = 16384;
-  char buf[CHUNKSIZE + 1];
-  size_t nbRead;
-  string body = "";
-  while ((nbRead = XBMC->ReadFile(file, buf, CHUNKSIZE)) > 0 && ~nbRead) {
-    buf[nbRead] = 0x0;
-    body += buf;
+  if (response.statusCode != "200") {
+    XBMC->Log(LOG_ERROR, "HTTP failed with status code %s.", response.statusCode.c_str());
+    return "";
   }
-
-  XBMC->CloseFile(file);
-
-  return body;
+  cookie = response.cookie;
+  return response.body;
 }
 
 string ZatData::getUUID() {
@@ -154,7 +141,7 @@ string ZatData::generateUUID() {
 }
 
 bool ZatData::loadAppId() {
-  string html = HttpGet("https://zattoo.com", true);
+  string html = HttpGet("http://zattoo.com", true);
   appToken = "";
   //There seems to be a problem with old gcc and osx with regex. Do it the dirty way:
   int basePos = html.find("window.appToken = '") + 19;
