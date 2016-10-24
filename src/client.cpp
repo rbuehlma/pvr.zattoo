@@ -229,6 +229,8 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsTV              = true;
   pCapabilities->bSupportsRadio           = true;
   pCapabilities->bSupportsChannelGroups   = true;
+  pCapabilities->bSupportsRecordingPlayCount = true;
+  pCapabilities->bSupportsLastPlayedPosition = true;
 
   if (zat) {
     zat->GetAddonCapabilities(pCapabilities);
@@ -457,6 +459,32 @@ PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size) {
 
 
 
+PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count) {
+  if (!zat) {
+    return PVR_ERROR_FAILED;
+  }
+  zat->SetRecordingPlayCount(recording, count);
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition) {
+  if (!zat) {
+    return PVR_ERROR_FAILED;
+  }
+  zat->SetRecordingLastPlayedPosition(recording, lastplayedposition);
+  return PVR_ERROR_NO_ERROR;
+}
+
+int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) {
+  if (!zat) {
+    return -1;
+  }
+
+  return zat->GetRecordingLastPlayedPosition(recording);
+}
+
+
+
 /** UNUSED API FUNCTIONS */
 bool CanPauseStream(void) { return false; }
 PVR_ERROR OpenDialogChannelScan(void) { return PVR_ERROR_NOT_IMPLEMENTED; }
@@ -479,9 +507,6 @@ long long SeekLiveStream(long long iPosition, int iWhence /* = SEEK_SET */) { re
 long long PositionLiveStream(void) { return -1; }
 long long LengthLiveStream(void) { return -1; }
 PVR_ERROR RenameRecording(const PVR_RECORDING &recording) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition) { return PVR_ERROR_NOT_IMPLEMENTED; }
-int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) { return -1; }
 PVR_ERROR GetRecordingEdl(const PVR_RECORDING&, PVR_EDL_ENTRY[], int*) { return PVR_ERROR_NOT_IMPLEMENTED; };
 PVR_ERROR UpdateTimer(const PVR_TIMER &timer) { return PVR_ERROR_NOT_IMPLEMENTED; }
 void DemuxAbort(void) {}

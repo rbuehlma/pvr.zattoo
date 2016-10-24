@@ -1,3 +1,5 @@
+v0.1.22
+ - Support resume time and watch count
 v0.1.21
  - Re-add own HTTP implementation to allow access to cookies
 v0.1.20

@@ -3,6 +3,7 @@
 #include "ZatData.h"
 #include "HTTPSocket.h"
 #include "yajl/yajl_tree.h"
+#include "yajl/yajl_gen.h"
 #include <sstream>
 #include "../lib/tinyxml2/tinyxml2.h"
 #include "p8-platform/sockets/tcp.h"
@@ -29,6 +30,8 @@
 
 using namespace ADDON;
 using namespace std;
+
+static const string data_file = "special://profile/addon_data/pvr.zattoo/data.json";
 
 static const char *to_base64 =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ\
@@ -102,6 +105,88 @@ string ZatData::HttpPost(string url, string postData, bool isInit) {
   }
   cookie = response.cookie;
   return response.body;
+}
+
+bool ZatData::readDataJson() {
+  void* file;
+  char buf[256];
+  size_t nbRead;
+  string jsonString;
+  if (!XBMC->FileExists(data_file.c_str(), true)) {
+    return true;
+  }
+  file = XBMC->CURLCreate(data_file.c_str());
+  if (!file || !XBMC->CURLOpen(file, 0)) {
+    XBMC->Log(LOG_ERROR, "Loading data.json failed.");
+    return false;
+  }
+  while ((nbRead = XBMC->ReadFile(file, buf, 255)) > 0) {
+    buf[nbRead] = 0;
+    jsonString.append(buf);
+  }
+  XBMC->CloseFile(file);
+
+  yajl_val json = JsonParser::parse(jsonString);
+  if (json == NULL) {
+    XBMC->Log(LOG_ERROR, "Parsing data.json failed.");
+    return false;
+  }
+
+  yajl_val recordings = JsonParser::getArray(json, 1, "recordings");
+  for ( int index = 0; index < recordings->u.array.len; ++index ) {
+    yajl_val recording = recordings->u.array.values[index];
+    ZatRecordingData *recData = new ZatRecordingData();
+    recData->recordingId = JsonParser::getString(recording, 1, "recordingId");
+    recData->playCount = JsonParser::getInt(recording, 1, "playCount");
+    recData->lastPlayedPosition = JsonParser::getInt(recording, 1, "lastPlayedPosition");
+    recData->stillValid = false;
+    recordingsData[recData->recordingId] = recData;
+  }
+
+  yajl_tree_free(json);
+  XBMC->Log(LOG_DEBUG, "Loaded data.json.");
+  return true;
+}
+
+bool ZatData::writeDataJson() {
+  void* file;
+  string jsonString;
+  yajl_gen g;
+  if (!(file = XBMC->OpenFileForWrite(data_file.c_str(), true))) {
+    XBMC->Log(LOG_ERROR, "Save data.json failed.");
+    return false;
+  }
+
+  g = yajl_gen_alloc(NULL);
+  yajl_gen_config(g, yajl_gen_beautify, 1);
+  yajl_gen_config(g, yajl_gen_validate_utf8, 1);
+  const unsigned char * buf;
+  size_t len;
+  yajl_gen_map_open(g);
+  JS_STR(g, "recordings");
+  yajl_gen_array_open(g);
+  for (auto const& item : recordingsData) {
+    if (!item.second->stillValid) {
+      continue;
+    }
+    yajl_gen_map_open(g);
+    JS_STR(g, "recordingId");
+    JS_STR(g, item.second->recordingId);
+    JS_STR(g, "playCount");
+    yajl_gen_integer(g, item.second->playCount);
+    JS_STR(g, "lastPlayedPosition");
+    yajl_gen_integer(g, item.second->lastPlayedPosition);
+    yajl_gen_map_close(g);
+  }
+  yajl_gen_array_close(g);
+  yajl_gen_map_close(g);
+  while (yajl_gen_status_ok == yajl_gen_get_buf(g, &buf, &len) && len > 0) {
+    XBMC->WriteFile(file, buf, len);
+    yajl_gen_clear(g);
+  }
+  XBMC->CloseFile(file);
+  yajl_gen_free(g);
+  return true;
 }
 
 string ZatData::getUUID() {
@@ -392,6 +477,8 @@ bool ZatData::Initialize() {
   if (!initSession()) {
     return false;
   }
+
+  readDataJson();
 
   return true;
 }
@@ -689,6 +776,50 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
     return true;
 }
 
+void ZatData::SetRecordingPlayCount(const PVR_RECORDING &recording, int count) {
+  string recordingId = recording.strRecordingId;
+  ZatRecordingData *recData;
+  if (recordingsData.find(recordingId) != recordingsData.end()) {
+    recData = recordingsData[recordingId];
+    recData->playCount = count;
+  } else {
+    recData = new ZatRecordingData();
+    recData->playCount = count;
+    recData->recordingId = recordingId;
+    recData->lastPlayedPosition = 0;
+    recData->stillValid = true;
+    recordingsData[recordingId] = recData;
+  }
+
+  writeDataJson();
+}
+
+void ZatData::SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition) {
+  string recordingId = recording.strRecordingId;
+  ZatRecordingData *recData;
+  if (recordingsData.find(recordingId) != recordingsData.end()) {
+    recData = recordingsData[recordingId];
+    recData->lastPlayedPosition = lastplayedposition;
+  } else {
+    recData = new ZatRecordingData();
+    recData->playCount = 0;
+    recData->recordingId = recordingId;
+    recData->lastPlayedPosition = lastplayedposition;
+    recData->stillValid = true;
+    recordingsData[recordingId] = recData;
+  }
+
+  writeDataJson();
+}
+
+int ZatData::GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) {
+  if (recordingsData.find(recording.strRecordingId) != recordingsData.end()) {
+    ZatRecordingData* recData = recordingsData[recording.strRecordingId];
+    return recData->lastPlayedPosition;
+  }
+  return 0;
+}
+
 void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
   string jsonString = HttpGet("http://zattoo.com/zapi/playlist");
 
@@ -741,6 +872,14 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       tag.recordingTime = startTime;
       tag.iDuration = endTime -  startTime;
       PVR_STRCPY(tag.strStreamURL, GetRecordingStreamUrl(tag.strRecordingId).c_str());
+
+      if (recordingsData.find(tag.strRecordingId) != recordingsData.end()) {
+        ZatRecordingData* recData = recordingsData[tag.strRecordingId];
+        tag.iPlayCount = recData->playCount;
+        tag.iLastPlayedPosition = recData->lastPlayedPosition;
+        recData->stillValid = true;
+      }
+
       PVR->TransferRecordingEntry(handle, &tag);
     }
   }

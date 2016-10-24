@@ -13,6 +13,11 @@
 #define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); dest[sizeof(dest)-1] = '\0'; } while(0)
 #define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
 
+#define JS_STR(G, STR) do {                                             \
+        string _s = (STR);                                         \
+        yajl_gen_string(G, (const unsigned char*)_s.c_str(), _s.length());      \
+} while (0)
+
 struct PVRIptvEpgEntry
 {
     int         iBroadcastId;
@@ -51,6 +56,14 @@ struct ZatChannel
     std::string strTvgLogo;
     std::string cid;
     std::vector<PVRIptvEpgEntry> epg;
+};
+
+struct ZatRecordingData
+{
+  std::string recordingId;
+  int playCount;
+  int lastPlayedPosition;
+  bool stillValid;
 };
 
 struct PVRZattooChannelGroup
@@ -93,6 +106,9 @@ public:
     virtual std::string GetRecordingStreamUrl(string recordingId);
     virtual bool Record(int programId);
     virtual bool DeleteRecording(string recordingId);
+    virtual void SetRecordingPlayCount(const PVR_RECORDING &recording, int count);
+    virtual void SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition);
+    virtual int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording);
 
 protected:
     virtual std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
@@ -123,12 +139,17 @@ private:
     std::vector<PVRZattooChannelGroup> channelGroups;
     std::map<int, ZatChannel>         channelsByNumber;
     std::map<std::string, ZatChannel> channelsByCid;
+    std::map<std::string, ZatRecordingData*> recordingsData;
     int64_t                           maxRecallSeconds;
     UpdateThread *updateThread;
     std::string uuid;
     std::string cookie;
 
     bool loadAppId();
+
+    bool readDataJson();
+
+    bool writeDataJson();
 
     string getUUID();
 
