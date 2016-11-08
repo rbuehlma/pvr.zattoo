@@ -1,3 +1,9 @@
+v0.2.0
+ - Enable DASH
+ - Enable Seeking (may not work with current inputstream.mpd)
+ - Enable recording of past shows
+ - Enable RePlay-TV
+ - Please note that this version requires a patched version of Kodi v17
 v0.1.22
  - Support resume time and watch count
 v0.1.21
