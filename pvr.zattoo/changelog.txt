@@ -1,3 +1,21 @@
+v0.2.6
+ - Merge v0.1.29
+v0.2.5
+ - Merge v0.1.28
+v0.2.4
+ - Merge v0.1.27
+v0.2.3
+ - Merge v0.1.26
+v0.2.2
+ - Merge v0.1.24
+v0.2.1
+ - Temporary fix to show correct epg in case of replay
+v0.2.0
+ - Enable DASH
+ - Enable Seeking (may not work with current inputstream.mpd)
+ - Enable recording of past shows
+ - Enable RePlay-TV
+ - Please note that this version requires a patched version of Kodi v17
 v0.1.32
  - Implement alternative EPG service to speed up and include description
 v0.1.31
