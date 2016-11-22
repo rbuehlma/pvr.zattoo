@@ -3,7 +3,12 @@
 #include "kodi/xbmc_pvr_dll.h"
 #include "kodi/libKODI_guilib.h"
 #include <iostream>
+#include <string>
 
+int main()
+{
+  std::string s = std::to_string(42);
+}
 
 
 using namespace ADDON;
