@@ -431,9 +431,10 @@ PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete) {
   if (!zat) {
     return PVR_ERROR_SERVER_ERROR;
   }
-  / if (!zat->DeleteRecording(to_string(timer.iClientIndex))) {
+  /* if (!zat->DeleteRecording(to_string(timer.iClientIndex))) {
     return PVR_ERROR_REJECTED;
-  } /
+  } */
+    
   PVR->TriggerTimerUpdate();
   return PVR_ERROR_NO_ERROR;
 }
