@@ -864,7 +864,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       memset(&tag, 0, sizeof(PVR_RECORDING));
       tag.bIsDeleted = false;
 
-      /*PVR_STRCPY(tag.strRecordingId, to_string(JsonParser::getInt(recording, 1, "id")).c_str());*/
+      PVR_STRCPY(tag.strRecordingId, to_string(JsonParser::getInt(recording, 1, "id")).c_str());
       PVR_STRCPY(tag.strTitle, JsonParser::getString(recording, 1, "title").c_str());
       PVR_STRCPY(tag.strEpisodeName, JsonParser::getString(recording, 1, "episode_title").c_str());
       PVR_STRCPY(tag.strIconPath, JsonParser::getString(recording, 1, "image_url").c_str());
