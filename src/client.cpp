@@ -3,6 +3,7 @@
 #include "kodi/xbmc_pvr_dll.h"
 #include "kodi/libKODI_guilib.h"
 #include <iostream>
+#include "to_string.h"
 
 using namespace ADDON;
 
