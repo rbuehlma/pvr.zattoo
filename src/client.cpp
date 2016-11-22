@@ -12,6 +12,10 @@ using namespace ADDON;
 #define snprintf _snprintf
 #endif
 
+#ifdef TARGET_ANDROID
+#include "to_string.h"
+#endif
+
 ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
 ZatData *zat = NULL;
 bool m_bIsPlaying = false;
