@@ -17,6 +17,10 @@
  #include <stdlib.h>
 #endif
 
+#ifdef TARGET_ANDROID
+#include "to_string.h"
+#endif
+
 
 #define DEBUG
 
