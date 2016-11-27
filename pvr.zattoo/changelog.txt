@@ -1,3 +1,5 @@
+v0.1.23
+ - Adapt to new API version
 v0.1.22
  - Support resume time and watch count
 v0.1.21
