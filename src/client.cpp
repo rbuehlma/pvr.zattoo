@@ -20,6 +20,8 @@ using namespace ADDON;
 ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
 ZatData *zat = NULL;
 bool m_bIsPlaying = false;
+time_t      g_pvrZattooTimeShift;
+
 
 /* User adjustable settings are saved here.
  * Default values are defined inside client.h
@@ -95,6 +97,8 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
     if (!hdl || !props) {
         return ADDON_STATUS_UNKNOWN;
     }
+
+    g_pvrZattooTimeShift = 0;
 
     PVR_PROPERTIES *pvrprops = (PVR_PROPERTIES *) props;
 
@@ -309,6 +313,7 @@ PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio)
 bool OpenLiveStream(const PVR_CHANNEL &channel)
 {
 
+    g_pvrZattooTimeShift = 0;
     std::string url = GetLiveStreamURL(channel);
 
     XBMC->Log(LOG_DEBUG, "Open Livestream URL %s", url.c_str());
@@ -489,6 +494,8 @@ int GetEpgTagUrl(const EPG_TAG &tag, char *url, int urlLen) {
     return -1;
   }
   string strUrl = zat->GetEpgTagUrl(tag);
+  time(&g_pvrZattooTimeShift);
+  g_pvrZattooTimeShift -= tag.startTime;
   strncpy(url, strUrl.c_str(), urlLen);
   return urlLen;
 }
@@ -517,7 +524,11 @@ int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) {
   return zat->GetRecordingLastPlayedPosition(recording);
 }
 
-
+time_t GetPlayingTime() {
+  time_t current_time;
+  time(&current_time);
+  return current_time - g_pvrZattooTimeShift;
+}
 
 /** UNUSED API FUNCTIONS */
 bool CanPauseStream(void) { return true; }
@@ -552,7 +563,6 @@ void PauseStream(bool bPaused) {}
 bool CanSeekStream(void) { return true; }
 bool SeekTime(double,bool,double*) { return false; }
 void SetSpeed(int) {};
-time_t GetPlayingTime() { return 0; }
 time_t GetBufferTimeStart() { return 0; }
 time_t GetBufferTimeEnd() { return 0; }
 PVR_ERROR UndeleteRecording(const PVR_RECORDING& recording) { return PVR_ERROR_NOT_IMPLEMENTED; }
