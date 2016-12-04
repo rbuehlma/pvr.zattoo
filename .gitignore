@@ -1,6 +1,6 @@
 # build artifacts
 build/
-
+pvr.zattoo/addon.xml
 CMakeFiles
 
 

@@ -12,11 +12,14 @@ using namespace ADDON;
 #define snprintf _snprintf
 #endif
 
-bool           m_bCreated       = false;
-ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
-ZatData   *zat           = NULL;
-bool           m_bIsPlaying     = false;
-ZatChannel currentChannel;
+#ifdef TARGET_ANDROID
+#include "to_string.h"
+#endif
+
+
+ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
+ZatData *zat = NULL;
+bool m_bIsPlaying = false;
 
 /* User adjustable settings are saved here.
  * Default values are defined inside client.h
@@ -30,6 +33,7 @@ CHelper_libXBMC_pvr   *PVR  = NULL;
 
 std::string zatUsername    = "";
 std::string zatPassword    = "";
+bool      zatFavoritesOnly = false;
 int         g_iStartNumber  = 1;
 bool        g_bTSOverride   = true;
 bool        g_bCacheM3U     = false;
@@ -65,6 +69,7 @@ extern "C" {
 
 void ADDON_ReadSettings(void) {
     char buffer[1024];
+    bool boolBuffer;
     XBMC->Log(LOG_DEBUG, "Read settings");
     if (XBMC->GetSetting("username", &buffer))
     {
@@ -73,6 +78,10 @@ void ADDON_ReadSettings(void) {
     if (XBMC->GetSetting("password", &buffer))
     {
         zatPassword = buffer;
+    }
+    if (XBMC->GetSetting("favoritesonly", &boolBuffer))
+    {
+        zatFavoritesOnly = boolBuffer;
     }
     XBMC->Log(LOG_DEBUG, "End Readsettings");
 }
@@ -99,12 +108,9 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
         return ADDON_STATUS_PERMANENT_FAILURE;
     }
 
-    XBMC->Log(LOG_DEBUG, "%s - Creating the PVR Zattoo Simple add-on", __FUNCTION__);
+    XBMC->Log(LOG_DEBUG, "%s - Creating the PVR Zattoo add-on", __FUNCTION__);
 
-    m_CurStatus = ADDON_STATUS_UNKNOWN;
-
-
-
+    m_CurStatus = ADDON_STATUS_NEED_SETTINGS;
 
     g_strClientPath = pvrprops->strClientPath;
     g_strUserPath = pvrprops->strUserPath;
@@ -112,11 +118,16 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
     zatUsername = "";
     zatPassword = "";
     ADDON_ReadSettings();
-    XBMC->Log(LOG_DEBUG, "Create zat");
-    zat = new ZatData(zatUsername,zatPassword);
-    XBMC->Log(LOG_DEBUG, "zat created");
-    m_CurStatus = ADDON_STATUS_OK;
-    m_bCreated = true;
+    if (!zatUsername.empty() && !zatPassword.empty()) {
+      XBMC->Log(LOG_DEBUG, "Create Zat");
+      zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly);
+      XBMC->Log(LOG_DEBUG, "Zat created");
+      if (zat->Initialize() && zat->LoadChannels()) {
+        m_CurStatus = ADDON_STATUS_OK;
+      } else {
+        XBMC->QueueNotification(QUEUE_ERROR, "Zattoo login failed!");
+      }
+    }
 
     return m_CurStatus;
 }
@@ -126,9 +137,8 @@ ADDON_STATUS ADDON_GetStatus() {
 }
 
 void ADDON_Destroy() {
-    delete zat;
-    m_bCreated = false;
-    m_CurStatus = ADDON_STATUS_UNKNOWN;
+  SAFE_DELETE(zat);
+  m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
 
 bool ADDON_HasSettings() {
@@ -140,8 +150,32 @@ unsigned int ADDON_GetSettings(ADDON_StructSetting ***sSet) {
 }
 
 ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue) {
+  string name = settingName;
 
-    return ADDON_STATUS_NEED_RESTART;
+  if (name == "username") {
+    string username = (const char*)settingValue;
+    if (username != zatUsername) {
+      zatUsername = username;
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+
+  if (name == "password") {
+    string password = (const char*)settingValue;
+    if (password != zatPassword) {
+      zatPassword = password;
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+
+  if (name == "favoritesonly") {
+    bool favOnly = *(bool *)settingValue;
+    if (favOnly != zatFavoritesOnly) {
+      zatFavoritesOnly = favOnly;
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+  return !zatUsername.empty() && !zatPassword.empty() ? ADDON_STATUS_OK : ADDON_STATUS_NEED_SETTINGS;
 }
 
 void ADDON_Stop() {
@@ -200,7 +234,12 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsTV              = true;
   pCapabilities->bSupportsRadio           = true;
   pCapabilities->bSupportsChannelGroups   = true;
-  pCapabilities->bSupportsRecordings      = false;
+  pCapabilities->bSupportsRecordingPlayCount = true;
+  pCapabilities->bSupportsLastPlayedPosition = true;
+
+  if (zat) {
+    zat->GetAddonCapabilities(pCapabilities);
+  }
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -333,11 +372,126 @@ const char * GetLiveStreamURL(const PVR_CHANNEL &channel)  {
     return XBMC->UnknownToUTF8(zat->GetChannelStreamUrl(channel.iUniqueId).c_str());
 }
 
+/** Recording API **/
+int GetRecordingsAmount(bool deleted) {
+  if (deleted) {
+    return 0;
+  }
+  if (!zat) {
+    return 0;
+  }
+  return zat->GetRecordingsAmount(false);
+}
+
+PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool deleted) {
+  if (deleted) {
+    return PVR_ERROR_NO_ERROR;
+  }
+  if (!zat) {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  zat->GetRecordings(handle, false);
+  return PVR_ERROR_NO_ERROR;
+}
+
+int GetTimersAmount(void) {
+  if (!zat) {
+    return 0;
+  }
+  return zat->GetRecordingsAmount(true);
+}
+
+PVR_ERROR GetTimers(ADDON_HANDLE handle) {
+  if (!zat) {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  zat->GetRecordings(handle, true);
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR AddTimer(const PVR_TIMER &timer) {
+  if (!zat) {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  if (timer.iEpgUid <= EPG_TAG_INVALID_UID) {
+    return PVR_ERROR_REJECTED;
+  }
+  if (!zat->Record(timer.iEpgUid)) {
+    return PVR_ERROR_REJECTED;
+  }
+  PVR->TriggerTimerUpdate();
+  PVR->TriggerRecordingUpdate();
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR DeleteRecording(const PVR_RECORDING &recording) {
+  if (!zat) {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  if (!zat->DeleteRecording(recording.strRecordingId)) {
+    return PVR_ERROR_REJECTED;
+  }
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete) {
+  if (!zat) {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  if (!zat->DeleteRecording(to_string(timer.iClientIndex))) {
+    return PVR_ERROR_REJECTED;
+  }
+  PVR->TriggerTimerUpdate();
+  return PVR_ERROR_NO_ERROR;
+}
+
+void addTimerType(PVR_TIMER_TYPE types[], int idx, int attributes) {
+  types[idx].iId = idx + 1;
+  types[idx].iAttributes = attributes;
+  types[idx].iPrioritiesSize = 0;
+  types[idx].iLifetimesSize = 0;
+  types[idx].iPreventDuplicateEpisodesSize = 0;
+  types[idx].iRecordingGroupSize = 0;
+  types[idx].iMaxRecordingsSize = 0;
+}
+
+PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size) {
+  addTimerType(types, 0, PVR_TIMER_TYPE_ATTRIBUTE_NONE);
+  addTimerType(types, 1, PVR_TIMER_TYPE_IS_MANUAL);
+  *size = 2;
+  return PVR_ERROR_NO_ERROR;
+}
+
+
+
+PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count) {
+  if (!zat) {
+    return PVR_ERROR_FAILED;
+  }
+  zat->SetRecordingPlayCount(recording, count);
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition) {
+  if (!zat) {
+    return PVR_ERROR_FAILED;
+  }
+  zat->SetRecordingLastPlayedPosition(recording, lastplayedposition);
+  return PVR_ERROR_NO_ERROR;
+}
+
+int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) {
+  if (!zat) {
+    return -1;
+  }
+
+  return zat->GetRecordingLastPlayedPosition(recording);
+}
+
+
 
 /** UNUSED API FUNCTIONS */
 bool CanPauseStream(void) { return false; }
-int GetRecordingsAmount(bool deleted) { return -1; }
-PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool deleted) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR OpenDialogChannelScan(void) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR CallMenuHook(const PVR_MENUHOOK &menuhook, const PVR_MENUHOOK_DATA &item) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteChannel(const PVR_CHANNEL &channel) { return PVR_ERROR_NOT_IMPLEMENTED; }
@@ -357,17 +511,8 @@ int ReadLiveStream(unsigned char *pBuffer, unsigned int iBufferSize) { return 0;
 long long SeekLiveStream(long long iPosition, int iWhence /* = SEEK_SET */) { return -1; }
 long long PositionLiveStream(void) { return -1; }
 long long LengthLiveStream(void) { return -1; }
-PVR_ERROR DeleteRecording(const PVR_RECORDING &recording) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR RenameRecording(const PVR_RECORDING &recording) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition) { return PVR_ERROR_NOT_IMPLEMENTED; }
-int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) { return -1; }
 PVR_ERROR GetRecordingEdl(const PVR_RECORDING&, PVR_EDL_ENTRY[], int*) { return PVR_ERROR_NOT_IMPLEMENTED; };
-PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size) { return PVR_ERROR_NOT_IMPLEMENTED; }
-int GetTimersAmount(void) { return -1; }
-PVR_ERROR GetTimers(ADDON_HANDLE handle) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR AddTimer(const PVR_TIMER &timer) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR UpdateTimer(const PVR_TIMER &timer) { return PVR_ERROR_NOT_IMPLEMENTED; }
 void DemuxAbort(void) {}
 DemuxPacket* DemuxRead(void) { return NULL; }
@@ -376,7 +521,7 @@ bool IsTimeshifting(void) { return false; }
 bool IsRealTimeStream(void) { return true; }
 void PauseStream(bool bPaused) {}
 bool CanSeekStream(void) { return false; }
-bool SeekTime(int,bool,double*) { return false; }
+bool SeekTime(double,bool,double*) { return false; }
 void SetSpeed(int) {};
 time_t GetPlayingTime() { return 0; }
 time_t GetBufferTimeStart() { return 0; }

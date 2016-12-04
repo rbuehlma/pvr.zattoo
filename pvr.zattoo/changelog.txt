@@ -1,3 +1,54 @@
+v0.1.23
+ - Adapt to new API version
+v0.1.22
+ - Support resume time and watch count
+v0.1.21
+ - Re-add own HTTP implementation to allow access to cookies
+v0.1.20
+ - Do not store app token and uuid anymore as Kodi does not store cookies since v17 beta 3
+v0.1.19
+ - Generate and store a unique UUID for every installation
+ - Ignore if hello fails
+v0.1.18
+ - Improve login handling
+ - Re-init session if we get errors on loading pages
+v0.1.17
+ - Update timers & recordings every 10 minutes or if a timer has reacht its start time
+v0.1.16
+ - Fix another memory leak
+ - Add option to only load favorites
+v0.1.15
+ - Fix memory leaks
+v0.1.14
+ - Add channel logos to addon (thanks to yattaah)
+v0.1.13
+ - Refactor login and session handling
+v0.1.12
+ - Always check that json is returned
+v0.1.11
+ - Reuse session if possible
+v0.1.10
+ - Preserve application token
+v0.1.9
+ - Revert to using hls stream
+v0.1.8
+ - Fix initial load. Open settings dialog if required
+v0.1.7
+ - Fix windows build
+ - Make recordings visible in EPG timeline
+v0.1.6
+ - Fix linking of libYajl for OSX (and maybe also for other environments)
+v0.1.5
+ - Fix sorting of favourites by using the first n channel numbers for them
+ - Offset the remaining channels by the number of favourites to prevent overlaps
+v0.1.4
+ - Support deletion of timer (planned recording)
+ - Refresh timers after change 
+v0.1.3
+ - Support creating timers (for recordings)
+ - Support deletion of recordings
+v0.1.2
+ - Support watching recordings
 v0.1.1
  - Replace own HTTP implementation with Curl from Kodi
 v0.1.0

@@ -4,6 +4,19 @@
 
 #include "client.h"
 #include "JsonParser.h"
+#include "UpdateThread.h"
+#include <map>
+
+/*!
+ * @brief PVR macros for string exchange
+ */
+#define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); dest[sizeof(dest)-1] = '\0'; } while(0)
+#define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
+
+#define JS_STR(G, STR) do {                                             \
+        string _s = (STR);                                         \
+        yajl_gen_string(G, (const unsigned char*)_s.c_str(), _s.length());      \
+} while (0)
 
 struct PVRIptvEpgEntry
 {
@@ -45,6 +58,14 @@ struct ZatChannel
     std::vector<PVRIptvEpgEntry> epg;
 };
 
+struct ZatRecordingData
+{
+  std::string recordingId;
+  int playCount;
+  int lastPlayedPosition;
+  bool stillValid;
+};
+
 struct PVRZattooChannelGroup
 {
     std::string name;
@@ -63,9 +84,11 @@ struct PVRIptvEpgGenre
 class ZatData : public P8PLATFORM::CThread
 {
 public:
-    ZatData(std::string username, std::string password);
+    ZatData(std::string username, std::string password, bool favoritesOnly);
     virtual ~ZatData();
-
+    virtual bool Initialize();
+    virtual bool LoadChannels();
+    virtual void      GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
     virtual int       GetChannelsAmount(void);
     virtual PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
     //virtual bool      GetChannel(const PVR_CHANNEL &channel, ZatChannel &myChannel);
@@ -78,59 +101,65 @@ public:
     //    virtual void      ReloadPlayList(const char * strNewPath);
     //    virtual void      ReloadEPG(const char * strNewPath);
     virtual std::string GetChannelStreamUrl(int uniqueId);
+    virtual void GetRecordings(ADDON_HANDLE handle, bool future);
+    virtual int GetRecordingsAmount(bool future);
+    virtual std::string GetRecordingStreamUrl(string recordingId);
+    virtual bool Record(int programId);
+    virtual bool DeleteRecording(string recordingId);
+    virtual void SetRecordingPlayCount(const PVR_RECORDING &recording, int count);
+    virtual void SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition);
+    virtual int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording);
+
 protected:
     virtual std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
-    virtual std::string HttpGet(string url);
-    virtual std::string HttpPost(string url, string postData);
-    virtual void loadAppId();
+    virtual std::string HttpGet(string url, bool isInit = false);
+    virtual std::string HttpPost(string url, string postData, bool isInit = false);
 
-
-
-
-//
-//    virtual bool                 LoadPlayList(void);
     virtual bool                 LoadEPG(time_t iStart, time_t iEnd);
-//    virtual bool                 LoadGenres(void);
-
-
 
     virtual ZatChannel*      FindChannel(int uniqueId);
     virtual PVRZattooChannelGroup* FindGroup(const std::string &strName);
 
-
-//    virtual PVRIptvEpgChannel*   FindEpg(const std::string &strId);
-//    virtual PVRIptvEpgChannel*   FindEpgForChannel(ZatChannel &channel);
-//    virtual bool                 FindEpgGenre(const std::string& strGenre, int& iType, int& iSubType);
-//    virtual int                  ParseDateTime(std::string& strDate, bool iDateFormat = true);
-//    virtual bool                 GzipInflate( const std::string &compressedBytes, std::string &uncompressedBytes);
-//    virtual int                  GetCachedFileContents(const std::string &strCachedName, const std::string &strFilePath,
-//                                                       std::string &strContent, const bool bUseCache = false);
-//    virtual void                 ApplyChannelsLogos();
-//    virtual void                 ApplyChannelsLogosFromEPG();
-//    virtual std::string          ReadMarkerValue(std::string &strLine, const char * strMarkerName);
     virtual int                  GetChannelId(const char * strChannelName);
 
 protected:
     virtual void *Process(void);
 
 private:
-    bool                              m_bTSOverride;
-    int                               m_iEPGTimeShift;
     int                               m_iLastStart;
     int                               m_iLastEnd;
-    int                               channelNumber;
     std::string                       appToken;
     std::string                       powerHash;
+    bool                              recallEnabled;
+    bool                              recordingEnabled;
+    std::string                       streamType;
     std::string                       username;
     std::string                       password;
-    std::string                       m_strLogoPath;
+    bool                              favoritesOnly;
     std::vector<PVRZattooChannelGroup> channelGroups;
+    std::map<int, ZatChannel>         channelsByNumber;
+    std::map<std::string, ZatChannel> channelsByCid;
+    std::map<std::string, ZatRecordingData*> recordingsData;
+    int64_t                           maxRecallSeconds;
+    UpdateThread *updateThread;
+    std::string uuid;
+    std::string cookie;
 
-    void sendHello();
+    bool loadAppId();
+
+    bool readDataJson();
+
+    bool writeDataJson();
+
+    string getUUID();
+
+    string generateUUID();
+
+    bool sendHello(string uuid);
 
     bool login();
 
-    void loadChannels();
+    bool initSession();
 
     int findChannelNumber(int uniqueId);
 
