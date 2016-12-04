@@ -3,7 +3,7 @@
   id="pvr.zattoo"
   version="0.1.23"
   name="Zattoo PVR Client"
-  provider-name="Johannes Trum">
+  provider-name="trummerjo">
   <extension
     point="xbmc.pvrclient"
     library_@PLATFORM@="@LIBRARY_FILENAME@"/>
