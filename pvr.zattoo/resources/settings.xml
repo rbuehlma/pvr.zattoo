@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
-	<setting id="username" type="text" label="Benutzername" default="" />
-	<setting id="password" type="text" option="hidden" label="Passwort" default="" />
-	<setting id="favoritesonly" type="bool" label="Nur Favoriten-Kanäle" default="false" />
+	<setting id="username" type="text" label="37101" default="" />
+	<setting id="password" type="text" option="hidden" label="37102" default="" />
+	<setting id="favoritesonly" type="bool" label="37103" default="false" />
 </settings>
