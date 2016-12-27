@@ -1,3 +1,5 @@
+v0.1.25
+ - URL-Encode username and password
 v0.1.24
  - New logo and fanart
  - Add LICENSE.txt

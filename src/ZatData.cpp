@@ -10,6 +10,7 @@
 #include <map>
 #include <time.h>
 #include <random>
+#include "Utils.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
  #pragma comment(lib, "ws2_32.lib")
@@ -272,7 +273,7 @@ bool ZatData::login() {
   XBMC->Log(LOG_DEBUG, "Try to login.");
 
   ostringstream dataStream;
-  dataStream << "login=" << username << "&password=" << password << "&format=json";
+  dataStream << "login=" << Utils::UrlEncode(username) << "&password=" << Utils::UrlEncode(password) << "&format=json";
   string jsonString = HttpPost("http://zattoo.com/zapi/account/login", dataStream.str(), true);
 
   yajl_val json = JsonParser::parse(jsonString);
