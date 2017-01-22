@@ -21,8 +21,8 @@ msgid "Password"
 msgstr ""
 
 msgctxt "#37103"
-msgid "Favorite channels only"
-msgstr "Load only channels which are in the favorite list"
+msgid "Favourite channels only"
+msgstr "Load only channels which are in the favourite list"
 
 msgctxt "#37111"
 msgid "Zattoo login failed!"
