@@ -872,6 +872,9 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       PVR_STRCPY(tag.strTitle, JsonParser::getString(recording, 1, "title").c_str());
       PVR_STRCPY(tag.strEpisodeName, JsonParser::getString(recording, 1, "episode_title").c_str());
       PVR_STRCPY(tag.strIconPath, JsonParser::getString(recording, 1, "image_url").c_str());
+      ZatChannel channel = channelsByCid[JsonParser::getString(recording, 1, "cid").c_str()];
+      tag.iChannelUid = channel.iUniqueId;
+      PVR_STRCPY(tag.strChannelName, channel.name.c_str());
       time_t endTime  = JsonParser::getTime(recording, 1, "end");
       tag.recordingTime = startTime;
       tag.iDuration = endTime -  startTime;

@@ -1,3 +1,6 @@
+v0.1.26
+ - Fix en_gb translations
+ - Show channel name for recordings
 v0.1.25
  - URL-Encode username and password
 v0.1.24
