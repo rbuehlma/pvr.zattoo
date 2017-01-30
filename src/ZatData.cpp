@@ -682,18 +682,6 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
         tag.iYear               = 0;     /* not supported */
         tag.strIMDBNumber       = NULL;  /* not supported */
         tag.strIconPath         = epgEntry.strIconPath.c_str();
-//        if (FindEpgGenre(myTag->strGenreString, iGenreType, iGenreSubType))
-//        {
-//            tag.iGenreType          = iGenreType;
-//            tag.iGenreSubType       = iGenreSubType;
-//            tag.strGenreDescription = NULL;
-//        }
-//        else
-//        {
-            tag.iGenreType          = EPG_GENRE_USE_STRING;
-            tag.iGenreSubType       = 0;     /* not supported */
-            tag.strGenreDescription = epgEntry.strGenreString.c_str();
-//        }
         tag.iParentalRating     = 0;     /* not supported */
         tag.iStarRating         = 0;     /* not supported */
         tag.bNotify             = false; /* not supported */
@@ -702,6 +690,16 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
         tag.iEpisodePartNumber  = 0;     /* not supported */
         tag.strEpisodeName      = NULL;  /* not supported */
         tag.iFlags              = EPG_TAG_FLAG_UNDEFINED;
+
+        int genre = categories.Category(epgEntry.strGenreString.c_str());
+        if (genre) {
+          tag.iGenreSubType = genre&0x0F;
+          tag.iGenreType = genre&0xF0;
+        } else {
+          tag.iGenreType          = EPG_GENRE_USE_STRING;
+          tag.iGenreSubType       = 0;     /* not supported */
+          tag.strGenreDescription = epgEntry.strGenreString.c_str();
+        }
 
         PVR->TransferEpgEntry(handle, &tag);
 
@@ -764,10 +762,9 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
                 yajl_val genres = JsonParser::getArray(program, 1, "g");
                 ostringstream generesStream;
                 for (int genre = 0; genre < genres->u.array.len; genre++) {
-                    string genereName = YAJL_GET_STRING(genres->u.array.values[genre]);
-                    generesStream << genereName << " ";
+                    entry.strGenreString = YAJL_GET_STRING(genres->u.array.values[genre]);
+                    break;
                 }
-                entry.strGenreString = generesStream.str();
 
                 if (channel)
                     channel->epg.insert(channel->epg.end(), entry);
@@ -841,6 +838,23 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
 
   for ( int index = 0; index < recordings->u.array.len; ++index ) {
     yajl_val recording = recordings->u.array.values[index];
+    int programId = JsonParser::getInt(recording, 1, "program_id");
+    ostringstream urlStream;
+    urlStream << "http://zattoo.com/zapi/program/details?program_id=" << programId;
+    jsonString = HttpGet(urlStream.str());
+    yajl_val detailJson = JsonParser::parse(jsonString);
+
+    if (detailJson == NULL || !JsonParser::getBoolean(detailJson, 1, "success")){
+      yajl_tree_free(detailJson);
+      continue;
+    }
+
+    //genre
+    yajl_val genres = JsonParser::getArray(detailJson, 2, "program", "genres");
+    //Only get the first genre
+    string genereName = YAJL_GET_STRING(genres->u.array.values[0]);
+    int genre = categories.Category(genereName);
+    ostringstream generesStream;
 
     time_t startTime  = JsonParser::getTime(recording, 1, "start");
     if (future && startTime > current_time) {
@@ -859,10 +873,14 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       ZatChannel channel = channelsByCid[JsonParser::getString(recording, 1, "cid").c_str()];
       tag.iClientChannelUid = channel.iUniqueId;
       PVR->TransferTimerEntry(handle, &tag);
-
       if (updateThread != NULL) {
         updateThread->SetNextRecordingUpdate(startTime);
       }
+      if (genre) {
+        tag.iGenreSubType = genre&0x0F;
+        tag.iGenreType = genre&0xF0;
+      }
+
     } else if (!future && startTime <= current_time) {
       PVR_RECORDING tag;
       memset(&tag, 0, sizeof(PVR_RECORDING));
@@ -871,6 +889,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       PVR_STRCPY(tag.strRecordingId, to_string(JsonParser::getInt(recording, 1, "id")).c_str());
       PVR_STRCPY(tag.strTitle, JsonParser::getString(recording, 1, "title").c_str());
       PVR_STRCPY(tag.strEpisodeName, JsonParser::getString(recording, 1, "episode_title").c_str());
+      PVR_STRCPY(tag.strPlot, JsonParser::getString(detailJson, 2, "program", "description").c_str());
       PVR_STRCPY(tag.strIconPath, JsonParser::getString(recording, 1, "image_url").c_str());
       ZatChannel channel = channelsByCid[JsonParser::getString(recording, 1, "cid").c_str()];
       tag.iChannelUid = channel.iUniqueId;
@@ -879,6 +898,11 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       tag.recordingTime = startTime;
       tag.iDuration = endTime -  startTime;
       PVR_STRCPY(tag.strStreamURL, GetRecordingStreamUrl(tag.strRecordingId).c_str());
+
+      if (genre) {
+        tag.iGenreSubType = genre&0x0F;
+        tag.iGenreType = genre&0xF0;
+      }
 
       if (recordingsData.find(tag.strRecordingId) != recordingsData.end()) {
         ZatRecordingData* recData = recordingsData[tag.strRecordingId];
@@ -889,6 +913,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
 
       PVR->TransferRecordingEntry(handle, &tag);
     }
+    yajl_tree_free(detailJson);
   }
   yajl_tree_free(json);
 }

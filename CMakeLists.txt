@@ -32,6 +32,7 @@ set(ZATTOO_SOURCES
 		src/JsonParser.cpp
 		src/UpdateThread.cpp
 		src/HTTPSocket.cpp
+		src/categories.cpp
 		 )
 
 if(WIN32)

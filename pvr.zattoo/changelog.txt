@@ -1,3 +1,7 @@
+v0.1.27
+ - Map genre in guid
+ - Add genre to recording and timer
+ - Add plot to recording
 v0.1.26
  - Fix en_gb translations
  - Show channel name for recordings

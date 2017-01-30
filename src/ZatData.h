@@ -5,6 +5,7 @@
 #include "client.h"
 #include "JsonParser.h"
 #include "UpdateThread.h"
+#include "categories.h"
 #include <map>
 
 /*!
@@ -144,6 +145,7 @@ private:
     UpdateThread *updateThread;
     std::string uuid;
     std::string cookie;
+    Categories categories;
 
     bool loadAppId();
 
