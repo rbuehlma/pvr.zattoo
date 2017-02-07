@@ -27,6 +27,11 @@
 
 #define CATEGORIES_MAXLINESIZE    255
 
+#if defined(_WIN32) || defined(_WIN64)
+/* We are on Windows */
+# define strtok_r strtok_s
+#endif
+
 using namespace ADDON;
 
 Categories::Categories()
