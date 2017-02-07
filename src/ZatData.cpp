@@ -760,7 +760,6 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
                 entry.strPlot = JsonParser::getString(program, 1, "et");
 
                 yajl_val genres = JsonParser::getArray(program, 1, "g");
-                ostringstream generesStream;
                 for (int genre = 0; genre < genres->u.array.len; genre++) {
                     entry.strGenreString = YAJL_GET_STRING(genres->u.array.values[genre]);
                     break;
@@ -852,9 +851,11 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
     //genre
     yajl_val genres = JsonParser::getArray(detailJson, 2, "program", "genres");
     //Only get the first genre
-    string genereName = YAJL_GET_STRING(genres->u.array.values[0]);
-    int genre = categories.Category(genereName);
-    ostringstream generesStream;
+    int genre = 0;
+    if (genres->u.array.len > 0) {
+      string genreName = YAJL_GET_STRING(genres->u.array.values[0]);
+      genre = categories.Category(genreName);
+    }
 
     time_t startTime  = JsonParser::getTime(recording, 1, "start");
     if (future && startTime > current_time) {

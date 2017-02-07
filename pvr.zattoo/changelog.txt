@@ -1,3 +1,5 @@
+v0.1.28
+ - Fix case where no genre is available
 v0.1.27
  - Map genre in guid
  - Add genre to recording and timer
