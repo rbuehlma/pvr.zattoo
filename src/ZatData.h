@@ -6,6 +6,7 @@
 #include "JsonParser.h"
 #include "UpdateThread.h"
 #include "categories.h"
+#include "Curl.h"
 #include <map>
 
 /*!
@@ -112,7 +113,6 @@ public:
     virtual int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording);
 
 protected:
-    virtual std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
     virtual std::string HttpGet(string url, bool isInit = false);
     virtual std::string HttpPost(string url, string postData, bool isInit = false);
 
@@ -142,9 +142,9 @@ private:
     std::map<std::string, ZatChannel> channelsByCid;
     std::map<std::string, ZatRecordingData*> recordingsData;
     int64_t                           maxRecallSeconds;
+    Curl *curl;
     UpdateThread *updateThread;
     std::string uuid;
-    std::string cookie;
     Categories categories;
 
     bool loadAppId();

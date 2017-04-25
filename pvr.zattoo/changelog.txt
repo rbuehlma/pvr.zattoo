@@ -1,3 +1,5 @@
+v0.1.29
+ - Use libcurl to support https
 v0.1.28
  - Fix case where no genre is available
 v0.1.27
