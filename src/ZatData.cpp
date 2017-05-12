@@ -193,7 +193,7 @@ bool ZatData::loadAppId() {
     return false;
   }
 
-  XBMC->Log(LOG_DEBUG, "Loaded App token %s", XBMC->UnknownToUTF8(appToken.c_str()));
+  XBMC->Log(LOG_DEBUG, "Loaded App token %s", appToken.c_str());
   return true;
 
 }
@@ -417,6 +417,9 @@ ZatData::~ZatData() {
   if (updateThread != NULL) {
     updateThread->StopThread(1000);
     delete updateThread;
+  }
+  for (auto const& item : recordingsData) {
+    delete item.second;
   }
   channelGroups.clear();
   delete curl;
