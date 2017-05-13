@@ -558,6 +558,10 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId) {
     ostringstream dataStream;
     dataStream << "cid=" << channel->cid << "&stream_type=" << streamType << "&format=json";
 
+    if (recallEnabled) {
+      dataStream << "&timeshift=" << maxRecallSeconds;
+    }
+
     string jsonString = HttpPost(zattooServer + "/zapi/watch", dataStream.str());
 
     yajl_val json = JsonParser::parse(jsonString);

@@ -1,3 +1,6 @@
+v0.2.7
+ - Fix some minor memory leaks
+ - Add new time-shift parameter to "watch" request
 v0.2.6
  - Merge v0.1.29
 v0.2.5
