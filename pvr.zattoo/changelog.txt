@@ -1,3 +1,5 @@
+v0.1.30
+ - Fix error upon installation without settings
 v0.1.29
  - Use libcurl to support https
 v0.1.28

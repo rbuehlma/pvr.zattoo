@@ -175,7 +175,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
       return ADDON_STATUS_NEED_RESTART;
     }
   }
-  return !zatUsername.empty() && !zatPassword.empty() ? ADDON_STATUS_OK : ADDON_STATUS_NEED_SETTINGS;
+  return ADDON_STATUS_OK;
 }
 
 void ADDON_Stop() {
