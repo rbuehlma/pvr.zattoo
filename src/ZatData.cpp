@@ -609,12 +609,14 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
         }
     }
 
-
-    std::vector<PVRIptvEpgEntry>::iterator it;
-    while (!zatChannel->epg.empty())
+    std::map<time_t, PVRIptvEpgEntry>* channelEpgCache = epgCache[zatChannel->cid];
+    if (channelEpgCache == NULL) {
+        return PVR_ERROR_NO_ERROR;
+    }
+    epgCache.erase(zatChannel->cid);
+    for (auto const &entry : *channelEpgCache)
     {
-        PVRIptvEpgEntry &epgEntry = zatChannel->epg.back();
-        zatChannel->epg.pop_back();
+        PVRIptvEpgEntry epgEntry = entry.second;
 
         EPG_TAG tag;
         memset(&tag, 0, sizeof(EPG_TAG));
@@ -653,9 +655,8 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
         }
 
         PVR->TransferEpgEntry(handle, &tag);
-
     }
-
+    delete channelEpgCache;
 
     return PVR_ERROR_NO_ERROR;
 }
@@ -716,7 +717,10 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
                     break;
                 }
 
-                channel->epg.insert(channel->epg.end(), entry);
+                if (epgCache[cid] == NULL) {
+                    epgCache[cid] = new map<time_t, PVRIptvEpgEntry>();
+                }
+                (*epgCache[cid])[entry.startTime] = entry;
             }
         }
         yajl_tree_free(json);

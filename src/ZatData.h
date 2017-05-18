@@ -57,7 +57,6 @@ struct ZatChannel
     std::string strTvgName;
     std::string strTvgLogo;
     std::string cid;
-    std::vector<PVRIptvEpgEntry> epg;
 };
 
 struct ZatRecordingData
@@ -140,6 +139,7 @@ private:
     std::map<int, ZatChannel>         channelsByNumber;
     std::map<std::string, ZatChannel> channelsByCid;
     std::map<std::string, ZatRecordingData*> recordingsData;
+    std::map<std::string, std::map<time_t, PVRIptvEpgEntry>*> epgCache;
     int64_t                           maxRecallSeconds;
     Curl *curl;
     UpdateThread *updateThread;
