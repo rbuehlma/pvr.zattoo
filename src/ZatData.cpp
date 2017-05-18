@@ -612,9 +612,10 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
 
 
     std::vector<PVRIptvEpgEntry>::iterator it;
-    for (it = zatChannel->epg.begin(); it != zatChannel->epg.end(); ++it)
+    while (!zatChannel->epg.empty())
     {
-        PVRIptvEpgEntry &epgEntry = (*it);
+        PVRIptvEpgEntry &epgEntry = zatChannel->epg.back();
+        zatChannel->epg.pop_back();
 
         EPG_TAG tag;
         memset(&tag, 0, sizeof(EPG_TAG));
