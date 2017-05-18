@@ -83,7 +83,7 @@ struct PVRIptvEpgGenre
 
 
 
-class ZatData : public P8PLATFORM::CThread
+class ZatData
 {
 public:
     ZatData(std::string username, std::string password, bool favoritesOnly);
@@ -122,9 +122,6 @@ protected:
     virtual PVRZattooChannelGroup* FindGroup(const std::string &strName);
 
     virtual int                  GetChannelId(const char * strChannelName);
-
-protected:
-    virtual void *Process(void);
 
 private:
     int                               m_iLastStart;
