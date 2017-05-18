@@ -1,5 +1,8 @@
 v0.1.30
  - Fix error upon installation without settings
+ - Fix memory leaks
+ - Remove some unused code
+ - Sync code with zattoo_dash branch where possible
 v0.1.29
  - Use libcurl to support https
 v0.1.28
