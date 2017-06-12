@@ -239,7 +239,6 @@ bool ZatData::login() {
 }
 
 bool ZatData::initSession() {
-  getUUID();
   string jsonString = HttpGet(zattooServer + "/zapi/v2/session", true);
   yajl_val json = JsonParser::parse(jsonString);
   if(json == NULL || !JsonParser::getBoolean(json, 1, "success")) {
@@ -692,15 +691,17 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
         for ( int index = 0; index < channels->u.array.len; ++index ) {
             yajl_val channelItem = channels->u.array.values[index];
             string cid = JsonParser::getString(channelItem, 1, "cid");
+
+            int channelId = GetChannelId(cid.c_str());
+            ZatChannel *channel = FindChannel(channelId);
+
+            if (!channel) {
+              continue;
+            }
+
             yajl_val programs = JsonParser::getArray(channelItem, 1, "programs");
             for (int i = 0; i < programs->u.array.len; ++i) {
                 yajl_val program = programs->u.array.values[i];
-                int channelId = GetChannelId(cid.c_str());
-                ZatChannel *channel = FindChannel(channelId);
-
-                if (!channel) {
-                    continue;
-                }
 
                 PVRIptvEpgEntry entry;
                 entry.strTitle = JsonParser::getString(program, 1, "t");
