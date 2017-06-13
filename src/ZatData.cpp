@@ -271,6 +271,7 @@ bool ZatData::initSession() {
     }
   }
 
+  countryCode = JsonParser::getString(json, 2, "session" , "aliased_country_code");
   recallEnabled = streamType == "dash" && JsonParser::getBoolean(json, 2, "session" , "recall_eligible");
   recordingEnabled = JsonParser::getBoolean(json, 2, "session" , "recording_eligible");
   if (recallEnabled) {
@@ -396,9 +397,10 @@ int ZatData::GetChannelGroupsAmount() {
     return channelGroups.size();
 }
 
-ZatData::ZatData(std::string u, std::string p, bool favoritesOnly) :
+ZatData::ZatData(std::string u, std::string p, bool favoritesOnly, bool alternativeEpgService) :
   maxRecallSeconds(0),
   recallEnabled(false),
+  countryCode(""),
   recordingEnabled(false),
   updateThread(NULL),
   uuid("")
@@ -406,6 +408,7 @@ ZatData::ZatData(std::string u, std::string p, bool favoritesOnly) :
   curl = new Curl();
   username = u;
   password = p;
+  this->alternativeEpgService = alternativeEpgService;
   this->favoritesOnly = favoritesOnly;
   m_iLastStart = 0;
   m_iLastEnd = 0;
@@ -591,7 +594,81 @@ int ZatData::findChannelNumber(int uniqueId) {
     return 0;
 }
 
+PVR_ERROR ZatData::GetEPGForChannelExternalService(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd) {
+  ZatChannel *zatChannel = FindChannel(channel.iUniqueId);
+  string cid = zatChannel->cid;
+  ostringstream urlStream;
+  urlStream << "http://zattoo.buehlmann.net/epg/api/Epg/" << countryCode << "/"
+            << powerHash << "/" << cid << "/" << iStart << "/" << iEnd;
+  string jsonString = HttpGet(urlStream.str());
+  yajl_val json = JsonParser::parse(jsonString);
+  if (json == NULL){
+    yajl_tree_free(json);
+    return PVR_ERROR_SERVER_ERROR;
+  }
+
+  for (int i = 0; i < json->u.array.len; ++i) {
+    yajl_val program = json->u.array.values[i];
+    EPG_TAG tag;
+    memset(&tag, 0, sizeof(EPG_TAG));
+
+    tag.iUniqueBroadcastId  = JsonParser::getInt(program, 1, "Id");
+    string title = JsonParser::getString(program, 1, "Title");
+    tag.strTitle            = title.c_str();
+    tag.iChannelNumber      = zatChannel->iChannelNumber;
+    tag.startTime           = JsonParser::getTime(program, 1, "StartTime");
+    tag.endTime             = JsonParser::getTime(program, 1, "EndTime");
+    string description = JsonParser::getString(program, 1, "Description");
+    tag.strPlotOutline      = description.c_str();
+    tag.strPlot             = description.c_str();
+    tag.strOriginalTitle    = NULL;  /* not supported */
+    tag.strCast             = NULL;  /* not supported */
+    tag.strDirector         = NULL;  /*SA not supported */
+    tag.strWriter           = NULL;  /* not supported */
+    tag.iYear               = 0;     /* not supported */
+    tag.strIMDBNumber       = NULL;  /* not supported */
+    string imageUrl = JsonParser::getString(program, 1, "ImageUrl");
+    tag.strIconPath         = imageUrl.c_str();
+    tag.iParentalRating     = 0;     /* not supported */
+    tag.iStarRating         = 0;     /* not supported */
+    tag.bNotify             = false; /* not supported */
+    tag.iSeriesNumber       = 0;     /* not supported */
+    tag.iEpisodeNumber      = 0;     /* not supported */
+    tag.iEpisodePartNumber  = 0;     /* not supported */
+    string subTitle = JsonParser::getString(program, 1, "Subtitle");
+    tag.strEpisodeName      = subTitle.c_str();  /* not supported */
+    tag.iFlags              = EPG_TAG_FLAG_UNDEFINED;
+
+    string genreStr = JsonParser::getString(program, 1, "Genre");
+    int genre = categories.Category(genreStr.c_str());
+    if (genre) {
+      tag.iGenreSubType = genre&0x0F;
+      tag.iGenreType = genre&0xF0;
+    } else {
+      tag.iGenreType          = EPG_GENRE_USE_STRING;
+      tag.iGenreSubType       = 0;     /* not supported */
+      tag.strGenreDescription = genreStr.c_str();
+    }
+
+    PVR->TransferEpgEntry(handle, &tag);
+  }
+
+  yajl_tree_free(json);
+
+  return PVR_ERROR_NO_ERROR;
+}
+
+string ZatData::timeToIsoString(time_t t) {
+  char buf[sizeof "2011-10-08T07:07:09Z"];
+  strftime(buf, sizeof buf, "%FT%TZ", gmtime(&t));
+  return buf;
+}
+
 PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd) {
+
+  if (this->alternativeEpgService) {
+    return GetEPGForChannelExternalService(handle, channel, iStart, iEnd);
+  }
 
     ZatChannel *zatChannel = FindChannel(channel.iUniqueId);
 

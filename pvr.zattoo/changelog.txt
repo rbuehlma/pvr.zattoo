@@ -1,3 +1,5 @@
+v0.1.32
+ - Implement alternative EPG service to speed up and include description
 v0.1.31
  - Refactor epg cache to solve memory issue
 v0.1.30

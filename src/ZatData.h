@@ -85,7 +85,7 @@ struct PVRIptvEpgGenre
 class ZatData
 {
 public:
-    ZatData(std::string username, std::string password, bool favoritesOnly);
+    ZatData(std::string username, std::string password, bool favoritesOnly, bool alternativeEpgService);
     virtual ~ZatData();
     virtual bool Initialize();
     virtual bool LoadChannels();
@@ -97,6 +97,7 @@ public:
     virtual PVR_ERROR GetChannelGroups(ADDON_HANDLE handle);
     virtual PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group);
     virtual PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
+    virtual PVR_ERROR GetEPGForChannelExternalService(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
 
     //    virtual void      ReaplyChannelsLogos(const char * strNewPath);
     //    virtual void      ReloadPlayList(const char * strNewPath);
@@ -129,12 +130,14 @@ private:
     int                               m_iLastEnd;
     std::string                       appToken;
     std::string                       powerHash;
+    std::string                       countryCode;
     bool                              recallEnabled;
     bool                              recordingEnabled;
     std::string                       streamType;
     std::string                       username;
     std::string                       password;
     bool                              favoritesOnly;
+    bool                              alternativeEpgService;
     std::vector<PVRZattooChannelGroup> channelGroups;
     std::map<int, ZatChannel>         channelsByNumber;
     std::map<std::string, ZatChannel> channelsByCid;
@@ -165,4 +168,5 @@ private:
     int findChannelNumber(int uniqueId);
 
     yajl_val loadFavourites();
+    string timeToIsoString(time_t t);
 };

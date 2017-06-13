@@ -34,6 +34,7 @@ CHelper_libXBMC_pvr   *PVR  = NULL;
 std::string zatUsername    = "";
 std::string zatPassword    = "";
 bool      zatFavoritesOnly = false;
+bool      zatAlternativeEpgService = false;
 int         g_iStartNumber  = 1;
 bool        g_bTSOverride   = true;
 bool        g_bCacheM3U     = false;
@@ -83,6 +84,10 @@ void ADDON_ReadSettings(void) {
     {
         zatFavoritesOnly = boolBuffer;
     }
+    if (XBMC->GetSetting("alternativeepgservice", &boolBuffer))
+    {
+      zatAlternativeEpgService = boolBuffer;
+    }
     XBMC->Log(LOG_DEBUG, "End Readsettings");
 }
 
@@ -120,7 +125,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
     ADDON_ReadSettings();
     if (!zatUsername.empty() && !zatPassword.empty()) {
       XBMC->Log(LOG_DEBUG, "Create Zat");
-      zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly);
+      zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly, zatAlternativeEpgService);
       XBMC->Log(LOG_DEBUG, "Zat created");
       if (zat->Initialize() && zat->LoadChannels()) {
         m_CurStatus = ADDON_STATUS_OK;

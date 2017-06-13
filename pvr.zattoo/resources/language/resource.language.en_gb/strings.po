@@ -24,6 +24,10 @@ msgctxt "#37103"
 msgid "Favourite channels only"
 msgstr "Load only channels which are in the favourite list"
 
+msgctxt "#37104"
+msgid "Use alternative EPG service"
+msgstr "This is an external service to gather additional EPG information and speed up EPG loading."
+
 msgctxt "#37111"
 msgid "Zattoo login failed!"
 msgstr ""
