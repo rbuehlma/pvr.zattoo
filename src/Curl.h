@@ -1,3 +1,7 @@
+#ifdef TARGET_WINDOWS
+#include "winsock2.h"
+#endif
+
 #include <curl/curl.h>
 #include <string>
 
