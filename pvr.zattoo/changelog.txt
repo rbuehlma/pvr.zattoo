@@ -1,3 +1,6 @@
+v0.1.33
+ - Initial support for Kodi 18 Leia
+ - Added minimalistic support for PVR Addon API 5.3.0
 v0.1.32
  - Implement alternative EPG service to speed up and include description
 v0.1.31
