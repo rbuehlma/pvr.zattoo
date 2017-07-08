@@ -1,3 +1,6 @@
+v18.0.0
+ - Initial support for Kodi 18 Leia
+ - Added minimalistic support for PVR Addon API 5.3.0
 v0.2.11
  - Merge v0.1.32
 v0.2.10
