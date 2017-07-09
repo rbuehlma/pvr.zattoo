@@ -459,7 +459,7 @@ bool IsPlayable(const EPG_TAG &tag) {
   return zat->IsPlayable(tag);
 }
 
-int GetEpgTagUrl(const EPG_TAG &tag, char *url, int urlLen) {
+int GetEpgTagUrl(const EPG_TAG &tag, char *url, int urlLen, const CStringPropertyMapPtr& properties) {
   if (!zat) {
     return -1;
   }
@@ -467,6 +467,10 @@ int GetEpgTagUrl(const EPG_TAG &tag, char *url, int urlLen) {
   time(&g_pvrZattooTimeShift);
   g_pvrZattooTimeShift -= tag.startTime;
   strncpy(url, strUrl.c_str(), urlLen);
+
+  properties->insert(std::make_pair("inputstreamaddon", "inputstream.adaptive"));
+  properties->insert(std::make_pair("inputstream.adaptive.manifest_type", "mpd"));
+
   return urlLen;
 }
 
