@@ -341,7 +341,6 @@ bool ZatData::LoadChannels() {
                 if(avail == "available") {
                     ZatChannel channel;
                     channel.name = JsonParser::getString(qualityItem, 1, "title");
-                    channel.strStreamURL = "";
                     std::string cid = JsonParser::getString(channelItem, 1, "cid");
                     channel.iUniqueId = GetChannelId(cid.c_str());
                     channel.cid = cid;
@@ -530,16 +529,6 @@ PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio) {
 
 
             kodiChannel.bIsHidden         = false;
-
-
-
-
-            // self referencing so GetLiveStreamURL() gets triggered
-            std::string streamURL;
-            streamURL = ("pvr://stream/tv/zattoo.ts");
-            strncpy(kodiChannel.strStreamURL, streamURL.c_str(), sizeof(kodiChannel.strStreamURL) - 1);
-            //
-
 
             PVR->TransferChannelEntry(handle, &kodiChannel);
 
@@ -930,7 +919,6 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future) {
       time_t endTime  = JsonParser::getTime(recording, 1, "end");
       tag.recordingTime = startTime;
       tag.iDuration = endTime -  startTime;
-      PVR_STRCPY(tag.strStreamURL, GetRecordingStreamUrl(tag.strRecordingId).c_str());
 
       if (genre) {
         tag.iGenreSubType = genre&0x0F;

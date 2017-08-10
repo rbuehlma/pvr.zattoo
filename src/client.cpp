@@ -278,14 +278,7 @@ PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio)
 
 bool OpenLiveStream(const PVR_CHANNEL &channel)
 {
-
-    std::string url = GetLiveStreamURL(channel);
-
-    XBMC->Log(LOG_DEBUG, "Open Livestream URL %s", url.c_str());
-    return true;
-
-
-
+  return false;
 }
 
 void CloseLiveStream(void)
@@ -343,8 +336,38 @@ PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
   return PVR_ERROR_NO_ERROR;
 }
 
-const char * GetLiveStreamURL(const PVR_CHANNEL &channel)  {
-    return XBMC->UnknownToUTF8(zat->GetChannelStreamUrl(channel.iUniqueId).c_str());
+void setStreamProperties(PVR_STREAM_URL_PROPERTY* properties, unsigned int* propertiesCount) {
+  snprintf(properties[0].strName, sizeof(properties[0].strName), "inputstreamaddon");
+  snprintf(properties[0].strValue, sizeof(properties[0].strValue), "inputstream.adaptive");
+  snprintf(properties[1].strName, sizeof(properties[1].strName), "inputstream.adaptive.manifest_type");
+  snprintf(properties[1].strValue, sizeof(properties[1].strValue), "mpd");
+  *propertiesCount = 2;
+}
+
+PVR_ERROR GetChannelStreamURL(const PVR_CHANNEL* channel, char* url, unsigned int* urlLen, PVR_STREAM_URL_PROPERTY* properties, unsigned int* propertiesCount) {
+  std::string strUrl = zat->GetChannelStreamUrl(channel->iUniqueId);
+  if (strUrl.empty()) {
+    return PVR_ERROR_FAILED;
+  }
+  if (strUrl.size() < (*urlLen)) {
+    *urlLen = strUrl.size();
+  }
+  memcpy(url, strUrl.c_str(), *urlLen);
+  setStreamProperties(properties, propertiesCount);
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR GetRecordingStreamURL(const PVR_RECORDING* recording, char* url, unsigned int* urlLen, PVR_STREAM_URL_PROPERTY* properties, unsigned int* propertiesCount)  {
+  std::string strUrl =  zat->GetRecordingStreamUrl(recording->strRecordingId);;
+  if (strUrl.empty()) {
+    return PVR_ERROR_FAILED;
+  }
+  if (strUrl.size() < (*urlLen)) {
+    *urlLen = strUrl.size();
+  }
+  setStreamProperties(properties, propertiesCount);
+  memcpy(url, strUrl.c_str(), *urlLen);
+  return PVR_ERROR_NO_ERROR;
 }
 
 /** Recording API **/
@@ -534,5 +557,6 @@ PVR_ERROR DeleteAllRecordingsFromTrash() { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetEPGTimeFrame(int) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetDescrambleInfo(PVR_DESCRAMBLE_INFO*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetRecordingLifetime(const PVR_RECORDING*) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR GetStreamTimes(PVR_STREAM_TIMES *times) { return PVR_ERROR_NOT_IMPLEMENTED; };
 
 }
