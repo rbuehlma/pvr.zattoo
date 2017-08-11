@@ -411,7 +411,7 @@ ZatData::ZatData(std::string u, std::string p, bool favoritesOnly, bool alternat
   this->favoritesOnly = favoritesOnly;
   m_iLastStart = 0;
   m_iLastEnd = 0;
-  streamType = "hls";
+  streamType = "dash";
 }
 
 ZatData::~ZatData() {
@@ -546,6 +546,10 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId) {
 
     ostringstream dataStream;
     dataStream << "cid=" << channel->cid << "&stream_type=" << streamType << "&format=json";
+
+    if (recallEnabled) {
+      dataStream << "&timeshift=" << maxRecallSeconds;
+    }
 
     string jsonString = HttpPost(zattooServer + "/zapi/watch", dataStream.str());
 
