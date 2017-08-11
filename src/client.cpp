@@ -340,37 +340,31 @@ PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
   return PVR_ERROR_NO_ERROR;
 }
 
-void setStreamProperties(PVR_STREAM_URL_PROPERTY* properties, unsigned int* propertiesCount) {
-  snprintf(properties[0].strName, sizeof(properties[0].strName), "inputstreamaddon");
-  snprintf(properties[0].strValue, sizeof(properties[0].strValue), "inputstream.adaptive");
-  snprintf(properties[1].strName, sizeof(properties[1].strName), "inputstream.adaptive.manifest_type");
-  snprintf(properties[1].strValue, sizeof(properties[1].strValue), "mpd");
-  *propertiesCount = 2;
+void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, std::string url) {
+  strncpy(properties[0].strName, PVR_STREAM_PROPERTY_STREAMURL, sizeof(properties[0].strName));
+  strncpy(properties[0].strValue, url.c_str(), sizeof(properties[0].strValue));
+  strncpy(properties[1].strName, "inputstreamaddon", sizeof(properties[1].strName));
+  strncpy(properties[1].strValue, "inputstream.adaptive", sizeof(properties[1].strValue));
+  strncpy(properties[2].strName, "inputstream.adaptive.manifest_type", sizeof(properties[2].strName));
+  strncpy(properties[2].strValue, "mpd", sizeof(properties[2].strValue));
+  *propertiesCount = 3;
 }
 
-PVR_ERROR GetChannelStreamURL(const PVR_CHANNEL* channel, char* url, unsigned int* urlLen, PVR_STREAM_URL_PROPERTY* properties, unsigned int* propertiesCount) {
+PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel, PVR_NAMED_VALUE* properties, unsigned int* propertiesCount) {
   std::string strUrl = zat->GetChannelStreamUrl(channel->iUniqueId);
   if (strUrl.empty()) {
     return PVR_ERROR_FAILED;
   }
-  if (strUrl.size() < (*urlLen)) {
-    *urlLen = strUrl.size();
-  }
-  memcpy(url, strUrl.c_str(), *urlLen);
-  setStreamProperties(properties, propertiesCount);
+  setStreamProperties(properties, propertiesCount, strUrl);
   return PVR_ERROR_NO_ERROR;
 }
 
-PVR_ERROR GetRecordingStreamURL(const PVR_RECORDING* recording, char* url, unsigned int* urlLen, PVR_STREAM_URL_PROPERTY* properties, unsigned int* propertiesCount)  {
+PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING* recording, PVR_NAMED_VALUE* properties, unsigned int* propertiesCount)  {
   std::string strUrl =  zat->GetRecordingStreamUrl(recording->strRecordingId);;
   if (strUrl.empty()) {
     return PVR_ERROR_FAILED;
   }
-  if (strUrl.size() < (*urlLen)) {
-    *urlLen = strUrl.size();
-  }
-  setStreamProperties(properties, propertiesCount);
-  memcpy(url, strUrl.c_str(), *urlLen);
+  setStreamProperties(properties, propertiesCount, strUrl);
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -481,19 +475,13 @@ bool IsPlayable(const EPG_TAG &tag) {
   return zat->IsPlayable(tag);
 }
 
-int GetEpgTagUrl(const EPG_TAG &tag, char *url, int urlLen, const CStringPropertyMapPtr& properties) {
-  if (!zat) {
-    return -1;
+PVR_ERROR GetEpgTagStreamProperties(const EPG_TAG* tag, PVR_NAMED_VALUE* properties, unsigned int* propertiesCount)  {
+  std::string strUrl =  zat->GetEpgTagUrl(tag);
+  if (strUrl.empty()) {
+    return PVR_ERROR_FAILED;
   }
-  string strUrl = zat->GetEpgTagUrl(tag);
-  time(&g_pvrZattooTimeShift);
-  g_pvrZattooTimeShift -= tag.startTime;
-  strncpy(url, strUrl.c_str(), urlLen);
-
-  properties->insert(std::make_pair("inputstreamaddon", "inputstream.adaptive"));
-  properties->insert(std::make_pair("inputstream.adaptive.manifest_type", "mpd"));
-
-  return urlLen;
+  setStreamProperties(properties, propertiesCount, strUrl);
+  return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count) {

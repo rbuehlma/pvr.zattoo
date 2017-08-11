@@ -1021,13 +1021,13 @@ bool ZatData::IsPlayable(const EPG_TAG &tag) {
   return ((current_time - tag.endTime) < maxRecallSeconds) && (tag.startTime < current_time);
 }
 
-string ZatData::GetEpgTagUrl(const EPG_TAG &tag) {
+string ZatData::GetEpgTagUrl(const EPG_TAG *tag) {
   ostringstream dataStream;
-  ZatChannel channel = channelsByNumber[tag.iChannelNumber];
+  ZatChannel channel = channelsByNumber[tag->iChannelNumber];
   char timeStart[sizeof "2011-10-08T07:07:09Z"];
-  strftime(timeStart, sizeof timeStart, "%FT%TZ", gmtime(&tag.startTime));
+  strftime(timeStart, sizeof timeStart, "%FT%TZ", gmtime(&tag->startTime));
   char timeEnd[sizeof "2011-10-08T07:07:09Z"];
-  strftime(timeEnd, sizeof timeEnd, "%FT%TZ", gmtime(&tag.endTime));
+  strftime(timeEnd, sizeof timeEnd, "%FT%TZ", gmtime(&tag->endTime));
 
   dataStream << "cid=" << channel.cid << "&start=" << timeStart << "&end=" << timeEnd << "&stream_type=" << streamType;
 
