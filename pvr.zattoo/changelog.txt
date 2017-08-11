@@ -1,3 +1,6 @@
+v18.0.1
+ - Adapt to new api
+ - Merge dash branch into master
 v18.0.0
  - Initial support for Kodi 18 Leia
  - Added minimalistic support for PVR Addon API 5.3.0
