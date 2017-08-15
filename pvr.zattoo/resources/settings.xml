@@ -4,4 +4,5 @@
 	<setting id="password" type="text" option="hidden" label="37102" default="" />
 	<setting id="favoritesonly" type="bool" label="37103" default="false" />
 	<setting id="alternativeepgservice" type="bool" label="37104" default="false" />
+	<setting id="streamtype" type="enum" label="37105" default = "0" values="dash|hls" />
 </settings>

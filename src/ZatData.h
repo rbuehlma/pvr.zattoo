@@ -85,7 +85,7 @@ struct PVRIptvEpgGenre
 class ZatData
 {
 public:
-    ZatData(std::string username, std::string password, bool favoritesOnly, bool alternativeEpgService);
+    ZatData(std::string username, std::string password, bool favoritesOnly, bool alternativeEpgService, std::string streamType);
     virtual ~ZatData();
     virtual bool Initialize();
     virtual bool LoadChannels();

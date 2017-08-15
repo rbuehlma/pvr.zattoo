@@ -1,3 +1,5 @@
+v18.0.2
+ - Allow selection between dash and hls stream
 v18.0.1
  - Adapt to new api
  - Merge dash branch into master

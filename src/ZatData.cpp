@@ -396,7 +396,7 @@ int ZatData::GetChannelGroupsAmount() {
     return channelGroups.size();
 }
 
-ZatData::ZatData(std::string u, std::string p, bool favoritesOnly, bool alternativeEpgService) :
+ZatData::ZatData(std::string u, std::string p, bool favoritesOnly, bool alternativeEpgService, std::string streamType) :
   maxRecallSeconds(0),
   recallEnabled(false),
   countryCode(""),
@@ -411,7 +411,7 @@ ZatData::ZatData(std::string u, std::string p, bool favoritesOnly, bool alternat
   this->favoritesOnly = favoritesOnly;
   m_iLastStart = 0;
   m_iLastEnd = 0;
-  streamType = "dash";
+  this->streamType = streamType;
 }
 
 ZatData::~ZatData() {

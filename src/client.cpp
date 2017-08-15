@@ -37,6 +37,7 @@ std::string zatUsername    = "";
 std::string zatPassword    = "";
 bool      zatFavoritesOnly = false;
 bool      zatAlternativeEpgService = false;
+bool      streamType = 0;
 int         g_iStartNumber  = 1;
 bool        g_bTSOverride   = true;
 bool        g_bCacheM3U     = false;
@@ -73,6 +74,7 @@ extern "C" {
 void ADDON_ReadSettings(void) {
     char buffer[1024];
     bool boolBuffer;
+    int intBuffer;
     XBMC->Log(LOG_DEBUG, "Read settings");
     if (XBMC->GetSetting("username", &buffer))
     {
@@ -89,6 +91,10 @@ void ADDON_ReadSettings(void) {
     if (XBMC->GetSetting("alternativeepgservice", &boolBuffer))
     {
       zatAlternativeEpgService = boolBuffer;
+    }
+    if (XBMC->GetSetting("streamtype", &intBuffer))
+    {
+      streamType = intBuffer;
     }
     XBMC->Log(LOG_DEBUG, "End Readsettings");
 }
@@ -129,7 +135,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
     ADDON_ReadSettings();
     if (!zatUsername.empty() && !zatPassword.empty()) {
       XBMC->Log(LOG_DEBUG, "Create Zat");
-      zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly, zatAlternativeEpgService);
+      zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly, zatAlternativeEpgService, streamType ? "hls" : "dash");
       XBMC->Log(LOG_DEBUG, "Zat created");
       if (zat->Initialize() && zat->LoadChannels()) {
         m_CurStatus = ADDON_STATUS_OK;
@@ -173,6 +179,13 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
     bool favOnly = *(bool *)settingValue;
     if (favOnly != zatFavoritesOnly) {
       zatFavoritesOnly = favOnly;
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+  if (name == "streamtype") {
+    int type = *(int *)settingValue;
+    if (type != streamType) {
+      streamType = type;
       return ADDON_STATUS_NEED_RESTART;
     }
   }
@@ -346,7 +359,7 @@ void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCo
   strncpy(properties[1].strName, "inputstreamaddon", sizeof(properties[1].strName));
   strncpy(properties[1].strValue, "inputstream.adaptive", sizeof(properties[1].strValue));
   strncpy(properties[2].strName, "inputstream.adaptive.manifest_type", sizeof(properties[2].strName));
-  strncpy(properties[2].strValue, "mpd", sizeof(properties[2].strValue));
+  strncpy(properties[2].strValue, streamType ? "hls" : "mpd", sizeof(properties[2].strValue));
   *propertiesCount = 3;
 }
 
