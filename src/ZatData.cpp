@@ -1012,13 +1012,22 @@ bool ZatData::DeleteRecording(string recordingId) {
   return ret;
 }
 
-bool ZatData::IsPlayable(const EPG_TAG &tag) {
+bool ZatData::IsPlayable(const EPG_TAG *tag) {
   if (!recallEnabled) {
     return false;
   }
   time_t current_time;
   time(&current_time);
-  return ((current_time - tag.endTime) < maxRecallSeconds) && (tag.startTime < current_time);
+  return ((current_time - tag->endTime) < maxRecallSeconds) && (tag->startTime < current_time);
+}
+
+bool ZatData::IsRecordable(const EPG_TAG *tag) {
+  if (!recallEnabled) {
+    return false;
+  }
+  time_t current_time;
+  time(&current_time);
+  return ((current_time - tag->endTime) < maxRecallSeconds);
 }
 
 string ZatData::GetEpgTagUrl(const EPG_TAG *tag) {

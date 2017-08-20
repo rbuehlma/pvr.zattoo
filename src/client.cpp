@@ -356,7 +356,7 @@ PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
 void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, std::string url) {
   strncpy(properties[0].strName, PVR_STREAM_PROPERTY_STREAMURL, sizeof(properties[0].strName));
   strncpy(properties[0].strValue, url.c_str(), sizeof(properties[0].strValue));
-  strncpy(properties[1].strName, "inputstreamaddon", sizeof(properties[1].strName));
+  strncpy(properties[1].strName, PVR_STREAM_PROPERTY_INPUTSTREAMADDON, sizeof(properties[1].strName));
   strncpy(properties[1].strValue, "inputstream.adaptive", sizeof(properties[1].strValue));
   strncpy(properties[2].strName, "inputstream.adaptive.manifest_type", sizeof(properties[2].strName));
   strncpy(properties[2].strValue, streamType ? "hls" : "mpd", sizeof(properties[2].strValue));
@@ -472,28 +472,28 @@ PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size) {
   return PVR_ERROR_NO_ERROR;
 }
 
-PVR_ERROR IsRecordable(const EPG_TAG& tag, bool* isRecordable) {
-
-  time_t current_time;
-  time(&current_time);
-
-  *isRecordable = true; //tag.endTime > current_time - 60 * 60 * 24 *7;
+PVR_ERROR IsEPGTagRecordable(const EPG_TAG* tag, bool* bIsRecordable) {
+  if (!zat) {
+    return PVR_ERROR_FAILED;
+  }
+  *bIsRecordable = zat->IsRecordable(tag);
   return PVR_ERROR_NO_ERROR;
 }
 
-bool IsPlayable(const EPG_TAG &tag) {
+PVR_ERROR IsEPGTagPlayable(const EPG_TAG* tag, bool* bIsPlayable) {
   if (!zat) {
-    return false;
+    return PVR_ERROR_FAILED;
   }
-  return zat->IsPlayable(tag);
+  *bIsPlayable = zat->IsPlayable(tag);
+  return PVR_ERROR_NO_ERROR;
 }
 
-PVR_ERROR GetEpgTagStreamProperties(const EPG_TAG* tag, PVR_NAMED_VALUE* properties, unsigned int* propertiesCount)  {
+PVR_ERROR GetEPGTagStreamProperties(const EPG_TAG* tag, PVR_NAMED_VALUE* properties, unsigned int* iPropertiesCount) {
   std::string strUrl =  zat->GetEpgTagUrl(tag);
   if (strUrl.empty()) {
     return PVR_ERROR_FAILED;
   }
-  setStreamProperties(properties, propertiesCount, strUrl);
+  setStreamProperties(properties, iPropertiesCount, strUrl);
   return PVR_ERROR_NO_ERROR;
 }
 

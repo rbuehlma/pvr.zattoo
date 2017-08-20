@@ -1,3 +1,5 @@
+v18.0.3
+ - Implement new replay api
 v18.0.2
  - Allow selection between dash and hls stream
 v18.0.1
