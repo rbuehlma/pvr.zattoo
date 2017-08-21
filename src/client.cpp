@@ -2,9 +2,6 @@
 #include "ZatData.h"
 #include "kodi/xbmc_pvr_dll.h"
 #include "kodi/libKODI_guilib.h"
-#include <iostream>
-
-
 
 using namespace ADDON;
 
@@ -19,9 +16,7 @@ using namespace ADDON;
 
 ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
 ZatData *zat = NULL;
-bool m_bIsPlaying = false;
-time_t      g_pvrZattooTimeShift;
-
+time_t g_pvrZattooTimeShift;
 
 /* User adjustable settings are saved here.
  * Default values are defined inside client.h
@@ -31,43 +26,13 @@ std::string g_strUserPath   = "";
 std::string g_strClientPath = "";
 
 CHelper_libXBMC_addon *XBMC = NULL;
-CHelper_libXBMC_pvr   *PVR  = NULL;
+CHelper_libXBMC_pvr *PVR  = NULL;
 
 std::string zatUsername    = "";
 std::string zatPassword    = "";
-bool      zatFavoritesOnly = false;
-bool      zatAlternativeEpgService = false;
-bool      streamType = 0;
-int         g_iStartNumber  = 1;
-bool        g_bTSOverride   = true;
-bool        g_bCacheM3U     = false;
-bool        g_bCacheEPG     = false;
-int         g_iEPGLogos     = 0;
-
-
-
-extern std::string PathCombine(const std::string &strPath, const std::string &strFileName)
-{
-    std::string strResult = strPath;
-    if (strResult.at(strResult.size() - 1) == '\\' ||
-        strResult.at(strResult.size() - 1) == '/')
-    {
-        strResult.append(strFileName);
-    }
-    else
-    {
-        strResult.append("/");
-        strResult.append(strFileName);
-    }
-
-    return strResult;
-}
-
-
-extern std::string GetUserFilePath(const std::string &strFileName)
-{
-    return PathCombine(g_strUserPath, strFileName);
-}
+bool zatFavoritesOnly = false;
+bool zatAlternativeEpgService = false;
+bool streamType = 0;
 
 extern "C" {
 
@@ -129,7 +94,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props) {
 
     g_strClientPath = pvrprops->strClientPath;
     g_strUserPath = pvrprops->strUserPath;
-
+    
     zatUsername = "";
     zatPassword = "";
     ADDON_ReadSettings();
@@ -259,13 +224,6 @@ const char *GetBackendHostname(void)
   return "";
 }
 
-PVR_ERROR GetDriveSpace(long long *iTotal, long long *iUsed)
-{
-  *iTotal = 0;
-  *iUsed  = 0;
-  return PVR_ERROR_NO_ERROR;
-}
-
 PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
 {
   if (zat)
@@ -343,14 +301,6 @@ PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &g
 
     return PVR_ERROR_SERVER_ERROR;
 
-}
-
-PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
-{
-  snprintf(signalStatus.strAdapterName, sizeof(signalStatus.strAdapterName), "Zattoo Adapter 1");
-  snprintf(signalStatus.strAdapterStatus, sizeof(signalStatus.strAdapterStatus), "OK");
-
-  return PVR_ERROR_NO_ERROR;
 }
 
 void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, std::string url) {
@@ -568,5 +518,6 @@ PVR_ERROR SetEPGTimeFrame(int) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetDescrambleInfo(PVR_DESCRAMBLE_INFO*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetRecordingLifetime(const PVR_RECORDING*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetStreamTimes(PVR_STREAM_TIMES *times) { return PVR_ERROR_NOT_IMPLEMENTED; };
-
+PVR_ERROR GetDriveSpace(long long *iTotal, long long *iUsed) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus) { return PVR_ERROR_NOT_IMPLEMENTED; }
 }

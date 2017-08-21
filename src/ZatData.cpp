@@ -21,16 +21,6 @@
 #include "to_string.h"
 #endif
 
-#define DEBUG
-
-#ifdef DEBUG
-#define D(x) x
-#else
-#define D(x)
-#endif
-
-
-
 using namespace ADDON;
 using namespace std;
 
@@ -582,11 +572,6 @@ ZatChannel *ZatData::FindChannel(int uniqueId) {
 }
 
 
-int ZatData::findChannelNumber(int uniqueId) {
-    ZatChannel *channel = FindChannel(uniqueId);
-    return 0;
-}
-
 PVR_ERROR ZatData::GetEPGForChannelExternalService(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd) {
   ZatChannel *zatChannel = FindChannel(channel.iUniqueId);
   string cid = zatChannel->cid;
@@ -649,12 +634,6 @@ PVR_ERROR ZatData::GetEPGForChannelExternalService(ADDON_HANDLE handle, const PV
   yajl_tree_free(json);
 
   return PVR_ERROR_NO_ERROR;
-}
-
-string ZatData::timeToIsoString(time_t t) {
-  char buf[sizeof "2011-10-08T07:07:09Z"];
-  strftime(buf, sizeof buf, "%FT%TZ", gmtime(&t));
-  return buf;
 }
 
 PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd) {
@@ -732,12 +711,6 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &chan
 
 
 bool ZatData::LoadEPG(time_t iStart, time_t iEnd) {
-
-
-//    iStart -= (iStart % (3600/2)) - 86400; // Do s
-//    iEnd = iStart + 3600*3;
-
-
     //Do some time magic that the start date is not to far in the past because zattoo doesnt like that
     time_t tempStart = iStart - (iStart % (3600/2)) - 86400;
     time_t tempEnd = tempStart + 3600*5; //Add 5 hours

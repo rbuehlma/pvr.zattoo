@@ -23,29 +23,12 @@
  *
  */
 
-#include <vector>
 #include "kodi/libXBMC_addon.h"
 #include "kodi/libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
 #include "p8-platform/util/util.h"
 
-extern std::string                   g_strUserPath;
-extern std::string                   g_strClientPath;
+extern std::string g_strUserPath;
+extern std::string g_strClientPath;
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 extern CHelper_libXBMC_pvr          *PVR;
-
-extern std::string g_strM3UPath;
-extern std::string g_strTvgPath;
-
-
-extern std::string g_strLogoPath;
-extern int         g_iEPGTimeShift;
-extern int         g_iStartNumber;
-extern bool        g_bTSOverride;
-extern bool        g_bCacheM3U;
-extern bool        g_bCacheEPG;
-extern int         g_iEPGLogos;
-
-
-extern std::string PathCombine(const std::string &strPath, const std::string &strFileName);
-extern std::string GetUserFilePath(const std::string &strFileName);

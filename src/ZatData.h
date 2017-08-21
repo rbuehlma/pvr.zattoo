@@ -73,15 +73,6 @@ struct PVRZattooChannelGroup
     std::vector<ZatChannel> channels;
 };
 
-struct PVRIptvEpgGenre
-{
-    int               iGenreType;
-    int               iGenreSubType;
-    std::string       strGenre;
-};
-
-
-
 class ZatData
 {
 public:
@@ -92,16 +83,11 @@ public:
     virtual void      GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
     virtual int       GetChannelsAmount(void);
     virtual PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
-    //virtual bool      GetChannel(const PVR_CHANNEL &channel, ZatChannel &myChannel);
     virtual int       GetChannelGroupsAmount(void);
     virtual PVR_ERROR GetChannelGroups(ADDON_HANDLE handle);
     virtual PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group);
     virtual PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
     virtual PVR_ERROR GetEPGForChannelExternalService(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
-
-    //    virtual void      ReaplyChannelsLogos(const char * strNewPath);
-    //    virtual void      ReloadPlayList(const char * strNewPath);
-    //    virtual void      ReloadEPG(const char * strNewPath);
     virtual std::string GetChannelStreamUrl(int uniqueId);
     virtual void GetRecordings(ADDON_HANDLE handle, bool future);
     virtual int GetRecordingsAmount(bool future);
@@ -166,8 +152,5 @@ private:
 
     bool initSession();
 
-    int findChannelNumber(int uniqueId);
-
     yajl_val loadFavourites();
-    string timeToIsoString(time_t t);
 };
