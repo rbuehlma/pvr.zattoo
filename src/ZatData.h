@@ -3,22 +3,18 @@
 //
 
 #include "client.h"
-#include "JsonParser.h"
 #include "UpdateThread.h"
 #include "categories.h"
 #include "Curl.h"
 #include <map>
+
+using namespace std;
 
 /*!
  * @brief PVR macros for string exchange
  */
 #define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); dest[sizeof(dest)-1] = '\0'; } while(0)
 #define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
-
-#define JS_STR(G, STR) do {                                             \
-        string _s = (STR);                                         \
-        yajl_gen_string(G, (const unsigned char*)_s.c_str(), _s.length());      \
-} while (0)
 
 struct PVRIptvEpgEntry
 {
@@ -138,7 +134,6 @@ private:
   bool SendHello(string uuid);
   bool Login();
   bool InitSession();
-  yajl_val LoadFavourites();
   virtual std::string HttpGet(string url, bool isInit = false);
   virtual std::string HttpPost(string url, string postData,
       bool isInit = false);
@@ -146,4 +141,5 @@ private:
   virtual ZatChannel* FindChannel(int uniqueId);
   virtual PVRZattooChannelGroup* FindGroup(const std::string &strName);
   virtual int GetChannelId(const char * strChannelName);
+  time_t StringToTime(std::string timeString);
 };

@@ -1,3 +1,7 @@
+v18.0.4
+ - Remove unused code
+ - Reformat code
+ - Replace libyajl with rapidjson
 v18.0.3
  - Implement new replay api
 v18.0.2

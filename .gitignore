@@ -1,21 +1,7 @@
 # build artifacts
 build/
 pvr.zattoo/addon.xml
-CMakeFiles
-
-
-CMakeCache.txt
-CPackConfig.cmake
-CPackSourceConfig.cmake
-install_manifest.txt
-cmake_install.cmake
-pvr.zattoo.so
-pvr.zattoo.so.0.0.1
-pvr.zattoo.so.17.0
-zatCookie.txt
-LICENSE
-Makefile
-
+depends/target/rapidjson/
 
 # clion
 .idea/
