@@ -34,8 +34,8 @@
 
 using namespace ADDON;
 
-Categories::Categories()
-: m_categoriesById()
+Categories::Categories() :
+    m_categoriesById()
 {
   std::string filePath;
   char *saveptr;
@@ -46,13 +46,15 @@ Categories::Categories()
   for (it = m_categoriesById.begin(); it != m_categoriesById.end(); ++it)
   {
     m_categoriesByName[it->second] = it->first;
-    if (it->second.find("/") != std::string::npos) {
+    if (it->second.find("/") != std::string::npos)
+    {
       char *categories = strdup(it->second.c_str());
       char *p = strtok_r(categories, "/", &saveptr);
-      while (p != NULL) {
-          std::string category = p;
-          m_categoriesByName[category] = it->first;
-          p = strtok_r(NULL, "/", &saveptr);
+      while (p != NULL)
+      {
+        std::string category = p;
+        m_categoriesByName[category] = it->first;
+        p = strtok_r(NULL, "/", &saveptr);
       }
       delete categories;
     }
@@ -79,7 +81,8 @@ void Categories::LoadEITCategories(const char *filePath)
 {
   if (XBMC->FileExists(filePath, false))
   {
-    XBMC->Log(LOG_DEBUG, "%s: Loading EIT categories from file '%s'", __FUNCTION__, filePath);
+    XBMC->Log(LOG_DEBUG, "%s: Loading EIT categories from file '%s'",
+        __FUNCTION__, filePath);
     void *file = XBMC->OpenFile(filePath, 0);
     char *line = new char[CATEGORIES_MAXLINESIZE + 1];
     char *name = new char[CATEGORIES_MAXLINESIZE + 1];
@@ -99,8 +102,7 @@ void Categories::LoadEITCategories(const char *filePath)
           do
           {
             ++pos;
-          }
-          while (isspace(*pos));
+          } while (isspace(*pos));
           if (*pos == '"')
             encaps = true;
           while (++pos < end)
@@ -111,15 +113,15 @@ void Categories::LoadEITCategories(const char *filePath)
               name[p++] = *pos;
           }
           m_categoriesById.insert(std::pair<int, std::string>(catId, name));
-          XBMC->Log(LOG_DEBUG, "%s: Add name [%s] for category %.2X", __FUNCTION__, name, catId);
+          XBMC->Log(LOG_DEBUG, "%s: Add name [%s] for category %.2X",
+              __FUNCTION__, name, catId);
         }
       }
     }
     delete[] name;
     delete[] line;
     XBMC->CloseFile(file);
-  }
-  else
+  } else
   {
     XBMC->Log(LOG_INFO, "%s: File '%s' not found", __FUNCTION__, filePath);
   }

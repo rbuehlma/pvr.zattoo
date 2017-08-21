@@ -6,30 +6,37 @@ using namespace ADDON;
 
 const time_t maximumUpdateInterval = 600;
 
-UpdateThread::UpdateThread() : CThread() {
+UpdateThread::UpdateThread() :
+    CThread()
+{
   time(&nextRecordingsUpdate);
   nextRecordingsUpdate += maximumUpdateInterval;
   CreateThread(false);
 }
 
-UpdateThread::~UpdateThread() {
+UpdateThread::~UpdateThread()
+{
 
 }
 
-void UpdateThread::SetNextRecordingUpdate(time_t nextRecordingsUpdate) {
-  if (nextRecordingsUpdate < this->nextRecordingsUpdate) {
+void UpdateThread::SetNextRecordingUpdate(time_t nextRecordingsUpdate)
+{
+  if (nextRecordingsUpdate < this->nextRecordingsUpdate)
+  {
     this->nextRecordingsUpdate = nextRecordingsUpdate;
   }
 }
 
-void* UpdateThread::Process() {
+void* UpdateThread::Process()
+{
   XBMC->Log(LOG_DEBUG, "Update thread started.");
   while (!IsStopped())
   {
     Sleep(100);
     time_t currentTime;
     time(&currentTime);
-    if (currentTime < nextRecordingsUpdate) {
+    if (currentTime < nextRecordingsUpdate)
+    {
       continue;
     }
     nextRecordingsUpdate = currentTime + maximumUpdateInterval;

@@ -38,6 +38,6 @@ public:
 private:
   void LoadEITCategories(const char *filePath);
 
-  CategoryByIdMap   m_categoriesById;
+  CategoryByIdMap m_categoriesById;
   CategoryByNameMap m_categoriesByName;
 };
