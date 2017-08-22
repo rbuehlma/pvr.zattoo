@@ -1,3 +1,5 @@
+v18.0.5
+ - Fix exception when loading timer
 v18.0.4
  - Remove unused code
  - Reformat code

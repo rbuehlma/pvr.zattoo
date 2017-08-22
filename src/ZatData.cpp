@@ -958,7 +958,9 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
 
       tag.iClientIndex = recording["id"].GetInt();
       PVR_STRCPY(tag.strTitle, recording["title"].GetString());
-      PVR_STRCPY(tag.strSummary, recording["episode_title"].GetString());
+      PVR_STRCPY(tag.strSummary,
+          recording["episode_title"].IsString() ?
+              recording["episode_title"].GetString() : "");
       time_t endTime = StringToTime(recording["end"].GetString());
       tag.startTime = startTime;
       tag.endTime = endTime;
