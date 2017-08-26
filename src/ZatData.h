@@ -116,7 +116,7 @@ private:
   bool favoritesOnly;
   bool alternativeEpgService;
   std::vector<PVRZattooChannelGroup> channelGroups;
-  std::map<int, ZatChannel> channelsByNumber;
+  std::map<int, ZatChannel> channelsByUid;
   std::map<std::string, ZatChannel> channelsByCid;
   std::map<std::string, ZatRecordingData*> recordingsData;
   std::map<std::string, std::map<time_t, PVRIptvEpgEntry>*> epgCache;

@@ -374,8 +374,8 @@ bool ZatData::LoadChannels()
           channel.strLogoPath.append(qualityItem["logo_white_84"].GetString());
           group.channels.insert(group.channels.end(), channel);
           allChannels[cid] = channel;
-          channelsByNumber[channel.iChannelNumber] = channel;
           channelsByCid[channel.cid] = channel;
+          channelsByUid[channel.iUniqueId] = channel;
           break;
         }
       }
@@ -396,8 +396,8 @@ bool ZatData::LoadChannels()
       ZatChannel channel = allChannels[favCid];
       channel.iChannelNumber = favGroup.channels.size() + 1;
       favGroup.channels.insert(favGroup.channels.end(), channel);
-      channelsByNumber[channel.iChannelNumber] = channel;
       channelsByCid[channel.cid] = channel;
+      channelsByUid[channel.iUniqueId] = channel;
     }
   }
 
@@ -651,7 +651,7 @@ PVR_ERROR ZatData::GetEPGForChannelExternalService(ADDON_HANDLE handle,
     tag.iUniqueBroadcastId = program["Id"].GetInt();
     string title = program["Title"].GetString();
     tag.strTitle = title.c_str();
-    tag.iChannelNumber = zatChannel->iChannelNumber;
+    tag.iUniqueChannelId = zatChannel->iUniqueId;
     tag.startTime = StringToTime(program["StartTime"].GetString());
     tag.endTime = StringToTime(program["EndTime"].GetString());
     string description = program["Description"].GetString();
@@ -738,7 +738,7 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle,
 
     tag.iUniqueBroadcastId = epgEntry.iBroadcastId;
     tag.strTitle = epgEntry.strTitle.c_str();
-    tag.iChannelNumber = epgEntry.iChannelId;
+    tag.iUniqueChannelId = epgEntry.iChannelId;
     tag.startTime = epgEntry.startTime;
     tag.endTime = epgEntry.endTime;
     tag.strPlotOutline = epgEntry.strPlot.c_str(); //epgEntry.strPlotOutline.c_str();
@@ -830,7 +830,7 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd)
         entry.iBroadcastId = program["id"].GetInt();
         entry.strIconPath =
             program["i_url"].IsString() ? program["i_url"].GetString() : "";
-        entry.iChannelId = channel->iChannelNumber;
+        entry.iChannelId = channel->iUniqueId;
         entry.strPlot =
             program["et"].IsString() ? program["et"].GetString() : "";
 
@@ -1122,7 +1122,7 @@ bool ZatData::IsRecordable(const EPG_TAG *tag)
 string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
 {
   ostringstream dataStream;
-  ZatChannel channel = channelsByNumber[tag->iChannelNumber];
+  ZatChannel channel = channelsByUid[tag->iUniqueChannelId];
   char timeStart[sizeof "2011-10-08T07:07:09Z"];
   strftime(timeStart, sizeof timeStart, "%FT%TZ", gmtime(&tag->startTime));
   char timeEnd[sizeof "2011-10-08T07:07:09Z"];
