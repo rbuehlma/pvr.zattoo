@@ -24,19 +24,19 @@ struct PVRIptvEpgEntry
   int iGenreSubType;
   time_t startTime;
   time_t endTime;
-  std::string strTitle;
-  std::string strPlotOutline;
-  std::string strPlot;
-  std::string strIconPath;
-  std::string strGenreString;
+  string strTitle;
+  string strPlotOutline;
+  string strPlot;
+  string strIconPath;
+  string strGenreString;
 };
 
 struct PVRIptvEpgChannel
 {
-  std::string strId;
-  std::string strName;
-  std::string strIcon;
-  std::vector<PVRIptvEpgEntry> epg;
+  string strId;
+  string strName;
+  string strIcon;
+  vector<PVRIptvEpgEntry> epg;
 };
 
 struct ZatChannel
@@ -46,18 +46,18 @@ struct ZatChannel
   int iChannelNumber;
   int iEncryptionSystem;
   int iTvgShift;
-  std::string name;
-  std::string strLogoPath;
-  std::string strStreamURL;
-  std::string strTvgId;
-  std::string strTvgName;
-  std::string strTvgLogo;
-  std::string cid;
+  string name;
+  string strLogoPath;
+  string strStreamURL;
+  string strTvgId;
+  string strTvgName;
+  string strTvgLogo;
+  string cid;
 };
 
 struct ZatRecordingData
 {
-  std::string recordingId;
+  string recordingId;
   int playCount;
   int lastPlayedPosition;
   bool stillValid;
@@ -65,15 +65,15 @@ struct ZatRecordingData
 
 struct PVRZattooChannelGroup
 {
-  std::string name;
-  std::vector<ZatChannel> channels;
+  string name;
+  vector<ZatChannel> channels;
 };
 
 class ZatData
 {
 public:
-  ZatData(std::string username, std::string password, bool favoritesOnly,
-      bool alternativeEpgService, std::string streamType);
+  ZatData(string username, string password, bool favoritesOnly,
+      bool alternativeEpgService, string streamType);
   virtual ~ZatData();
   virtual bool Initialize();
   virtual bool LoadChannels();
@@ -88,10 +88,10 @@ public:
       const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
   virtual PVR_ERROR GetEPGForChannelExternalService(ADDON_HANDLE handle,
       const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
-  virtual std::string GetChannelStreamUrl(int uniqueId);
+  virtual string GetChannelStreamUrl(int uniqueId);
   virtual void GetRecordings(ADDON_HANDLE handle, bool future);
   virtual int GetRecordingsAmount(bool future);
-  virtual std::string GetRecordingStreamUrl(string recordingId);
+  virtual string GetRecordingStreamUrl(string recordingId);
   virtual bool Record(int programId);
   virtual bool DeleteRecording(string recordingId);
   virtual void SetRecordingPlayCount(const PVR_RECORDING &recording, int count);
@@ -100,30 +100,30 @@ public:
   virtual int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording);
   virtual bool IsPlayable(const EPG_TAG *tag);
   virtual bool IsRecordable(const EPG_TAG *tag);
-  virtual std::string GetEpgTagUrl(const EPG_TAG *tag);
+  virtual string GetEpgTagUrl(const EPG_TAG *tag);
 
 private:
   int m_iLastStart;
   int m_iLastEnd;
-  std::string appToken;
-  std::string powerHash;
-  std::string countryCode;
+  string appToken;
+  string powerHash;
+  string countryCode;
   bool recallEnabled;
   bool recordingEnabled;
-  std::string streamType;
-  std::string username;
-  std::string password;
+  string streamType;
+  string username;
+  string password;
   bool favoritesOnly;
   bool alternativeEpgService;
-  std::vector<PVRZattooChannelGroup> channelGroups;
-  std::map<int, ZatChannel> channelsByUid;
-  std::map<std::string, ZatChannel> channelsByCid;
-  std::map<std::string, ZatRecordingData*> recordingsData;
-  std::map<std::string, std::map<time_t, PVRIptvEpgEntry>*> epgCache;
+  vector<PVRZattooChannelGroup> channelGroups;
+  map<int, ZatChannel> channelsByUid;
+  map<string, ZatChannel> channelsByCid;
+  map<string, ZatRecordingData*> recordingsData;
+  map<string, map<time_t, PVRIptvEpgEntry>*> epgCache;
   int64_t maxRecallSeconds;
   Curl *curl;
   UpdateThread *updateThread;
-  std::string uuid;
+  string uuid;
   Categories categories;
 
   bool LoadAppId();
@@ -134,13 +134,12 @@ private:
   bool SendHello(string uuid);
   bool Login();
   bool InitSession();
-  virtual std::string HttpGet(string url, bool isInit = false);
-  virtual std::string HttpPost(string url, string postData,
-      bool isInit = false);
+  virtual string HttpGet(string url, bool isInit = false);
+  virtual string HttpPost(string url, string postData, bool isInit = false);
   virtual bool LoadEPG(time_t iStart, time_t iEnd);
   virtual ZatChannel* FindChannel(int uniqueId);
-  virtual PVRZattooChannelGroup* FindGroup(const std::string &strName);
+  virtual PVRZattooChannelGroup* FindGroup(const string &strName);
   virtual int GetChannelId(const char * strChannelName);
-  time_t StringToTime(std::string timeString);
+  time_t StringToTime(string timeString);
   bool LoadAppIdFromFile();
 };

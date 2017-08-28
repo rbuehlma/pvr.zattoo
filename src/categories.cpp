@@ -102,7 +102,8 @@ void Categories::LoadEITCategories(const char *filePath)
           do
           {
             ++pos;
-          } while (isspace(*pos));
+          }
+          while (isspace(*pos));
           if (*pos == '"')
             encaps = true;
           while (++pos < end)
@@ -121,7 +122,8 @@ void Categories::LoadEITCategories(const char *filePath)
     delete[] name;
     delete[] line;
     XBMC->CloseFile(file);
-  } else
+  }
+  else
   {
     XBMC->Log(LOG_INFO, "%s: File '%s' not found", __FUNCTION__, filePath);
   }

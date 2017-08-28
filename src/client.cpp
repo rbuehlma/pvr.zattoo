@@ -112,7 +112,8 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
     if (zat->Initialize() && zat->LoadChannels())
     {
       m_CurStatus = ADDON_STATUS_OK;
-    } else
+    }
+    else
     {
       XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(37111));
     }
