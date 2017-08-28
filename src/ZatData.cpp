@@ -29,6 +29,8 @@ using namespace rapidjson;
 static const string data_file =
     "special://profile/addon_data/pvr.zattoo/data.json";
 static const string zattooServer = "https://zattoo.com";
+static const string app_token_file =
+    "special://profile/addon_data/pvr.zattoo/app_token";
 
 string ZatData::HttpGet(string url, bool isInit)
 {
@@ -43,8 +45,6 @@ string ZatData::HttpPost(string url, string postData, bool isInit)
 
   if (statusCode == 403 && !isInit)
   {
-    delete curl;
-    curl = new Curl();
     XBMC->Log(LOG_ERROR, "Open URL failed. Try to re-init session.");
     if (!InitSession())
     {
@@ -206,8 +206,19 @@ bool ZatData::LoadAppId()
 
   if (appToken.empty())
   {
-    XBMC->Log(LOG_ERROR, "Error getting app token");
-    return false;
+    XBMC->Log(LOG_DEBUG, "Could not load App token. Try to get from file.");
+
+    if (!LoadAppIdFromFile() && appToken.empty())
+    {
+      XBMC->Log(LOG_ERROR, "Error getting app token");
+      return false;
+    }
+  }
+  else
+  {
+    void *file = XBMC->OpenFileForWrite(app_token_file.c_str(), true);
+    XBMC->WriteFile(file, appToken.c_str(), appToken.length());
+    XBMC->CloseFile(file);
   }
 
   XBMC->Log(LOG_DEBUG, "Loaded App token %s", appToken.c_str());
@@ -1156,4 +1167,25 @@ time_t ZatData::StringToTime(string timeString)
   tm->tm_sec = s;
 
   return timegm(tm);
+}
+
+bool ZatData::LoadAppIdFromFile()
+{
+  void* file;
+  char buf[256];
+  size_t nbRead;
+  file = XBMC->CURLCreate(app_token_file.c_str());
+  if (file && XBMC->CURLOpen(file, 0))
+  {
+    nbRead = XBMC->ReadFile(file, buf, 255);
+    XBMC->CloseFile(file);
+    if (nbRead > 0)
+    {
+      buf[nbRead] = 0;
+      appToken = buf;
+      XBMC->Log(LOG_DEBUG, "Loaded App token from file: %s", appToken.c_str());
+      return true;
+    }
+  }
+  return false;
 }

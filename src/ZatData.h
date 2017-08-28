@@ -142,4 +142,5 @@ private:
   virtual PVRZattooChannelGroup* FindGroup(const std::string &strName);
   virtual int GetChannelId(const char * strChannelName);
   time_t StringToTime(std::string timeString);
+  bool LoadAppIdFromFile();
 };

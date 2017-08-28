@@ -4,11 +4,6 @@
 using namespace std;
 using namespace ADDON;
 
-static const string setCookie = "Set-Cookie: ";
-static const string beakerSesssionId = "beaker.session.id=";
-
-string Curl::cookie = "";
-
 Curl::Curl()
 {
 }
@@ -17,64 +12,82 @@ Curl::~Curl()
 {
 }
 
-size_t Curl::WriteCallback(void *contents, size_t size, size_t nmemb,
-    void *userp)
-{
-  ((std::string*) userp)->append((char*) contents, size * nmemb);
-  return size * nmemb;
-}
-
-size_t Curl::HeaderCallback(char *buffer, size_t size, size_t nitems,
-    void *userdata)
-{
-  std::string header(buffer, 0, nitems);
-  if (strncmp(header.c_str(), (setCookie + beakerSesssionId).c_str(),
-      (setCookie + beakerSesssionId).size()) == 0)
-  {
-    cookie = header.substr(setCookie.size(), string::npos);
-    cookie = cookie.substr(0, cookie.find(";", 0));
-  }
-  return nitems * size;
-}
-
 string Curl::Post(string url, string postData, int &statusCode)
 {
-  CURLcode res;
-  CURL *curl;
-  string readBuffer;
-  curl = curl_easy_init();
-  if (!curl)
+  void* file = XBMC->CURLCreate(url.c_str());
+  if (!file)
   {
-    XBMC->Log(LOG_ERROR, "curl_easy_init failed.");
+    statusCode = 500;
     return "";
-  }
-  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-  if (!postData.empty())
-  {
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData.c_str());
-  }
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Curl::WriteCallback);
-  curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, Curl::HeaderCallback);
-  if (!cookie.empty())
-  {
-    curl_easy_setopt(curl, CURLOPT_COOKIE, cookie.c_str());
   }
 
-  res = curl_easy_perform(curl);
-  if (res != CURLE_OK)
+  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "acceptencoding",
+      "gzip");
+  if (postData.size() != 0)
   {
-    XBMC->Log(LOG_ERROR, "Http request failed");
-    curl_easy_cleanup(curl);
+    string base64 = Base64Encode((const unsigned char *) postData.c_str(),
+        postData.size(), false);
+    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "postdata",
+        base64.c_str());
+  }
+
+  if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE))
+  {
+    statusCode = 403;
     return "";
   }
-  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &statusCode);
-  if (statusCode != 200)
+
+  // read the file
+  static const unsigned int CHUNKSIZE = 16384;
+  char buf[CHUNKSIZE + 1];
+  size_t nbRead;
+  string body = "";
+  while ((nbRead = XBMC->ReadFile(file, buf, CHUNKSIZE)) > 0 && ~nbRead)
   {
-    XBMC->Log(LOG_ERROR, "HTTP failed with status code %i.", statusCode);
-    curl_easy_cleanup(curl);
-    return "";
+    buf[nbRead] = 0x0;
+    body += buf;
   }
-  curl_easy_cleanup(curl);
-  return readBuffer;
+
+  XBMC->CloseFile(file);
+  statusCode = 200;
+  return body;
+}
+
+std::string Curl::Base64Encode(unsigned char const* in, unsigned int in_len,
+    bool urlEncode)
+{
+  std::string ret;
+  int i(3);
+  unsigned char c_3[3];
+  unsigned char c_4[4];
+
+  const char *to_base64 =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+  while (in_len)
+  {
+    i = in_len > 2 ? 3 : in_len;
+    in_len -= i;
+    c_3[0] = *(in++);
+    c_3[1] = i > 1 ? *(in++) : 0;
+    c_3[2] = i > 2 ? *(in++) : 0;
+
+    c_4[0] = (c_3[0] & 0xfc) >> 2;
+    c_4[1] = ((c_3[0] & 0x03) << 4) + ((c_3[1] & 0xf0) >> 4);
+    c_4[2] = ((c_3[1] & 0x0f) << 2) + ((c_3[2] & 0xc0) >> 6);
+    c_4[3] = c_3[2] & 0x3f;
+
+    for (int j = 0; (j < i + 1); ++j)
+    {
+      if (urlEncode && to_base64[c_4[j]] == '+')
+        ret += "%2B";
+      else if (urlEncode && to_base64[c_4[j]] == '/')
+        ret += "%2F";
+      else
+        ret += to_base64[c_4[j]];
+    }
+  }
+  while ((i++ < 3))
+    ret += urlEncode ? "%3D" : "=";
+  return ret;
 }

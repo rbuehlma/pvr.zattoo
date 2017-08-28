@@ -1,8 +1,3 @@
-#ifdef TARGET_WINDOWS
-#include "winsock2.h"
-#endif
-
-#include <curl/curl.h>
 #include <string>
 
 class Curl
@@ -12,11 +7,7 @@ public:
   virtual ~Curl();
   virtual std::string Post(std::string url, std::string postData,
       int &statusCode);
-
 private:
-  static size_t WriteCallback(void *contents, size_t size, size_t nmemb,
-      void *userp);
-  static size_t HeaderCallback(char *buffer, size_t size, size_t nitems,
-      void *userdata);
-  static std::string cookie;
+  std::string Base64Encode(unsigned char const* in, unsigned int in_len,
+      bool urlEncode);
 };
