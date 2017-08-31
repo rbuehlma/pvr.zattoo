@@ -17,7 +17,7 @@ string Curl::Post(string url, string postData, int &statusCode)
   void* file = XBMC->CURLCreate(url.c_str());
   if (!file)
   {
-    statusCode = 500;
+    statusCode = -1;
     return "";
   }
 
@@ -31,11 +31,28 @@ string Curl::Post(string url, string postData, int &statusCode)
         base64.c_str());
   }
 
+  if (!cookies.empty())
+  {
+    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "cookie",
+        cookies.c_str());
+  }
+
   if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE))
   {
-    statusCode = 403;
+    statusCode = 403; //Fake statusCode for now
     return "";
   }
+
+  char *cookiesPtr = XBMC->GetFileProperty(file,
+      XFILE::FILE_PROPERTY_RESPONSE_HEADER, "set-cookie");
+  if (cookiesPtr && *cookiesPtr)
+  {
+    cookies = cookiesPtr;
+    std::string::size_type paramPos = cookies.find(';');
+    if (paramPos != std::string::npos)
+      cookies.resize(paramPos);
+  }
+  XBMC->FreeString(cookiesPtr);
 
   // read the file
   static const unsigned int CHUNKSIZE = 16384;
