@@ -249,7 +249,10 @@ PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel,
     time_t iStart, time_t iEnd)
 {
   if (zat)
-    return zat->GetEPGForChannel(handle, channel, iStart, iEnd);
+  {
+    zat->GetEPGForChannel(channel, iStart, iEnd);
+    return PVR_ERROR_NO_ERROR;
+  }
 
   return PVR_ERROR_SERVER_ERROR;
 }

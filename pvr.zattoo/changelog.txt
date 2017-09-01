@@ -1,3 +1,5 @@
+v18.0.8
+ - Load EPG async
 v18.0.7
  - Replace libcurl with kodi implementation
  - Add cache to improve loading time of recordings and timer

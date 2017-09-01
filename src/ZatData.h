@@ -7,6 +7,7 @@
 #include "categories.h"
 #include "Curl.h"
 #include <map>
+#include <thread>
 
 using namespace std;
 
@@ -84,10 +85,10 @@ public:
   virtual PVR_ERROR GetChannelGroups(ADDON_HANDLE handle);
   virtual PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle,
       const PVR_CHANNEL_GROUP &group);
-  virtual PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle,
-      const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
-  virtual PVR_ERROR GetEPGForChannelExternalService(ADDON_HANDLE handle,
-      const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
+  virtual void GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart,
+      time_t iEnd);
+  virtual void GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
+      time_t iEnd);
   virtual string GetChannelStreamUrl(int uniqueId);
   virtual void GetRecordings(ADDON_HANDLE handle, bool future);
   virtual int GetRecordingsAmount(bool future);
@@ -142,4 +143,6 @@ private:
   virtual PVRZattooChannelGroup* FindGroup(const string &strName);
   virtual int GetChannelId(const char * strChannelName);
   time_t StringToTime(string timeString);
+  virtual void GetEPGForChannelExternalService(int uniqueChannelId,
+      time_t iStart, time_t iEnd);
 };

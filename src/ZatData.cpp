@@ -40,10 +40,12 @@ string ZatData::HttpGetCached(string url, time_t cacheDuration)
   if (!Cache::Read(cacheKey, content))
   {
     content = HttpGet(url);
-    time_t validUntil;
-    time(&validUntil);
-    validUntil += cacheDuration;
-    Cache::Write(cacheKey, content, validUntil);
+    if (content != "") {
+      time_t validUntil;
+      time(&validUntil);
+      validUntil += cacheDuration;
+      Cache::Write(cacheKey, content, validUntil);
+    }
   }
   return content;
 }
@@ -318,7 +320,7 @@ bool ZatData::InitSession()
   }
   if (recordingEnabled && updateThread == NULL)
   {
-    updateThread = new UpdateThread();
+    updateThread = new UpdateThread(this);
   }
   powerHash = session["power_guide_hash"].GetString();
   return true;
@@ -635,10 +637,9 @@ ZatChannel *ZatData::FindChannel(int uniqueId)
   return NULL;
 }
 
-PVR_ERROR ZatData::GetEPGForChannelExternalService(ADDON_HANDLE handle,
-    const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
+void ZatData::GetEPGForChannelExternalService(int uniqueChannelId, time_t iStart, time_t iEnd)
 {
-  ZatChannel *zatChannel = FindChannel(channel.iUniqueId);
+  ZatChannel *zatChannel = FindChannel(uniqueChannelId);
   string cid = zatChannel->cid;
   ostringstream urlStream;
   urlStream << "http://zattoo.buehlmann.net/epg/api/Epg/" << countryCode << "/"
@@ -648,7 +649,7 @@ PVR_ERROR ZatData::GetEPGForChannelExternalService(ADDON_HANDLE handle,
   doc.Parse(jsonString.c_str());
   if (doc.GetParseError())
   {
-    return PVR_ERROR_SERVER_ERROR;
+    return;
   }
 
   for (Value::ConstValueIterator itr = doc.Begin(); itr != doc.End(); ++itr)
@@ -700,22 +701,26 @@ PVR_ERROR ZatData::GetEPGForChannelExternalService(ADDON_HANDLE handle,
       tag.strGenreDescription = genreStr.c_str();
     }
 
-    PVR->TransferEpgEntry(handle, &tag);
+    PVR->EpgEventStateChange(&tag, EPG_EVENT_CREATED);
   }
 
-  return PVR_ERROR_NO_ERROR;
+  return;
 }
 
-PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle,
-    const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
+void ZatData::GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
 {
+  updateThread->LoadEpg(channel.iUniqueId, iStart, iEnd);
+}
 
+void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart, time_t iEnd)
+{
   if (this->alternativeEpgService)
   {
-    return GetEPGForChannelExternalService(handle, channel, iStart, iEnd);
+    GetEPGForChannelExternalService(uniqueChannelId, iStart, iEnd);
+    return;
   }
 
-  ZatChannel *zatChannel = FindChannel(channel.iUniqueId);
+  ZatChannel *zatChannel = FindChannel(uniqueChannelId);
 
   if (iStart > m_iLastStart || iEnd > m_iLastEnd)
   {
@@ -728,15 +733,15 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle,
     {
       XBMC->Log(LOG_NOTICE,
           "Loading epg faild for channel '%s' from %lu to %lu",
-          channel.strChannelName, iStart, iEnd);
-      return PVR_ERROR_SERVER_ERROR;
+          zatChannel->name.c_str(), iStart, iEnd);
+      return;
     }
   }
 
   map<time_t, PVRIptvEpgEntry>* channelEpgCache = epgCache[zatChannel->cid];
   if (channelEpgCache == NULL)
   {
-    return PVR_ERROR_NO_ERROR;
+    return;
   }
   epgCache.erase(zatChannel->cid);
   for (auto const &entry : *channelEpgCache)
@@ -782,11 +787,9 @@ PVR_ERROR ZatData::GetEPGForChannel(ADDON_HANDLE handle,
       tag.strGenreDescription = epgEntry.strGenreString.c_str();
     }
 
-    PVR->TransferEpgEntry(handle, &tag);
+    PVR->EpgEventStateChange(&tag, EPG_EVENT_CREATED);
   }
   delete channelEpgCache;
-
-  return PVR_ERROR_NO_ERROR;
 }
 
 bool ZatData::LoadEPG(time_t iStart, time_t iEnd)
