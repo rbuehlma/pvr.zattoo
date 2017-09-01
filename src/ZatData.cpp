@@ -63,6 +63,8 @@ string ZatData::HttpRequest(string action, string url, string postData,
 {
   Curl curl;
   int statusCode;
+  
+  curl.AddOption("acceptencoding", "gzip,deflate");
 
   if (!beakerSessionId.empty())
   {

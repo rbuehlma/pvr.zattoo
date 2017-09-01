@@ -383,7 +383,19 @@ void setStreamProperties(PVR_NAMED_VALUE* properties,
       sizeof(properties[2].strName));
   strncpy(properties[2].strValue, streamType ? "hls" : "mpd",
       sizeof(properties[2].strValue));
-  *propertiesCount = 3;
+  strncpy(properties[3].strName, "mimetype",
+    sizeof(properties[3].strName));
+  strncpy(properties[3].strValue, streamType ? "application/x-mpegURL" : "application/xml+dash",
+    sizeof(properties[3].strValue));
+  *propertiesCount = 4;
+  if (!streamType)
+  {
+    strncpy(properties[4].strName, "inputstream.adaptive.manifest_update_parameter",
+      sizeof(properties[4].strName));
+    strncpy(properties[4].strValue, "full",
+      sizeof(properties[4].strValue));
+    *propertiesCount = 5;
+  }
 }
 
 PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel,
