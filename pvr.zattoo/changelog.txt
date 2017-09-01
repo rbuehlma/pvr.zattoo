@@ -1,5 +1,6 @@
 v18.0.7
  - Replace libcurl with kodi implementation
+ - Add cache to improve loading time of recordings and timer
 v18.0.6
  - Adapt to final pvr api 5.7.0
 v18.0.5

@@ -11,6 +11,8 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
+#include "Cache.h"
+#include "md5.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #pragma comment(lib, "ws2_32.lib")
@@ -29,6 +31,22 @@ using namespace rapidjson;
 static const string addon_datadir = "special://profile/addon_data/pvr.zattoo/";
 static const string data_file = addon_datadir + "data.json";
 static const string zattooServer = "https://zattoo.com";
+
+string ZatData::HttpGetCached(string url, time_t cacheDuration)
+{
+
+  string content;
+  string cacheKey = md5(url);
+  if (!Cache::Read(cacheKey, content))
+  {
+    content = HttpGet(url);
+    time_t validUntil;
+    time(&validUntil);
+    validUntil += cacheDuration;
+    Cache::Write(cacheKey, content, validUntil);
+  }
+  return content;
+}
 
 string ZatData::HttpGet(string url, bool isInit)
 {
@@ -56,26 +74,16 @@ string ZatData::HttpPost(string url, string postData, bool isInit)
 
 bool ZatData::ReadDataJson()
 {
-  void* file;
-  char buf[256];
-  size_t nbRead;
-  string jsonString;
   if (!XBMC->FileExists(data_file.c_str(), true))
   {
     return true;
   }
-  file = XBMC->CURLCreate(data_file.c_str());
-  if (!file || !XBMC->CURLOpen(file, 0))
+  string jsonString = Utils::ReadFile(data_file.c_str());
+  if (jsonString == "")
   {
     XBMC->Log(LOG_ERROR, "Loading data.json failed.");
     return false;
   }
-  while ((nbRead = XBMC->ReadFile(file, buf, 255)) > 0)
-  {
-    buf[nbRead] = 0;
-    jsonString.append(buf);
-  }
-  XBMC->CloseFile(file);
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -915,7 +923,8 @@ int ZatData::GetRecordingLastPlayedPosition(const PVR_RECORDING &recording)
 
 void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
 {
-  string jsonString = HttpGet(zattooServer + "/zapi/playlist");
+  Cache::Cleanup();
+  string jsonString = HttpGetCached(zattooServer + "/zapi/playlist", 60);
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -937,7 +946,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
     ostringstream urlStream;
     urlStream << zattooServer + "/zapi/program/details?program_id="
         << programId;
-    jsonString = HttpGet(urlStream.str());
+    jsonString = HttpGetCached(urlStream.str(), 60 * 60 * 24 * 30);
     Document detailDoc;
     detailDoc.Parse(jsonString.c_str());
     if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
@@ -1030,7 +1039,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
 
 int ZatData::GetRecordingsAmount(bool future)
 {
-  string jsonString = HttpGet(zattooServer + "/zapi/playlist");
+  string jsonString = HttpGetCached(zattooServer + "/zapi/playlist", 60);
 
   time_t current_time;
   time(&current_time);

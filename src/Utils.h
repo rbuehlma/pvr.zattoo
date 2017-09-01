@@ -11,4 +11,5 @@ public:
   static std::string UrlEncode(const std::string &string);
   static double StringToDouble(const std::string &value);
   static int StringToInt(const std::string &value);
+  static std::string ReadFile(const std::string path);
 };

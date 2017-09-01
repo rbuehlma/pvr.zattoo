@@ -33,9 +33,11 @@ set(ZATTOO_SOURCES
 		src/Utils.cpp
 		src/client.cpp
 		src/Curl.cpp
+		src/Cache.cpp
 		src/ZatData.cpp
 		src/UpdateThread.cpp
 		src/categories.cpp
+		src/md5.cpp
 )
 
 if(WIN32)

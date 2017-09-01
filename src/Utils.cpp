@@ -9,6 +9,8 @@
 
 #include "client.h"
 
+using namespace ADDON;
+
 std::string Utils::GetFilePath(std::string strPath, bool bUserPath)
 {
   return (bUserPath ? g_strUserPath : g_strClientPath) + PATH_SEPARATOR_CHAR
@@ -54,5 +56,28 @@ double Utils::StringToDouble(const std::string &value)
 int Utils::StringToInt(const std::string &value)
 {
   return (int) StringToDouble(value);
+}
+
+std::string Utils::ReadFile(const std::string path)
+{
+  void* file;
+  file = XBMC->CURLCreate(path.c_str());
+  if (!file || !XBMC->CURLOpen(file, 0))
+  {
+    XBMC->Log(LOG_ERROR, "Failed to open file [%s].", path.c_str());
+    return "";
+  }
+
+  char buf[1025];
+  size_t nbRead;
+  std::string content;
+  while ((nbRead = XBMC->ReadFile(file, buf, 1024)) > 0)
+  {
+    buf[nbRead] = 0;
+    content.append(buf);
+  }
+  XBMC->CloseFile(file);
+  return content;
+
 }
 

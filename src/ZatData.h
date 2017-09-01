@@ -134,6 +134,7 @@ private:
   bool SendHello(string uuid);
   bool Login();
   bool InitSession();
+  virtual string HttpGetCached(string url, time_t cacheDuration);
   virtual string HttpGet(string url, bool isInit = false);
   virtual string HttpPost(string url, string postData, bool isInit = false);
   virtual bool LoadEPG(time_t iStart, time_t iEnd);
