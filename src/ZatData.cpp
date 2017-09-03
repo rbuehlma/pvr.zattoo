@@ -157,10 +157,6 @@ bool ZatData::WriteDataJson()
 
 string ZatData::GetUUID()
 {
-  void* file;
-  char buf[37];
-  size_t nbRead;
-
   if (!uuid.empty())
   {
     return uuid;
@@ -318,7 +314,7 @@ bool ZatData::InitSession()
   {
     maxRecallSeconds = session["recall_seconds"].GetInt();
   }
-  if (recordingEnabled && updateThread == NULL)
+  if (updateThread == NULL)
   {
     updateThread = new UpdateThread(this);
   }
@@ -422,7 +418,7 @@ int ZatData::GetChannelId(const char * strChannelName)
 {
   int iId = 0;
   int c;
-  while (c = *strChannelName++)
+  while ((c = *strChannelName++))
     iId = ((iId << 5) + iId) + c; /* iId * 33 + c */
   return abs(iId);
 }
@@ -434,7 +430,7 @@ int ZatData::GetChannelGroupsAmount()
 
 ZatData::ZatData(string u, string p, bool favoritesOnly,
     bool alternativeEpgService, string streamType) :
-    maxRecallSeconds(0), recallEnabled(false), countryCode(""), recordingEnabled(
+    recordingEnabled(
         false), updateThread(NULL), uuid("")
 {
   curl = new Curl();
@@ -709,7 +705,9 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId, time_t iStart
 
 void ZatData::GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
 {
-  updateThread->LoadEpg(channel.iUniqueId, iStart, iEnd);
+  if (updateThread != NULL) {
+    updateThread->LoadEpg(channel.iUniqueId, iStart, iEnd);
+  }
 }
 
 void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart, time_t iEnd)
@@ -968,7 +966,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
     }
 
     time_t startTime = StringToTime(recording["start"].GetString());
-    if (future && startTime > current_time)
+    if (future && (startTime > current_time))
     {
       PVR_TIMER tag;
       memset(&tag, 0, sizeof(PVR_TIMER));
@@ -998,7 +996,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       }
 
     }
-    else if (!future && startTime <= current_time)
+    else if (!future && (startTime <= current_time))
     {
       PVR_RECORDING tag;
       memset(&tag, 0, sizeof(PVR_RECORDING));
@@ -1062,7 +1060,7 @@ int ZatData::GetRecordingsAmount(bool future)
   {
     const Value& recording = (*itr);
     time_t startTime = StringToTime(recording["start"].GetString());
-    if (future == startTime > current_time)
+    if (future == (startTime > current_time))
     {
       count++;
     }

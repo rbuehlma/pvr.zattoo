@@ -91,7 +91,7 @@ void Cache::Cleanup()
     XBMC->Log(LOG_ERROR, "Could not get cache directory.");
     return;
   }
-  for (int i = 0; i < itemCount; i++)
+  for (unsigned int i = 0; i < itemCount; i++)
   {
     if (items[i].folder)
     {

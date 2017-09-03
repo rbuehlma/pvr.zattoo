@@ -108,9 +108,9 @@ private:
   int m_iLastEnd;
   string appToken;
   string powerHash;
-  string countryCode;
-  bool recallEnabled;
-  bool recordingEnabled;
+  string countryCode = "";
+  bool recallEnabled = false;
+  bool recordingEnabled = false;
   string streamType;
   string username;
   string password;
@@ -121,7 +121,7 @@ private:
   map<string, ZatChannel> channelsByCid;
   map<string, ZatRecordingData*> recordingsData;
   map<string, map<time_t, PVRIptvEpgEntry>*> epgCache;
-  int64_t maxRecallSeconds;
+  int64_t maxRecallSeconds = 0;
   Curl *curl;
   UpdateThread *updateThread;
   string uuid;
