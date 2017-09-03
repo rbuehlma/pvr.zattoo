@@ -53,16 +53,19 @@ void* UpdateThread::Process()
       ((ZatData*) zat)->GetEPGForChannelAsync(entry.uniqueChannelId,
           entry.startTime, entry.endTime);
     }
-    time_t currentTime;
-    time(&currentTime);
-    if (currentTime < nextRecordingsUpdate)
+    if (((ZatData *)zat)->RecordingEnabled())
     {
-      continue;
+      time_t currentTime;
+      time(&currentTime);
+      if (currentTime < nextRecordingsUpdate)
+      {
+        continue;
+      }
+      nextRecordingsUpdate = currentTime + maximumUpdateInterval;
+      PVR->TriggerTimerUpdate();
+      PVR->TriggerRecordingUpdate();
+      XBMC->Log(LOG_DEBUG, "Update thread triggered update.");
     }
-    nextRecordingsUpdate = currentTime + maximumUpdateInterval;
-    PVR->TriggerTimerUpdate();
-    PVR->TriggerRecordingUpdate();
-    XBMC->Log(LOG_DEBUG, "Update thread triggered update.");
   }
   XBMC->Log(LOG_DEBUG, "Update thread stopped.");
   return 0;

@@ -102,6 +102,7 @@ public:
   virtual bool IsPlayable(const EPG_TAG *tag);
   virtual bool IsRecordable(const EPG_TAG *tag);
   virtual string GetEpgTagUrl(const EPG_TAG *tag);
+  virtual bool RecordingEnabled() { return recordingEnabled; }
 
 private:
   int m_iLastStart;

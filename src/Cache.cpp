@@ -65,7 +65,7 @@ void Cache::Write(string key, const std::string& data, time_t validUntil)
 
   Document d;
   d.SetObject();
-  d.AddMember("validUntil", validUntil, d.GetAllocator());
+  d.AddMember("validUntil", static_cast<uint64_t>(validUntil), d.GetAllocator());
   Value value;
   value.SetString(data.c_str(), data.length(), d.GetAllocator());
   d.AddMember("data", value, d.GetAllocator());
@@ -127,7 +127,7 @@ void Cache::Cleanup()
 
 bool Cache::IsStillValid(const Value& cache)
 {
-  time_t validUntil = cache["validUntil"].GetInt();
+  time_t validUntil = cache["validUntil"].GetUint64();
   time_t current_time;
   time(&current_time);
   return validUntil >= current_time;
