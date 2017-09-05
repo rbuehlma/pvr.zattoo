@@ -5,6 +5,16 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
+#ifdef TARGET_WINDOWS
+#include <windows.h>
+#ifdef CreateDirectory
+#undef CreateDirectory
+#endif
+#ifdef DeleteFile
+#undef DeleteFile
+#endif
+#endif
+
 using namespace rapidjson;
 using namespace std;
 using namespace ADDON;
