@@ -43,7 +43,7 @@ string Curl::Post(string url, string postData, int &statusCode)
     return "";
   }
 
-  char *cookiesPtr = XBMC->GetFileProperty(file,
+  char *cookiesPtr = XBMC->GetFilePropertyValue(file,
       XFILE::FILE_PROPERTY_RESPONSE_HEADER, "set-cookie");
   if (cookiesPtr && *cookiesPtr)
   {

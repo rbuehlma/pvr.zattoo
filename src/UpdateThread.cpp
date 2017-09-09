@@ -44,9 +44,7 @@ void* UpdateThread::Process()
   XBMC->Log(LOG_DEBUG, "Update thread started.");
   while (!IsStopped())
   {
-    Sleep(100);
-
-    while (!loadEpgQueue.empty())
+    while (!loadEpgQueue.empty() && !IsStopped())
     {
       EpgQueueEntry entry = loadEpgQueue.front();
       loadEpgQueue.pop();
@@ -59,6 +57,7 @@ void* UpdateThread::Process()
       time(&currentTime);
       if (currentTime < nextRecordingsUpdate)
       {
+        Sleep(100);
         continue;
       }
       nextRecordingsUpdate = currentTime + maximumUpdateInterval;
@@ -66,6 +65,7 @@ void* UpdateThread::Process()
       PVR->TriggerRecordingUpdate();
       XBMC->Log(LOG_DEBUG, "Update thread triggered update.");
     }
+    Sleep(100);
   }
   XBMC->Log(LOG_DEBUG, "Update thread stopped.");
   return 0;
