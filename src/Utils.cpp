@@ -58,6 +58,31 @@ int Utils::StringToInt(const std::string &value)
   return (int) StringToDouble(value);
 }
 
+std::vector<std::string> Utils::SplitString(const std::string &str,
+    const char &delim, int maxParts)
+{
+  typedef std::string::const_iterator iter;
+  iter beg = str.begin();
+  std::vector < std::string > tokens;
+
+  while (beg != str.end())
+  {
+    if (maxParts == 1)
+    {
+      tokens.push_back(std::string(beg, str.end()));
+    }
+    maxParts--;
+    iter temp = find(beg, str.end(), delim);
+    if (beg != str.end())
+      tokens.push_back(std::string(beg, temp));
+    beg = temp;
+    while ((beg != str.end()) && (*beg == delim))
+      beg++;
+  }
+
+  return tokens;
+}
+
 std::string Utils::ReadFile(const std::string path)
 {
   void* file;

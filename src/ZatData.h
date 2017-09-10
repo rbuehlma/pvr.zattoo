@@ -102,7 +102,10 @@ public:
   virtual bool IsPlayable(const EPG_TAG *tag);
   virtual bool IsRecordable(const EPG_TAG *tag);
   virtual string GetEpgTagUrl(const EPG_TAG *tag);
-  virtual bool RecordingEnabled() { return recordingEnabled; }
+  virtual bool RecordingEnabled()
+  {
+    return recordingEnabled;
+  }
 
 private:
   int m_iLastStart;
@@ -123,7 +126,7 @@ private:
   map<string, ZatRecordingData*> recordingsData;
   map<string, map<time_t, PVRIptvEpgEntry>*> epgCache;
   int64_t maxRecallSeconds = 0;
-  Curl *curl;
+  string beakerSessionId;
   UpdateThread *updateThread;
   string uuid;
   Categories categories;
@@ -138,7 +141,8 @@ private:
   bool InitSession();
   virtual string HttpGetCached(string url, time_t cacheDuration);
   virtual string HttpGet(string url, bool isInit = false);
-  virtual string HttpPost(string url, string postData, bool isInit = false);
+  virtual string HttpPost(string url, string postData, bool isInit =
+      false);
   virtual bool LoadEPG(time_t iStart, time_t iEnd);
   virtual ZatChannel* FindChannel(int uniqueId);
   virtual PVRZattooChannelGroup* FindGroup(const string &strName);

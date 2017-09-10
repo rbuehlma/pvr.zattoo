@@ -1,5 +1,6 @@
 #include "Curl.h"
 #include "client.h"
+#include "Utils.h"
 
 using namespace std;
 using namespace ADDON;
@@ -10,6 +11,30 @@ Curl::Curl()
 
 Curl::~Curl()
 {
+}
+
+string Curl::GetCookie(string name)
+{
+  if (cookies.find(name) == cookies.end())
+  {
+    return "";
+  }
+  return cookies[name];
+}
+
+void Curl::AddHeader(std::string name, std::string value)
+{
+  headers[name] = value;
+}
+
+void Curl::AddOption(std::string name, std::string value)
+{
+  options[name] = value;
+}
+
+void Curl::ResetHeaders()
+{
+  headers.clear();
 }
 
 string Curl::Post(string url, string postData, int &statusCode)
@@ -31,10 +56,16 @@ string Curl::Post(string url, string postData, int &statusCode)
         base64.c_str());
   }
 
-  if (!cookies.empty())
+  for (auto const &entry : headers)
   {
-    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "cookie",
-        cookies.c_str());
+    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, entry.first.c_str(),
+        entry.second.c_str());
+  }
+
+  for (auto const &entry : options)
+  {
+    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, entry.first.c_str(),
+        entry.second.c_str());
   }
 
   if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE))
@@ -42,17 +73,30 @@ string Curl::Post(string url, string postData, int &statusCode)
     statusCode = 403; //Fake statusCode for now
     return "";
   }
+  int numValues;
+  char **cookiesPtr = XBMC->GetFilePropertyValues(file,
+      XFILE::FILE_PROPERTY_RESPONSE_HEADER, "set-cookie", &numValues);
 
-  char *cookiesPtr = XBMC->GetFilePropertyValue(file,
-      XFILE::FILE_PROPERTY_RESPONSE_HEADER, "set-cookie");
-  if (cookiesPtr && *cookiesPtr)
+  for (int i = 0; i < numValues; i++)
   {
-    cookies = cookiesPtr;
-    std::string::size_type paramPos = cookies.find(';');
-    if (paramPos != std::string::npos)
-      cookies.resize(paramPos);
+    char *cookiePtr = cookiesPtr[i];
+    if (cookiePtr && *cookiePtr)
+    {
+      string cookie = cookiePtr;
+      std::string::size_type paramPos = cookie.find(';');
+      if (paramPos != std::string::npos)
+        cookie.resize(paramPos);
+      vector<string> parts = Utils::SplitString(cookie, '=', 2);
+      if (parts.size() != 2)
+      {
+        continue;
+      }
+      cookies[parts[0]] = parts[1];
+      XBMC->Log(LOG_NOTICE, "Got cookie: %s=%s.", parts[0].c_str(),
+          parts[1].c_str());
+    }
   }
-  XBMC->FreeString(cookiesPtr);
+  XBMC->FreeStringArray(cookiesPtr, numValues);
 
   // read the file
   static const unsigned int CHUNKSIZE = 16384;

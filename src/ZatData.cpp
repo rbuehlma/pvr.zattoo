@@ -41,7 +41,8 @@ string ZatData::HttpGetCached(string url, time_t cacheDuration)
   if (!Cache::Read(cacheKey, content))
   {
     content = HttpGet(url);
-    if (content != "") {
+    if (content != "")
+    {
       time_t validUntil;
       time(&validUntil);
       validUntil += cacheDuration;
@@ -58,9 +59,16 @@ string ZatData::HttpGet(string url, bool isInit)
 
 string ZatData::HttpPost(string url, string postData, bool isInit)
 {
+  Curl curl;
   int statusCode;
   XBMC->Log(LOG_DEBUG, "Http-Request: %s.", url.c_str());
-  string content = curl->Post(url, postData, statusCode);
+
+  if (!beakerSessionId.empty())
+  {
+    curl.AddOption("cookie", "beaker.session.id=" + beakerSessionId);
+  }
+
+  string content = curl.Post(url, postData, statusCode);
 
   if (statusCode == 403 && !isInit)
   {
@@ -70,7 +78,13 @@ string ZatData::HttpPost(string url, string postData, bool isInit)
       XBMC->Log(LOG_ERROR, "Re-init of session. Failed.");
       return "";
     }
-    return curl->Post(url, postData, statusCode);
+    return curl.Post(url, postData, statusCode);
+  }
+  string sessionId = curl.GetCookie("beaker.session.id");
+  if (!sessionId.empty() && beakerSessionId != sessionId)
+  {
+    XBMC->Log(LOG_ERROR, "Got new beaker.session.id: %s", sessionId.c_str());
+    beakerSessionId = sessionId;
   }
   return content;
 }
@@ -431,10 +445,8 @@ int ZatData::GetChannelGroupsAmount()
 
 ZatData::ZatData(string u, string p, bool favoritesOnly,
     bool alternativeEpgService, string streamType) :
-    recordingEnabled(
-        false), updateThread(NULL), uuid("")
+    recordingEnabled(false), updateThread(NULL), uuid("")
 {
-  curl = new Curl();
   username = u;
   password = p;
   this->alternativeEpgService = alternativeEpgService;
@@ -456,7 +468,6 @@ ZatData::~ZatData()
     delete item.second;
   }
   channelGroups.clear();
-  delete curl;
 }
 
 bool ZatData::Initialize()
@@ -634,7 +645,8 @@ ZatChannel *ZatData::FindChannel(int uniqueId)
   return NULL;
 }
 
-void ZatData::GetEPGForChannelExternalService(int uniqueChannelId, time_t iStart, time_t iEnd)
+void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
+    time_t iStart, time_t iEnd)
 {
   ZatChannel *zatChannel = FindChannel(uniqueChannelId);
   string cid = zatChannel->cid;
@@ -704,14 +716,17 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId, time_t iStart
   return;
 }
 
-void ZatData::GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
+void ZatData::GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart,
+    time_t iEnd)
 {
-  if (updateThread != NULL) {
+  if (updateThread != NULL)
+  {
     updateThread->LoadEpg(channel.iUniqueId, iStart, iEnd);
   }
 }
 
-void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart, time_t iEnd)
+void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
+    time_t iEnd)
 {
   if (this->alternativeEpgService)
   {
