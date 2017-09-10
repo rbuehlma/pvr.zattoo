@@ -1,6 +1,7 @@
 #pragma once
 
 #include <p8-platform/threads/threads.h>
+#include <p8-platform/threads/mutex.h>
 #include "kodi/libXBMC_pvr.h"
 #include <queue>
 
@@ -16,12 +17,13 @@ class UpdateThread: public P8PLATFORM::CThread
 public:
   UpdateThread(void *zat);
   ~UpdateThread();
-  void SetNextRecordingUpdate(time_t nextRecordingsUpdate);
-  void LoadEpg(int uniqueChannelId, time_t startTime, time_t endTime);
+  static void SetNextRecordingUpdate(time_t nextRecordingsUpdate);
+  static void LoadEpg(int uniqueChannelId, time_t startTime, time_t endTime);
   void* Process();
 
 private:
-  time_t nextRecordingsUpdate;
   void *zat;
-  std::queue<EpgQueueEntry> loadEpgQueue;
+  static std::queue<EpgQueueEntry> loadEpgQueue;
+  static time_t nextRecordingsUpdate;
+  static P8PLATFORM::CMutex mutex;
 };

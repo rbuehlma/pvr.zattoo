@@ -329,10 +329,6 @@ bool ZatData::InitSession()
   {
     maxRecallSeconds = session["recall_seconds"].GetInt();
   }
-  if (updateThread == NULL)
-  {
-    updateThread = new UpdateThread(this);
-  }
   powerHash = session["power_guide_hash"].GetString();
   return true;
 }
@@ -445,7 +441,7 @@ int ZatData::GetChannelGroupsAmount()
 
 ZatData::ZatData(string u, string p, bool favoritesOnly,
     bool alternativeEpgService, string streamType) :
-    recordingEnabled(false), updateThread(NULL), uuid("")
+    recordingEnabled(false), uuid("")
 {
   username = u;
   password = p;
@@ -454,13 +450,17 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
   m_iLastStart = 0;
   m_iLastEnd = 0;
   this->streamType = streamType;
+  for (int i = 0; i < 5; ++i)
+  {
+    updateThreads.emplace_back(new UpdateThread(this));
+  }
 }
 
 ZatData::~ZatData()
 {
-  if (updateThread != NULL)
+  for (auto const &updateThread : updateThreads)
   {
-    updateThread->StopThread(1000);
+    updateThread->StopThread(200);
     delete updateThread;
   }
   for (auto const& item : recordingsData)
@@ -719,10 +719,7 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
 void ZatData::GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart,
     time_t iEnd)
 {
-  if (updateThread != NULL)
-  {
-    updateThread->LoadEpg(channel.iUniqueId, iStart, iEnd);
-  }
+  UpdateThread::LoadEpg(channel.iUniqueId, iStart, iEnd);
 }
 
 void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
@@ -1001,10 +998,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       ZatChannel channel = channelsByCid[recording["cid"].GetString()];
       tag.iClientChannelUid = channel.iUniqueId;
       PVR->TransferTimerEntry(handle, &tag);
-      if (updateThread != NULL)
-      {
-        updateThread->SetNextRecordingUpdate(startTime);
-      }
+      UpdateThread::SetNextRecordingUpdate(startTime);
       if (genre)
       {
         tag.iGenreSubType = genre & 0x0F;

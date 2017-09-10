@@ -127,7 +127,7 @@ private:
   map<string, map<time_t, PVRIptvEpgEntry>*> epgCache;
   int64_t maxRecallSeconds = 0;
   string beakerSessionId;
-  UpdateThread *updateThread;
+  vector<UpdateThread*> updateThreads;
   string uuid;
   Categories categories;
 
