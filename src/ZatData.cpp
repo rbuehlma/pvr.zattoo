@@ -54,21 +54,31 @@ string ZatData::HttpGetCached(string url, time_t cacheDuration)
 
 string ZatData::HttpGet(string url, bool isInit)
 {
-  return HttpPost(url, "", isInit);
+  return HttpRequest("GET", url, "", isInit);
+}
+
+string ZatData::HttpDelete(string url, bool isInit)
+{
+  return HttpRequest("DELETE", url, "", isInit);
 }
 
 string ZatData::HttpPost(string url, string postData, bool isInit)
 {
+  return HttpRequest("POST", url, postData, isInit);
+}
+
+string ZatData::HttpRequest(string action, string url, string postData,
+    bool isInit)
+{
   Curl curl;
   int statusCode;
-  XBMC->Log(LOG_DEBUG, "Http-Request: %s.", url.c_str());
 
   if (!beakerSessionId.empty())
   {
     curl.AddOption("cookie", "beaker.session.id=" + beakerSessionId);
   }
 
-  string content = curl.Post(url, postData, statusCode);
+  string content = HttpRequestToCurl(curl, action, url, postData, statusCode);
 
   if (statusCode == 403 && !isInit)
   {
@@ -78,15 +88,36 @@ string ZatData::HttpPost(string url, string postData, bool isInit)
       XBMC->Log(LOG_ERROR, "Re-init of session. Failed.");
       return "";
     }
-    return curl.Post(url, postData, statusCode);
+    return HttpRequestToCurl(curl, action, url, postData, statusCode);
   }
   string sessionId = curl.GetCookie("beaker.session.id");
   if (!sessionId.empty() && beakerSessionId != sessionId)
   {
-    XBMC->Log(LOG_ERROR, "Got new beaker.session.id: %s", sessionId.c_str());
+    XBMC->Log(LOG_NOTICE, "Got new beaker.session.id: %s", sessionId.c_str());
     beakerSessionId = sessionId;
   }
   return content;
+}
+
+string ZatData::HttpRequestToCurl(Curl &curl, string action, string url,
+    string postData, int &statusCode)
+{
+  XBMC->Log(LOG_DEBUG, "Http-Request: %s %s.", action, url.c_str());
+  string content;
+  if (action.compare("POST") == 0)
+  {
+    content = curl.Post(url, postData, statusCode);
+  }
+  else if (action.compare("DELETE") == 0)
+  {
+    content = curl.Delete(url, statusCode);
+  }
+  else
+  {
+    content = curl.Get(url, statusCode);
+  }
+  return content;
+
 }
 
 bool ZatData::ReadDataJson()

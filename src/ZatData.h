@@ -139,10 +139,13 @@ private:
   bool SendHello(string uuid);
   bool Login();
   bool InitSession();
-  virtual string HttpGetCached(string url, time_t cacheDuration);
-  virtual string HttpGet(string url, bool isInit = false);
-  virtual string HttpPost(string url, string postData, bool isInit =
-      false);
+  string HttpGetCached(string url, time_t cacheDuration);
+  string HttpGet(string url, bool isInit = false);
+  string HttpDelete(string url, bool isInit = false);
+  string HttpPost(string url, string postData, bool isInit = false);
+  string HttpRequest(string action, string url, string postData, bool isInit);
+  string HttpRequestToCurl(Curl &curl, string action, string url,
+      string postData, int &statusCode);
   virtual bool LoadEPG(time_t iStart, time_t iEnd);
   virtual ZatChannel* FindChannel(int uniqueId);
   virtual PVRZattooChannelGroup* FindGroup(const string &strName);
