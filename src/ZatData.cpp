@@ -102,7 +102,7 @@ string ZatData::HttpRequest(string action, string url, string postData,
 string ZatData::HttpRequestToCurl(Curl &curl, string action, string url,
     string postData, int &statusCode)
 {
-  XBMC->Log(LOG_DEBUG, "Http-Request: %s %s.", action, url.c_str());
+  XBMC->Log(LOG_DEBUG, "Http-Request: %s %s.", action.c_str(), url.c_str());
   string content;
   if (action.compare("POST") == 0)
   {
