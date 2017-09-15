@@ -481,7 +481,7 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
   m_iLastStart = 0;
   m_iLastEnd = 0;
   this->streamType = streamType;
-  for (int i = 0; i < 5; ++i)
+  for (int i = 0; i < 1; ++i)
   {
     updateThreads.emplace_back(new UpdateThread(this));
   }
