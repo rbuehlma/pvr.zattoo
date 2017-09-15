@@ -50,7 +50,7 @@ bool Cache::Read(string key, std::string& data)
 
   XBMC->Log(LOG_DEBUG, "Load from cache file [%s].", cacheFile.c_str());
   data = doc["data"].GetString();
-  return true;
+  return !data.empty();
 }
 
 void Cache::Write(string key, const std::string& data, time_t validUntil)

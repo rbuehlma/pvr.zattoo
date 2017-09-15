@@ -70,13 +70,13 @@ void* UpdateThread::Process()
       continue;
     }
 
-    if (!loadEpgQueue.empty())
+    while (!loadEpgQueue.empty())
     {
       if (!mutex.Lock())
       {
         XBMC->Log(LOG_ERROR,
             "UpdateThread::Process : Could not lock mutex for epg queue");
-        continue;
+        break;
       }
       if (!loadEpgQueue.empty())
       {

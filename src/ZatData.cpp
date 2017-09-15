@@ -41,7 +41,7 @@ string ZatData::HttpGetCached(string url, time_t cacheDuration)
   if (!Cache::Read(cacheKey, content))
   {
     content = HttpGet(url);
-    if (content != "")
+    if (!content.empty())
     {
       time_t validUntil;
       time(&validUntil);
@@ -764,20 +764,17 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
 
   ZatChannel *zatChannel = FindChannel(uniqueChannelId);
 
-  if (iStart > m_iLastStart || iEnd > m_iLastEnd)
-  {
-    // reload EPG for new time interval only
-    // doesn't matter is epg loaded or not we shouldn't try to load it for same interval
-    m_iLastStart = iStart;
-    m_iLastEnd = iEnd;
+  // reload EPG for new time interval only
+  // doesn't matter is epg loaded or not we shouldn't try to load it for same interval
+  m_iLastStart = iStart;
+  m_iLastEnd = iEnd;
 
-    if (!LoadEPG(iStart, iEnd))
-    {
-      XBMC->Log(LOG_NOTICE,
-          "Loading epg faild for channel '%s' from %lu to %lu",
-          zatChannel->name.c_str(), iStart, iEnd);
-      return;
-    }
+  if (!LoadEPG(iStart, iEnd))
+  {
+    XBMC->Log(LOG_NOTICE,
+        "Loading epg faild for channel '%s' from %lu to %lu",
+        zatChannel->name.c_str(), iStart, iEnd);
+    return;
   }
 
   map<time_t, PVRIptvEpgEntry>* channelEpgCache = epgCache[zatChannel->cid];
@@ -847,7 +844,7 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd)
         << powerHash << "?end=" << tempEnd << "&start=" << tempStart
         << "&format=json";
 
-    string jsonString = HttpGet(urlStream.str());
+    string jsonString = HttpGetCached(urlStream.str(), 3600);
 
     Document doc;
     doc.Parse(jsonString.c_str());
