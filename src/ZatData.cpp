@@ -478,8 +478,6 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
   password = p;
   this->alternativeEpgService = alternativeEpgService;
   this->favoritesOnly = favoritesOnly;
-  m_iLastStart = 0;
-  m_iLastEnd = 0;
   this->streamType = streamType;
   for (int i = 0; i < 1; ++i)
   {
@@ -684,14 +682,13 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
   ostringstream urlStream;
   urlStream << "http://zattoo.buehlmann.net/epg/api/Epg/" << countryCode << "/"
       << powerHash << "/" << cid << "/" << iStart << "/" << iEnd;
-  string jsonString = HttpGet(urlStream.str());
+  string jsonString = HttpGetCached(urlStream.str(), 3600);
   Document doc;
   doc.Parse(jsonString.c_str());
   if (doc.GetParseError())
   {
     return;
   }
-
   for (Value::ConstValueIterator itr = doc.Begin(); itr != doc.End(); ++itr)
   {
     const Value& program = (*itr);
@@ -743,7 +740,7 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
 
     PVR->EpgEventStateChange(&tag, EPG_EVENT_CREATED);
   }
-
+  
   return;
 }
 
@@ -764,25 +761,14 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
 
   ZatChannel *zatChannel = FindChannel(uniqueChannelId);
 
-  // reload EPG for new time interval only
-  // doesn't matter is epg loaded or not we shouldn't try to load it for same interval
-  m_iLastStart = iStart;
-  m_iLastEnd = iEnd;
-
-  if (!LoadEPG(iStart, iEnd))
+  map<time_t, PVRIptvEpgEntry>* channelEpgCache = LoadEPG(iStart, iEnd, uniqueChannelId);
+  if (channelEpgCache == nullptr)
   {
     XBMC->Log(LOG_NOTICE,
         "Loading epg faild for channel '%s' from %lu to %lu",
         zatChannel->name.c_str(), iStart, iEnd);
     return;
   }
-
-  map<time_t, PVRIptvEpgEntry>* channelEpgCache = epgCache[zatChannel->cid];
-  if (channelEpgCache == NULL)
-  {
-    return;
-  }
-  epgCache.erase(zatChannel->cid);
   for (auto const &entry : *channelEpgCache)
   {
     PVRIptvEpgEntry epgEntry = entry.second;
@@ -831,12 +817,14 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
   delete channelEpgCache;
 }
 
-bool ZatData::LoadEPG(time_t iStart, time_t iEnd)
+map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd, int uniqueChannelId)
 {
   //Do some time magic that the start date is not to far in the past because zattoo doesnt like that
   time_t tempStart = iStart - (iStart % (3600 / 2)) - 86400;
   time_t tempEnd = tempStart + 3600 * 5; //Add 5 hours
 
+  map<time_t, PVRIptvEpgEntry> *epgCache = new map<time_t, PVRIptvEpgEntry>();
+  
   while (tempEnd <= iEnd)
   {
     ostringstream urlStream;
@@ -850,11 +838,11 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd)
     doc.Parse(jsonString.c_str());
     if (doc.GetParseError() || !doc["success"].GetBool())
     {
-      return false;
+      return nullptr;
     }
 
     const Value& channels = doc["channels"];
-
+    
     //Load the channel groups and channels
     for (Value::ConstValueIterator itr = channels.Begin();
         itr != channels.End(); ++itr)
@@ -865,7 +853,7 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd)
       int channelId = GetChannelId(cid.c_str());
       ZatChannel *channel = FindChannel(channelId);
 
-      if (!channel)
+      if (!channel || channel->iUniqueId != uniqueChannelId)
       {
         continue;
       }
@@ -895,17 +883,13 @@ bool ZatData::LoadEPG(time_t iStart, time_t iEnd)
           break;
         }
 
-        if (epgCache[cid] == NULL)
-        {
-          epgCache[cid] = new map<time_t, PVRIptvEpgEntry>();
-        }
-        (*epgCache[cid])[entry.startTime] = entry;
+        (*epgCache)[entry.startTime] = entry;
       }
     }
     tempStart = tempEnd;
     tempEnd = tempStart + 3600 * 5; //Add 5 hours
   }
-  return true;
+  return epgCache;
 }
 
 void ZatData::SetRecordingPlayCount(const PVR_RECORDING &recording, int count)

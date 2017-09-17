@@ -8,6 +8,7 @@
 #include "Curl.h"
 #include <map>
 #include <thread>
+#include <p8-platform/threads/mutex.h>
 
 using namespace std;
 
@@ -108,8 +109,6 @@ public:
   }
 
 private:
-  int m_iLastStart;
-  int m_iLastEnd;
   string appToken;
   string powerHash;
   string countryCode = "";
@@ -124,7 +123,6 @@ private:
   map<int, ZatChannel> channelsByUid;
   map<string, ZatChannel> channelsByCid;
   map<string, ZatRecordingData*> recordingsData;
-  map<string, map<time_t, PVRIptvEpgEntry>*> epgCache;
   int64_t maxRecallSeconds = 0;
   string beakerSessionId;
   vector<UpdateThread*> updateThreads;
@@ -146,7 +144,7 @@ private:
   string HttpRequest(string action, string url, string postData, bool isInit);
   string HttpRequestToCurl(Curl &curl, string action, string url,
       string postData, int &statusCode);
-  virtual bool LoadEPG(time_t iStart, time_t iEnd);
+  virtual map<time_t, PVRIptvEpgEntry>* LoadEPG(time_t iStart, time_t iEnd, int uniqueChannelId);
   virtual ZatChannel* FindChannel(int uniqueId);
   virtual PVRZattooChannelGroup* FindGroup(const string &strName);
   virtual int GetChannelId(const char * strChannelName);
