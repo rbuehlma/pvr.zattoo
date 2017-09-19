@@ -32,6 +32,7 @@ std::string zatPassword = "";
 bool zatFavoritesOnly = false;
 bool zatAlternativeEpgService = false;
 bool streamType = 0;
+bool provider = 0;
 
 extern "C"
 {
@@ -61,6 +62,10 @@ void ADDON_ReadSettings(void)
   if (XBMC->GetSetting("streamtype", &intBuffer))
   {
     streamType = intBuffer;
+  }
+  if (XBMC->GetSetting("provider", &intBuffer))
+  {
+    provider = intBuffer;
   }
   XBMC->Log(LOG_DEBUG, "End Readsettings");
 }
@@ -107,7 +112,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
   {
     XBMC->Log(LOG_DEBUG, "Create Zat");
     zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly,
-        zatAlternativeEpgService, streamType ? "hls" : "dash");
+        zatAlternativeEpgService, streamType ? "hls" : "dash", provider);
     XBMC->Log(LOG_DEBUG, "Zat created");
     if (zat->Initialize() && zat->LoadChannels())
     {
@@ -172,6 +177,15 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
     if (type != streamType)
     {
       streamType = type;
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+  if (name == "provider")
+  {
+    int prov = *(int *) settingValue;
+    if (provider != prov)
+    {
+      provider = prov;
       return ADDON_STATUS_NEED_RESTART;
     }
   }

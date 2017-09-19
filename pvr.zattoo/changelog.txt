@@ -1,3 +1,5 @@
+v18.0.13
+ - Add support for Zattoo reseller (Quickline and Net+)
 v18.0.12
  - Improve EPG loading
 v18.0.11

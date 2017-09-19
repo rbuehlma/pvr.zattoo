@@ -31,7 +31,6 @@ using namespace rapidjson;
 
 static const string addon_datadir = "special://profile/addon_data/pvr.zattoo/";
 static const string data_file = addon_datadir + "data.json";
-static const string zattooServer = "https://zattoo.com";
 
 string ZatData::HttpGetCached(string url, time_t cacheDuration)
 {
@@ -245,7 +244,7 @@ string ZatData::GenerateUUID()
 
 bool ZatData::LoadAppId()
 {
-  string html = HttpGet(zattooServer, true);
+  string html = HttpGet(providerUrl, true);
 
   appToken = "";
   //There seems to be a problem with old gcc and osx with regex. Do it the dirty way:
@@ -274,7 +273,7 @@ bool ZatData::SendHello(string uuid)
   dataStream << "uuid=" << uuid << "&lang=en&format=json&client_app_token="
       << appToken;
 
-  string jsonString = HttpPost(zattooServer + "/zapi/session/hello",
+  string jsonString = HttpPost(providerUrl + "/zapi/session/hello",
       dataStream.str(), true);
 
   Document doc;
@@ -298,7 +297,7 @@ bool ZatData::Login()
   ostringstream dataStream;
   dataStream << "login=" << Utils::UrlEncode(username) << "&password="
       << Utils::UrlEncode(password) << "&format=json";
-  string jsonString = HttpPost(zattooServer + "/zapi/account/login",
+  string jsonString = HttpPost(providerUrl + "/zapi/account/login",
       dataStream.str(), true);
 
   Document doc;
@@ -315,7 +314,7 @@ bool ZatData::Login()
 
 bool ZatData::InitSession()
 {
-  string jsonString = HttpGet(zattooServer + "/zapi/v2/session", true);
+  string jsonString = HttpGet(providerUrl + "/zapi/v2/session", true);
   Document doc;
   doc.Parse(jsonString.c_str());
   if (doc.GetParseError() || !doc["success"].GetBool())
@@ -341,7 +340,7 @@ bool ZatData::InitSession()
     {
       return false;
     }
-    jsonString = HttpGet(zattooServer + "/zapi/v2/session", true);
+    jsonString = HttpGet(providerUrl + "/zapi/v2/session", true);
     doc.Parse(jsonString.c_str());
     if (doc.GetParseError() || !doc["success"].GetBool()
         || !doc["session"]["loggedin"].GetBool())
@@ -367,7 +366,7 @@ bool ZatData::InitSession()
 bool ZatData::LoadChannels()
 {
   map<string, ZatChannel> allChannels;
-  string jsonString = HttpGet(zattooServer + "/zapi/channels/favorites");
+  string jsonString = HttpGet(providerUrl + "/zapi/channels/favorites");
   Document favDoc;
   favDoc.Parse(jsonString.c_str());
 
@@ -378,7 +377,7 @@ bool ZatData::LoadChannels()
   const Value& favs = favDoc["favorites"];
 
   ostringstream urlStream;
-  urlStream << zattooServer + "/zapi/v2/cached/channels/" << powerHash
+  urlStream << providerUrl + "/zapi/v2/cached/channels/" << powerHash
       << "?details=False";
   jsonString = HttpGet(urlStream.str());
 
@@ -471,7 +470,7 @@ int ZatData::GetChannelGroupsAmount()
 }
 
 ZatData::ZatData(string u, string p, bool favoritesOnly,
-    bool alternativeEpgService, string streamType) :
+    bool alternativeEpgService, string streamType, int provider) :
     recordingEnabled(false), uuid("")
 {
   username = u;
@@ -482,6 +481,17 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
   for (int i = 0; i < 1; ++i)
   {
     updateThreads.emplace_back(new UpdateThread(this));
+  }
+  
+  switch (provider) {
+    case 1:
+      providerUrl = "https://www.netplus.tv";
+      break;
+    case 2:
+      providerUrl = "https://mobiltv.quickline.com";
+      break;
+    default:
+      providerUrl = "https://zattoo.com";
   }
 }
 
@@ -643,7 +653,7 @@ string ZatData::GetChannelStreamUrl(int uniqueId)
     dataStream << "&timeshift=" << maxRecallSeconds;
   }
 
-  string jsonString = HttpPost(zattooServer + "/zapi/watch", dataStream.str());
+  string jsonString = HttpPost(providerUrl + "/zapi/watch", dataStream.str());
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -828,7 +838,7 @@ map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd, int u
   while (tempEnd <= iEnd)
   {
     ostringstream urlStream;
-    urlStream << zattooServer + "/zapi/v2/cached/program/power_guide/"
+    urlStream << providerUrl + "/zapi/v2/cached/program/power_guide/"
         << powerHash << "?end=" << tempEnd << "&start=" << tempStart
         << "&format=json";
 
@@ -950,7 +960,7 @@ int ZatData::GetRecordingLastPlayedPosition(const PVR_RECORDING &recording)
 void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
 {
   Cache::Cleanup();
-  string jsonString = HttpGetCached(zattooServer + "/zapi/playlist", 60);
+  string jsonString = HttpGetCached(providerUrl + "/zapi/playlist", 60);
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -970,7 +980,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
     const Value& recording = (*itr);
     int programId = recording["program_id"].GetInt();
     ostringstream urlStream;
-    urlStream << zattooServer + "/zapi/program/details?program_id="
+    urlStream << providerUrl + "/zapi/program/details?program_id="
         << programId;
     jsonString = HttpGetCached(urlStream.str(), 60 * 60 * 24 * 30);
     Document detailDoc;
@@ -1062,7 +1072,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
 
 int ZatData::GetRecordingsAmount(bool future)
 {
-  string jsonString = HttpGetCached(zattooServer + "/zapi/playlist", 60);
+  string jsonString = HttpGetCached(providerUrl + "/zapi/playlist", 60);
 
   time_t current_time;
   time(&current_time);
@@ -1095,7 +1105,7 @@ string ZatData::GetRecordingStreamUrl(string recordingId)
   ostringstream dataStream;
   dataStream << "recording_id=" << recordingId << "&stream_type=" << streamType;
 
-  string jsonString = HttpPost(zattooServer + "/zapi/watch", dataStream.str());
+  string jsonString = HttpPost(providerUrl + "/zapi/watch", dataStream.str());
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -1114,7 +1124,7 @@ bool ZatData::Record(int programId)
   ostringstream dataStream;
   dataStream << "program_id=" << programId;
 
-  string jsonString = HttpPost(zattooServer + "/zapi/playlist/program",
+  string jsonString = HttpPost(providerUrl + "/zapi/playlist/program",
       dataStream.str());
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -1126,7 +1136,7 @@ bool ZatData::DeleteRecording(string recordingId)
   ostringstream dataStream;
   dataStream << "recording_id=" << recordingId << "";
 
-  string jsonString = HttpPost(zattooServer + "/zapi/playlist/remove",
+  string jsonString = HttpPost(providerUrl + "/zapi/playlist/remove",
       dataStream.str());
 
   Document doc;
@@ -1169,7 +1179,7 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   dataStream << "cid=" << channel.cid << "&start=" << timeStart << "&end="
       << timeEnd << "&stream_type=" << streamType;
 
-  string jsonString = HttpPost(zattooServer + "/zapi/watch", dataStream.str());
+  string jsonString = HttpPost(providerUrl + "/zapi/watch", dataStream.str());
 
   Document doc;
   doc.Parse(jsonString.c_str());

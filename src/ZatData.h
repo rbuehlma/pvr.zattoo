@@ -75,7 +75,7 @@ class ZatData
 {
 public:
   ZatData(string username, string password, bool favoritesOnly,
-      bool alternativeEpgService, string streamType);
+      bool alternativeEpgService, string streamType, int provider);
   virtual ~ZatData();
   virtual bool Initialize();
   virtual bool LoadChannels();
@@ -128,6 +128,7 @@ private:
   vector<UpdateThread*> updateThreads;
   string uuid;
   Categories categories;
+  string providerUrl;
 
   bool LoadAppId();
   bool ReadDataJson();
@@ -144,7 +145,8 @@ private:
   string HttpRequest(string action, string url, string postData, bool isInit);
   string HttpRequestToCurl(Curl &curl, string action, string url,
       string postData, int &statusCode);
-  virtual map<time_t, PVRIptvEpgEntry>* LoadEPG(time_t iStart, time_t iEnd, int uniqueChannelId);
+  virtual map<time_t, PVRIptvEpgEntry>* LoadEPG(time_t iStart, time_t iEnd,
+      int uniqueChannelId);
   virtual ZatChannel* FindChannel(int uniqueId);
   virtual PVRZattooChannelGroup* FindGroup(const string &strName);
   virtual int GetChannelId(const char * strChannelName);

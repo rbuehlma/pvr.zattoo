@@ -32,6 +32,10 @@ msgctxt "#37105"
 msgid "Stream type"
 msgstr "The stream type"
 
+msgctxt "#37106"
+msgid "Provider"
+msgstr "The provider of the Zattoo service"
+
 msgctxt "#37111"
 msgid "Zattoo login failed!"
 msgstr ""
