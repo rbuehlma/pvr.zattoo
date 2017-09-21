@@ -711,7 +711,7 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     tag.iUniqueChannelId = zatChannel->iUniqueId;
     tag.startTime = StringToTime(program["StartTime"].GetString());
     tag.endTime = StringToTime(program["EndTime"].GetString());
-    string description = program["Description"].GetString();
+    string description = program["Description"].IsString() ? program["Description"].GetString() : "";
     tag.strPlotOutline = description.c_str();
     tag.strPlot = description.c_str();
     tag.strOriginalTitle = NULL; /* not supported */

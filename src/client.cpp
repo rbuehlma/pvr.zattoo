@@ -32,7 +32,7 @@ std::string zatPassword = "";
 bool zatFavoritesOnly = false;
 bool zatAlternativeEpgService = false;
 bool streamType = 0;
-bool provider = 0;
+int provider = 0;
 
 extern "C"
 {

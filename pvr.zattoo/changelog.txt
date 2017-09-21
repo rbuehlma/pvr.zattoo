@@ -1,3 +1,6 @@
+v18.0.14
+ - Fix crash when loading EPG
+ - Fix selection of Quickline
 v18.0.13
  - Add support for Zattoo reseller (Quickline and Net+)
 v18.0.12
