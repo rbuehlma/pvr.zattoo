@@ -3,14 +3,8 @@ project(pvr.zattoo)
 cmake_minimum_required(VERSION 2.8.12)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR})
-set(PC_RapidJSON_INCLUDEDIR ${PROJECT_SOURCE_DIR}/depends/target/rapidjson/native/build/dummy/include)
 
 enable_language(CXX)
-
-execute_process(
-	COMMAND make PREFIX=dummy
-	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/depends/target/rapidjson/
-)
 
 find_package(Kodi REQUIRED)
 find_package(kodiplatform REQUIRED)
