@@ -23,8 +23,6 @@ set(DEPLIBS ${kodiplatform_LIBRARIES}
 )
 
 set(ZATTOO_SOURCES
-		lib/tinyxml2/tinyxml2.h
-		lib/tinyxml2/tinyxml2.cpp
 		src/Utils.cpp
 		src/client.cpp
 		src/Curl.cpp
