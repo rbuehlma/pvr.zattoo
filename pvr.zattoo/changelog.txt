@@ -1,3 +1,6 @@
+v18.0.15
+ - Add debian folder
+ - Remove tinyxml2
 v18.0.14
  - Fix crash when loading EPG
  - Fix selection of Quickline
