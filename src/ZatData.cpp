@@ -18,6 +18,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define timegm _mkgmtime
+
+#define localtime_r __localtime_r
+static CC_INLINE struct tm *localtime_r(const time_t *clock, struct tm *result)
+{
+  struct tm *data;
+  if (!clock || !result)
+    return NULL;
+  data = localtime(clock);
+  if (!data)
+    return NULL;
+  memcpy(result, data, sizeof(*result));
+  return result;
+}
+
+#define gmtime_r __gmtime_r
+static CC_INLINE struct tm *gmtime_r(const time_t *clock, struct tm *result)
+{
+  struct tm *data;
+  if (!clock || !result)
+    return NULL;
+  data = gmtime(clock);
+  if (!data)
+    return NULL;
+  memcpy(result, data, sizeof(*result));
+  return result;
+}
+
 #endif
 
 #ifdef TARGET_ANDROID
@@ -477,7 +504,7 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
   this->alternativeEpgService = alternativeEpgService;
   this->favoritesOnly = favoritesOnly;
   this->streamType = streamType;
-  for (int i = 0; i < 1; ++i)
+  for (int i = 0; i < 5; ++i)
   {
     updateThreads.emplace_back(new UpdateThread(this));
   }
@@ -1171,9 +1198,12 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   ostringstream dataStream;
   ZatChannel channel = channelsByUid[tag->iUniqueChannelId];
   char timeStart[sizeof "2011-10-08T07:07:09Z"];
-  strftime(timeStart, sizeof timeStart, "%FT%TZ", gmtime(&tag->startTime));
+  struct tm tm;
+  gmtime_r(&tag->startTime, &tm);
+  strftime(timeStart, sizeof timeStart, "%FT%TZ", &tm);
   char timeEnd[sizeof "2011-10-08T07:07:09Z"];
-  strftime(timeEnd, sizeof timeEnd, "%FT%TZ", gmtime(&tag->endTime));
+  gmtime_r(&tag->endTime, &tm);
+  strftime(timeEnd, sizeof timeEnd, "%FT%TZ", &tm);
 
   dataStream << "cid=" << channel.cid << "&start=" << timeStart << "&end="
       << timeEnd << "&stream_type=" << streamType;
@@ -1187,20 +1217,21 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
 
 time_t ZatData::StringToTime(string timeString)
 {
-  struct tm *tm;
+  struct tm tm;
   time_t current_time;
   time(&current_time);
-  tm = localtime(&current_time);
+  localtime_r(&current_time, &tm);
 
   int year, month, day, h, m, s;
   sscanf(timeString.c_str(), "%d-%d-%dT%d:%d:%dZ", &year, &month, &day, &h, &m,
       &s);
-  tm->tm_year = year - 1900;
-  tm->tm_mon = month - 1;
-  tm->tm_mday = day;
-  tm->tm_hour = h;
-  tm->tm_min = m;
-  tm->tm_sec = s;
+  tm.tm_year = year - 1900;
+  tm.tm_mon = month - 1;
+  tm.tm_mday = day;
+  tm.tm_hour = h;
+  tm.tm_min = m;
+  tm.tm_sec = s;
 
-  return timegm(tm);
+  time_t ret = mktime(&tm);
+  return ret;
 }
