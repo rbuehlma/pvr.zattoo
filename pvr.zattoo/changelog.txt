@@ -1,3 +1,17 @@
+v18.0.17
+ - Add some reseller
+ -- netplus.tv
+ -- mobiltv.quickline.com
+ -- tvplus.m-net.de
+ -- player.waly.tv
+ -- meinewelt.cc
+ -- bbv-tv.net
+ -- vtxtv.ch
+ -- myvisiontv.ch
+ -- iptv.glattvision.ch
+ -- saktv.ch
+ -- nettv.netcologne.de
+ -- tvonline.ewe.de
 v18.0.16
  - Make loading EPG multithreaded
 v18.0.15

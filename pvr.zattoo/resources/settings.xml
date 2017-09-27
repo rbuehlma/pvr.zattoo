@@ -5,5 +5,5 @@
 	<setting id="favoritesonly" type="bool" label="37103" default="false" />
 	<setting id="alternativeepgservice" type="bool" label="37104" default="false" />
 	<setting id="streamtype" type="enum" label="37105" default = "0" values="dash|hls" />
-	<setting id="provider" type="enum" label="37106" default = "0" values="Zattoo|Netplus|Quickline" />
+	<setting id="provider" type="enum" label="37106" default = "0" values="Zattoo|Netplus|Quickline|m-net|WALY.TV|meinewelt.cc|BBV-tv.net|VTXtv.ch|myvisiontv.ch|GLATTvision.ch|SAKtv.ch|NetCologne|EWE.de" />
 </settings>

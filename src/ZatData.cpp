@@ -516,6 +516,36 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
     case 2:
       providerUrl = "https://mobiltv.quickline.com";
       break;
+    case 3:
+      providerUrl = "https://tvplus.m-net.de";
+      break;
+    case 4:
+      providerUrl = "https://player.waly.tv";
+      break;
+    case 5:
+      providerUrl = "https://www.meinewelt.cc";
+      break;
+    case 6:
+      providerUrl = "https://www.bbv-tv.net";
+      break;
+    case 7:
+      providerUrl = "https://www.vtxtv.ch";
+      break;
+    case 8:
+      providerUrl = "https://www.myvisiontv.ch";
+      break;
+    case 9:
+      providerUrl = "https://iptv.glattvision.ch";
+      break;
+    case 10:
+      providerUrl = "https://www.saktv.ch";
+      break;
+    case 11:
+      providerUrl = "https://nettv.netcologne.de";
+      break;
+    case 12:
+      providerUrl = "https://tvonline.ewe.de";
+      break;
     default:
       providerUrl = "https://zattoo.com";
   }
