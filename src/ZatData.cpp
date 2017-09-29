@@ -20,7 +20,7 @@
 #define timegm _mkgmtime
 
 #define localtime_r __localtime_r
-static CC_INLINE struct tm *localtime_r(const time_t *clock, struct tm *result)
+static inline struct tm *localtime_r(const time_t *clock, struct tm *result)
 {
   struct tm *data;
   if (!clock || !result)
@@ -33,7 +33,7 @@ static CC_INLINE struct tm *localtime_r(const time_t *clock, struct tm *result)
 }
 
 #define gmtime_r __gmtime_r
-static CC_INLINE struct tm *gmtime_r(const time_t *clock, struct tm *result)
+static inline struct tm *gmtime_r(const time_t *clock, struct tm *result)
 {
   struct tm *data;
   if (!clock || !result)
