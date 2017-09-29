@@ -1262,6 +1262,6 @@ time_t ZatData::StringToTime(string timeString)
   tm.tm_min = m;
   tm.tm_sec = s;
 
-  time_t ret = mktime(&tm);
+  time_t ret = timegm(&tm);
   return ret;
 }

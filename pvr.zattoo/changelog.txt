@@ -1,3 +1,5 @@
+v18.0.18
+ - Fix time zone for EPG
 v18.0.17
  - Add some reseller
  -- netplus.tv
