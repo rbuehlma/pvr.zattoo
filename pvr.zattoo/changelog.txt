@@ -1,3 +1,7 @@
+v18.0.19
+ - Fix case where session is still alive while addon starts
+ - Improve cache cleanup
+ - Change some log levels
 v18.0.18
  - Fix time zone for EPG
 v18.0.17

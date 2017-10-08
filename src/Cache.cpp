@@ -21,6 +21,8 @@ using namespace ADDON;
 
 static const string CACHE_DIR = "special://profile/addon_data/pvr.zattoo/cache/";
 
+time_t Cache::lastCleanup = 0;
+
 bool Cache::Read(string key, std::string& data)
 {
   string cacheFile = CACHE_DIR + key;
@@ -90,6 +92,12 @@ void Cache::Write(string key, const std::string& data, time_t validUntil)
 
 void Cache::Cleanup()
 {
+  time_t currTime;
+  time(&currTime);
+  if (lastCleanup + 60 * 60 > currTime) {
+    return;
+  }
+  lastCleanup = currTime;
   if (!XBMC->DirectoryExists(CACHE_DIR.c_str()))
   {
     return;

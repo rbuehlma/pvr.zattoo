@@ -134,7 +134,9 @@ ADDON_STATUS ADDON_GetStatus()
 
 void ADDON_Destroy()
 {
-  SAFE_DELETE(zat);
+  ZatData* oldZat = zat;
+  zat = nullptr;
+  SAFE_DELETE(oldZat);
   m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
 

@@ -283,7 +283,8 @@ bool ZatData::LoadAppId()
 
   if (appToken.empty())
   {
-    XBMC->Log(LOG_ERROR, "Error getting app token");
+    XBMC->Log(LOG_NOTICE, "Error getting app token. Maybe already logged in. Logout and try to login anyway");
+    HttpPost(providerUrl + "/zapi/account/logout", " ", true);
     return false;
   }
 
@@ -311,7 +312,7 @@ bool ZatData::SendHello(string uuid)
   }
   else
   {
-    XBMC->Log(LOG_ERROR, "Hello failed.");
+    XBMC->Log(LOG_NOTICE, "Hello failed.");
     return false;
   }
 }
@@ -568,11 +569,7 @@ ZatData::~ZatData()
 bool ZatData::Initialize()
 {
 
-  if (!LoadAppId())
-  {
-    XBMC->Log(LOG_ERROR, "Could not get an app id.");
-    return false;
-  }
+  LoadAppId();
 
   if (!InitSession())
   {

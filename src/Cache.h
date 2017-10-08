@@ -12,4 +12,5 @@ public:
   static void Cleanup();
 private:
   static bool IsStillValid(const Value& cache);
+  static time_t lastCleanup;
 };
