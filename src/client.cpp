@@ -33,6 +33,7 @@ bool zatFavoritesOnly = false;
 bool zatAlternativeEpgService = false;
 bool streamType = 0;
 int provider = 0;
+int runningRequests = 0;
 
 extern "C"
 {
@@ -136,7 +137,16 @@ void ADDON_Destroy()
 {
   ZatData* oldZat = zat;
   zat = nullptr;
+  int waitCount = 10;
+  while (runningRequests > 0 && waitCount > 0)
+  {
+    XBMC->Log(LOG_NOTICE, "Wait for %d requests to finish for %d seconds.", runningRequests, waitCount);
+    sleep(1);
+    waitCount--;
+  }
   SAFE_DELETE(oldZat);
+  SAFE_DELETE(PVR);
+  SAFE_DELETE(XBMC);
   m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
 
@@ -220,6 +230,7 @@ void OnPowerSavingDeactivated()
 
 PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
+  runningRequests++;
   pCapabilities->bSupportsEPG = true;
   pCapabilities->bSupportsTV = true;
   pCapabilities->bSupportsRadio = true;
@@ -234,7 +245,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   {
     zat->GetAddonCapabilities(pCapabilities);
   }
-
+  runningRequests--;
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -264,32 +275,37 @@ const char *GetBackendHostname(void)
 PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel,
     time_t iStart, time_t iEnd)
 {
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_SERVER_ERROR;
   if (zat)
   {
     zat->GetEPGForChannel(channel, iStart, iEnd);
-    return PVR_ERROR_NO_ERROR;
+    ret = PVR_ERROR_NO_ERROR;
   }
-
-  return PVR_ERROR_SERVER_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 int GetChannelsAmount(void)
 {
+  runningRequests++;
+  int ret = 0;
   if (zat)
-    return zat->GetChannelsAmount();
-
-  return 0;
+    ret = zat->GetChannelsAmount();
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
+  PVR_ERROR ret = PVR_ERROR_NO_ERROR;
   if (bRadio)
-    return PVR_ERROR_NO_ERROR;
-
+    return ret;
+  runningRequests++;
   if (zat)
-    return zat->GetChannels(handle, bRadio);
-
-  return PVR_ERROR_NO_ERROR;
+    ret = zat->GetChannels(handle, bRadio);
+  runningRequests--;
+  return ret;
 }
 
 bool OpenLiveStream(const PVR_CHANNEL &channel)
@@ -321,28 +337,34 @@ PVR_ERROR GetStreamProperties(PVR_STREAM_PROPERTIES* pProperties)
 
 int GetChannelGroupsAmount(void)
 {
-  return zat->GetChannelGroupsAmount();
+  runningRequests++;
+  int ret = zat->GetChannelGroupsAmount();
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio)
 {
   if (bRadio)
     return PVR_ERROR_NO_ERROR;
+  PVR_ERROR ret = PVR_ERROR_SERVER_ERROR;
+  runningRequests++;
   if (zat)
-    return zat->GetChannelGroups(handle);
+    ret = zat->GetChannelGroups(handle);
 
-  return PVR_ERROR_SERVER_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle,
     const PVR_CHANNEL_GROUP &group)
 {
-
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_SERVER_ERROR;
   if (zat)
-    return zat->GetChannelGroupMembers(handle, group);
-
-  return PVR_ERROR_SERVER_ERROR;
-
+    ret = zat->GetChannelGroupMembers(handle, group);
+  runningRequests--;
+  return ret;
 }
 
 void setStreamProperties(PVR_NAMED_VALUE* properties,
@@ -365,26 +387,31 @@ void setStreamProperties(PVR_NAMED_VALUE* properties,
 PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel,
     PVR_NAMED_VALUE* properties, unsigned int* propertiesCount)
 {
+  runningRequests++;
   std::string strUrl = zat->GetChannelStreamUrl(channel->iUniqueId);
-  if (strUrl.empty())
+  PVR_ERROR ret = PVR_ERROR_FAILED;
+  if (!strUrl.empty())
   {
-    return PVR_ERROR_FAILED;
+    setStreamProperties(properties, propertiesCount, strUrl);
+    ret = PVR_ERROR_NO_ERROR;
   }
-  setStreamProperties(properties, propertiesCount, strUrl);
-  return PVR_ERROR_NO_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING* recording,
     PVR_NAMED_VALUE* properties, unsigned int* propertiesCount)
 {
+  runningRequests++;
   std::string strUrl = zat->GetRecordingStreamUrl(recording->strRecordingId);
-  ;
-  if (strUrl.empty())
+  PVR_ERROR ret = PVR_ERROR_FAILED;
+  if (!strUrl.empty())
   {
-    return PVR_ERROR_FAILED;
+    setStreamProperties(properties, propertiesCount, strUrl);
+    ret = PVR_ERROR_NO_ERROR;
   }
-  setStreamProperties(properties, propertiesCount, strUrl);
-  return PVR_ERROR_NO_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 /** Recording API **/
@@ -394,11 +421,14 @@ int GetRecordingsAmount(bool deleted)
   {
     return 0;
   }
-  if (!zat)
+  runningRequests++;
+  int ret = 0;
+  if (zat)
   {
-    return 0;
+    ret = zat->GetRecordingsAmount(false);
   }
-  return zat->GetRecordingsAmount(false);
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool deleted)
@@ -407,78 +437,102 @@ PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool deleted)
   {
     return PVR_ERROR_NO_ERROR;
   }
-  if (!zat)
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_SERVER_ERROR;
+  if (zat)
   {
-    return PVR_ERROR_SERVER_ERROR;
+    zat->GetRecordings(handle, false);
+    ret = PVR_ERROR_NO_ERROR;
   }
-  zat->GetRecordings(handle, false);
-  return PVR_ERROR_NO_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 int GetTimersAmount(void)
 {
-  if (!zat)
+  runningRequests++;
+  int ret = 0;
+  if (zat)
   {
-    return 0;
+    ret = zat->GetRecordingsAmount(true);
   }
-  return zat->GetRecordingsAmount(true);
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR GetTimers(ADDON_HANDLE handle)
 {
-  if (!zat)
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_SERVER_ERROR;
+  if (zat)
   {
-    return PVR_ERROR_SERVER_ERROR;
+    zat->GetRecordings(handle, true);
+    ret = PVR_ERROR_NO_ERROR;
   }
-  zat->GetRecordings(handle, true);
-  return PVR_ERROR_NO_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR AddTimer(const PVR_TIMER &timer)
 {
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_NO_ERROR;
   if (!zat)
   {
-    return PVR_ERROR_SERVER_ERROR;
+    ret = PVR_ERROR_SERVER_ERROR;
   }
-  if (timer.iEpgUid <= EPG_TAG_INVALID_UID)
+  else if (timer.iEpgUid <= EPG_TAG_INVALID_UID)
   {
-    return PVR_ERROR_REJECTED;
+    ret = PVR_ERROR_REJECTED;
   }
-  if (!zat->Record(timer.iEpgUid))
+  else if (!zat->Record(timer.iEpgUid))
   {
-    return PVR_ERROR_REJECTED;
+    ret = PVR_ERROR_REJECTED;
   }
-  PVR->TriggerTimerUpdate();
-  PVR->TriggerRecordingUpdate();
-  return PVR_ERROR_NO_ERROR;
+  else
+  {
+    PVR->TriggerTimerUpdate();
+    PVR->TriggerRecordingUpdate();
+  }
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR DeleteRecording(const PVR_RECORDING &recording)
 {
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_NO_ERROR;
   if (!zat)
   {
-    return PVR_ERROR_SERVER_ERROR;
+    ret = PVR_ERROR_SERVER_ERROR;
   }
-  if (!zat->DeleteRecording(recording.strRecordingId))
+  else if (!zat->DeleteRecording(recording.strRecordingId))
   {
-    return PVR_ERROR_REJECTED;
+    ret = PVR_ERROR_REJECTED;
   }
-  return PVR_ERROR_NO_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete)
 {
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_NO_ERROR;
   if (!zat)
   {
-    return PVR_ERROR_SERVER_ERROR;
+    ret = PVR_ERROR_SERVER_ERROR;
   }
-  if (!zat->DeleteRecording(to_string(timer.iClientIndex)))
+  else if (!zat->DeleteRecording(to_string(timer.iClientIndex)))
   {
-    return PVR_ERROR_REJECTED;
+    ret = PVR_ERROR_REJECTED;
   }
-  PVR->TriggerTimerUpdate();
-  PVR->TriggerRecordingUpdate();
-  return PVR_ERROR_NO_ERROR;
+  else
+  {
+    PVR->TriggerTimerUpdate();
+    PVR->TriggerRecordingUpdate();
+  }
+  runningRequests--;
+  return ret;
 }
 
 void addTimerType(PVR_TIMER_TYPE types[], int idx, int attributes)
@@ -502,65 +556,83 @@ PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
 
 PVR_ERROR IsEPGTagRecordable(const EPG_TAG* tag, bool* bIsRecordable)
 {
-  if (!zat)
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_FAILED;
+  if (zat)
   {
-    return PVR_ERROR_FAILED;
+    *bIsRecordable = zat->IsRecordable(tag);
+    ret = PVR_ERROR_NO_ERROR;
   }
-  *bIsRecordable = zat->IsRecordable(tag);
-  return PVR_ERROR_NO_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR IsEPGTagPlayable(const EPG_TAG* tag, bool* bIsPlayable)
 {
-  if (!zat)
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_FAILED;
+  if (zat)
   {
-    return PVR_ERROR_FAILED;
+    *bIsPlayable = zat->IsPlayable(tag);
+    ret = PVR_ERROR_NO_ERROR;
   }
-  *bIsPlayable = zat->IsPlayable(tag);
-  return PVR_ERROR_NO_ERROR;
+
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR GetEPGTagStreamProperties(const EPG_TAG* tag,
     PVR_NAMED_VALUE* properties, unsigned int* iPropertiesCount)
 {
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_FAILED;
   std::string strUrl = zat->GetEpgTagUrl(tag);
-  if (strUrl.empty())
+  if (!strUrl.empty())
   {
-    return PVR_ERROR_FAILED;
+    setStreamProperties(properties, iPropertiesCount, strUrl);
+    ret = PVR_ERROR_NO_ERROR;
   }
-  setStreamProperties(properties, iPropertiesCount, strUrl);
-  return PVR_ERROR_NO_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count)
 {
-  if (!zat)
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_FAILED;
+  if (zat)
   {
-    return PVR_ERROR_FAILED;
+    zat->SetRecordingPlayCount(recording, count);
+    ret = PVR_ERROR_NO_ERROR;
   }
-  zat->SetRecordingPlayCount(recording, count);
-  return PVR_ERROR_NO_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording,
     int lastplayedposition)
 {
-  if (!zat)
+  runningRequests++;
+  PVR_ERROR ret = PVR_ERROR_FAILED;
+  if (zat)
   {
-    return PVR_ERROR_FAILED;
+    zat->SetRecordingLastPlayedPosition(recording, lastplayedposition);
+    ret = PVR_ERROR_NO_ERROR;
   }
-  zat->SetRecordingLastPlayedPosition(recording, lastplayedposition);
-  return PVR_ERROR_NO_ERROR;
+  runningRequests--;
+  return ret;
 }
 
 int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording)
 {
+  runningRequests++;
+  int ret = -1;
   if (!zat)
   {
-    return -1;
+    ret = zat->GetRecordingLastPlayedPosition(recording);
   }
-
-  return zat->GetRecordingLastPlayedPosition(recording);
+  runningRequests--;
+  return ret;
 }
 
 time_t GetPlayingTime()

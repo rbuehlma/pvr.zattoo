@@ -94,8 +94,9 @@ void Cache::Cleanup()
 {
   time_t currTime;
   time(&currTime);
-  if (lastCleanup + 60 * 60 > currTime) {
-    return;
+  if (lastCleanup + 60 * 60 > currTime)
+  {
+   return;
   }
   lastCleanup = currTime;
   if (!XBMC->DirectoryExists(CACHE_DIR.c_str()))

@@ -1,3 +1,5 @@
+v18.0.20
+ - Fix race conditions while closing the addon
 v18.0.19
  - Fix case where session is still alive while addon starts
  - Improve cache cleanup
