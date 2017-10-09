@@ -673,10 +673,18 @@ PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio)
       string iconPath = iconStream.str();
       if (!XBMC->FileExists(iconPath.c_str(), true))
       {
-        XBMC->Log(LOG_INFO,
-            "No logo found for channel '%s'. Fallback to Zattoo-Logo.",
-            channel.cid.c_str());
-        iconPath = channel.strLogoPath;
+        ostringstream iconStreamSystem;
+        iconStreamSystem
+            << "special://xbmc/addons/pvr.zattoo/resources/media/channel_logo/"
+            << channel.cid << ".png";
+        iconPath = iconStreamSystem.str();
+        if (!XBMC->FileExists(iconPath.c_str(), true))
+        {
+          XBMC->Log(LOG_INFO,
+              "No logo found for channel '%s'. Fallback to Zattoo-Logo.",
+              channel.cid.c_str());
+          iconPath = channel.strLogoPath;
+        }
       }
 
       strncpy(kodiChannel.strIconPath, iconPath.c_str(),
