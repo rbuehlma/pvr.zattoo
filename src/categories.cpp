@@ -37,10 +37,8 @@ using namespace ADDON;
 Categories::Categories() :
     m_categoriesById()
 {
-  std::string filePath;
   char *saveptr;
-  filePath = "special://home/addons/pvr.zattoo/resources/eit_categories.txt";
-  LoadEITCategories(filePath.c_str());
+  LoadEITCategories();
   // Copy over
   CategoryByIdMap::const_iterator it;
   for (it = m_categoriesById.begin(); it != m_categoriesById.end(); ++it)
@@ -77,8 +75,13 @@ int Categories::Category(const std::string& category) const
   return 0;
 }
 
-void Categories::LoadEITCategories(const char *filePath)
+void Categories::LoadEITCategories()
 {
+  const char *filePath = "special://home/addons/pvr.zattoo/resources/eit_categories.txt";
+  if (!XBMC->FileExists(filePath, false)) {
+    filePath = "special://xbmc/addons/pvr.zattoo/resources/eit_categories.txt";
+  }
+
   if (XBMC->FileExists(filePath, false))
   {
     XBMC->Log(LOG_DEBUG, "%s: Loading EIT categories from file '%s'",

@@ -36,7 +36,7 @@ public:
   int Category(const std::string& category) const;
 
 private:
-  void LoadEITCategories(const char *filePath);
+  void LoadEITCategories();
 
   CategoryByIdMap m_categoriesById;
   CategoryByNameMap m_categoriesByName;
