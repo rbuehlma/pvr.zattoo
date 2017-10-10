@@ -2,6 +2,8 @@
 #include "ZatData.h"
 #include "kodi/xbmc_pvr_dll.h"
 #include "kodi/libKODI_guilib.h"
+#include <chrono>
+#include <thread>
 
 using namespace ADDON;
 
@@ -141,7 +143,7 @@ void ADDON_Destroy()
   while (runningRequests > 0 && waitCount > 0)
   {
     XBMC->Log(LOG_NOTICE, "Wait for %d requests to finish for %d seconds.", runningRequests, waitCount);
-    sleep(1);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     waitCount--;
   }
   SAFE_DELETE(oldZat);
