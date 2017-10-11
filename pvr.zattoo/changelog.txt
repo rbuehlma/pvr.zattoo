@@ -1,3 +1,5 @@
+v18.0.23
+ - Add missing epg categories
 v18.0.22
  - Search for eit_categories.txt in system addon path
 v18.0.21
