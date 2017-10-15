@@ -150,7 +150,6 @@ private:
   virtual ZatChannel* FindChannel(int uniqueId);
   virtual PVRZattooChannelGroup* FindGroup(const string &strName);
   virtual int GetChannelId(const char * strChannelName);
-  time_t StringToTime(string timeString);
   virtual void GetEPGForChannelExternalService(int uniqueChannelId,
       time_t iStart, time_t iEnd);
 };

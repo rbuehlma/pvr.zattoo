@@ -13,40 +13,6 @@
 #include "Cache.h"
 #include "md5.h"
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-#pragma comment(lib, "ws2_32.lib")
-#include <stdio.h>
-#include <stdlib.h>
-#define timegm _mkgmtime
-
-#define localtime_r __localtime_r
-static inline struct tm *localtime_r(const time_t *clock, struct tm *result)
-{
-  struct tm *data;
-  if (!clock || !result)
-    return NULL;
-  data = localtime(clock);
-  if (!data)
-    return NULL;
-  memcpy(result, data, sizeof(*result));
-  return result;
-}
-
-#define gmtime_r __gmtime_r
-static inline struct tm *gmtime_r(const time_t *clock, struct tm *result)
-{
-  struct tm *data;
-  if (!clock || !result)
-    return NULL;
-  data = gmtime(clock);
-  if (!data)
-    return NULL;
-  memcpy(result, data, sizeof(*result));
-  return result;
-}
-
-#endif
-
 #ifdef TARGET_ANDROID
 #include "to_string.h"
 #endif
@@ -770,8 +736,8 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     string title = program["Title"].GetString();
     tag.strTitle = title.c_str();
     tag.iUniqueChannelId = zatChannel->iUniqueId;
-    tag.startTime = StringToTime(program["StartTime"].GetString());
-    tag.endTime = StringToTime(program["EndTime"].GetString());
+    tag.startTime = Utils::StringToTime(program["StartTime"].GetString());
+    tag.endTime = Utils::StringToTime(program["EndTime"].GetString());
     string description = program["Description"].IsString() ? program["Description"].GetString() : "";
     tag.strPlotOutline = description.c_str();
     tag.strPlot = description.c_str();
@@ -1061,7 +1027,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       genre = categories.Category(genreName);
     }
 
-    time_t startTime = StringToTime(recording["start"].GetString());
+    time_t startTime = Utils::StringToTime(recording["start"].GetString());
     if (future && (startTime > current_time))
     {
       PVR_TIMER tag;
@@ -1072,7 +1038,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       PVR_STRCPY(tag.strSummary,
           recording["episode_title"].IsString() ?
               recording["episode_title"].GetString() : "");
-      time_t endTime = StringToTime(recording["end"].GetString());
+      time_t endTime = Utils::StringToTime(recording["end"].GetString());
       tag.startTime = startTime;
       tag.endTime = endTime;
       tag.state = PVR_TIMER_STATE_SCHEDULED;
@@ -1108,7 +1074,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       ZatChannel channel = channelsByCid[recording["cid"].GetString()];
       tag.iChannelUid = channel.iUniqueId;
       PVR_STRCPY(tag.strChannelName, channel.name.c_str());
-      time_t endTime = StringToTime(recording["end"].GetString());
+      time_t endTime = Utils::StringToTime(recording["end"].GetString());
       tag.recordingTime = startTime;
       tag.iDuration = endTime - startTime;
 
@@ -1152,7 +1118,7 @@ int ZatData::GetRecordingsAmount(bool future)
       itr != recordings.End(); ++itr)
   {
     const Value& recording = (*itr);
-    time_t startTime = StringToTime(recording["start"].GetString());
+    time_t startTime = Utils::StringToTime(recording["start"].GetString());
     if (future == (startTime > current_time))
     {
       count++;
@@ -1248,25 +1214,4 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   Document doc;
   doc.Parse(jsonString.c_str());
   return doc["stream"]["url"].GetString();
-}
-
-time_t ZatData::StringToTime(string timeString)
-{
-  struct tm tm;
-  time_t current_time;
-  time(&current_time);
-  localtime_r(&current_time, &tm);
-
-  int year, month, day, h, m, s;
-  sscanf(timeString.c_str(), "%d-%d-%dT%d:%d:%dZ", &year, &month, &day, &h, &m,
-      &s);
-  tm.tm_year = year - 1900;
-  tm.tm_mon = month - 1;
-  tm.tm_mday = day;
-  tm.tm_hour = h;
-  tm.tm_min = m;
-  tm.tm_sec = s;
-
-  time_t ret = timegm(&tm);
-  return ret;
 }

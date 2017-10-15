@@ -106,3 +106,27 @@ std::string Utils::ReadFile(const std::string path)
   return content;
 
 }
+
+time_t Utils::StringToTime(std::string timeString)
+{
+  struct tm tm;
+
+  int year, month, day, h, m, s, tzh, tzm;
+  if (sscanf(timeString.c_str(), "%d-%d-%dT%d:%d:%d%d", &year, &month, &day, &h,
+      &m, &s, &tzh) < 7)
+  {
+    tzh = 0;
+  }
+  tzm = tzh % 100;
+  tzh = tzh / 100;
+
+  tm.tm_year = year - 1900;
+  tm.tm_mon = month - 1;
+  tm.tm_mday = day;
+  tm.tm_hour = h - tzh;
+  tm.tm_min = m - tzm;
+  tm.tm_sec = s;
+
+  time_t ret = timegm(&tm);
+  return ret;
+}

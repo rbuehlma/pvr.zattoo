@@ -14,4 +14,5 @@ public:
   static std::string ReadFile(const std::string path);
   static std::vector<std::string> SplitString(const std::string &str,
       const char &delim, int maxParts = 0);
+  static time_t StringToTime(std::string timeString);
 };
