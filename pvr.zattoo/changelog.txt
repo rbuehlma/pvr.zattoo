@@ -1,3 +1,5 @@
+v18.0.24
+ - Sync time handling with pvr.teleboy
 v18.0.23
  - Add missing epg categories
 v18.0.22
