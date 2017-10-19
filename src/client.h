@@ -1,3 +1,6 @@
+#ifndef CLIENT_H
+#define CLIENT_H
+
 #include "kodi/libXBMC_addon.h"
 #include "kodi/libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
@@ -27,5 +30,6 @@ static inline struct tm *gmtime_r(const time_t *clock, struct tm *result)
   return result;
 }
 
+#endif
 #endif
 
