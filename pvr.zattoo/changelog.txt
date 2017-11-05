@@ -1,3 +1,5 @@
+v18.0.25
+ - Add some session information to log output
 v18.0.24
  - Sync time handling with pvr.teleboy
 v18.0.23

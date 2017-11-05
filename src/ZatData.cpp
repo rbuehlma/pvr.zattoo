@@ -348,10 +348,18 @@ bool ZatData::InitSession()
   countryCode = session["aliased_country_code"].GetString();
   recallEnabled = streamType == "dash" && session["recall_eligible"].GetBool();
   recordingEnabled = session["recording_eligible"].GetBool();
+  XBMC->Log(LOG_NOTICE, "Country code: %s", countryCode.c_str());
+  XBMC->Log(LOG_NOTICE, "Stream type: %s", streamType.c_str());
   if (recallEnabled)
   {
     maxRecallSeconds = session["recall_seconds"].GetInt();
+    XBMC->Log(LOG_NOTICE, "Recall is enabled for %d seconds.", maxRecallSeconds);
   }
+  else
+  {
+    XBMC->Log(LOG_NOTICE, "Recall is disabled");
+  }
+  XBMC->Log(LOG_NOTICE, "Recordings are %s", recordingEnabled ? "enabled" : "disabled");
   powerHash = session["power_guide_hash"].GetString();
   return true;
 }

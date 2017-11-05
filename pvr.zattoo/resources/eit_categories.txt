@@ -17,7 +17,7 @@
 0x31;"Game Show/Spielshow"
 0x32;"Variety Show"
 0x33;"Talk Show/Talkshow"
-0x40;"Sports/Cycling/Extreme Sports/Extremsport/Golf/Radsport/US-Sport/US Sports"
+0x40;"Sports/Cycling/Extreme Sports/Extremsport/Golf/Radsport/US-Sport/US Sports/Aerobics"
 0x41;"Special Events (World Cup, World Series, etc)"
 0x42;"Sports Magazines"
 0x43;"Football (Soccer)/Fußball/Soccer"
