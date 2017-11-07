@@ -1181,23 +1181,27 @@ bool ZatData::DeleteRecording(string recordingId)
 
 bool ZatData::IsPlayable(const EPG_TAG *tag)
 {
-  if (!recallEnabled)
-  {
-    return false;
-  }
   time_t current_time;
   time(&current_time);
+  if (!recallEnabled)
+  {
+    return current_time < tag->endTime;
+  }
   return ((current_time - tag->endTime) < maxRecallSeconds)
       && (tag->startTime < current_time);
 }
 
 bool ZatData::IsRecordable(const EPG_TAG *tag)
 {
+  if (!recordingEnabled)
+  {
+    return false;
+  }
   time_t current_time;
   time(&current_time);
   if (!recallEnabled)
   {
-    return current_time < tag->startTime;
+    return current_time < tag->endTime;
   }
   return ((current_time - tag->endTime) < maxRecallSeconds);
 }
