@@ -1,3 +1,5 @@
+v18.0.27
+ - Disable playing future program
 v18.0.26
  - Allow playing current program from start without recall
 v18.0.25

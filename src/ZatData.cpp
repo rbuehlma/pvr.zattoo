@@ -1185,7 +1185,7 @@ bool ZatData::IsPlayable(const EPG_TAG *tag)
   time(&current_time);
   if (!recallEnabled)
   {
-    return current_time < tag->endTime;
+    return (current_time < tag->endTime) && (tag->startTime < current_time);
   }
   return ((current_time - tag->endTime) < maxRecallSeconds)
       && (tag->startTime < current_time);
@@ -1201,7 +1201,7 @@ bool ZatData::IsRecordable(const EPG_TAG *tag)
   time(&current_time);
   if (!recallEnabled)
   {
-    return current_time < tag->endTime;
+    return current_time < tag->startTime;
   }
   return ((current_time - tag->endTime) < maxRecallSeconds);
 }
