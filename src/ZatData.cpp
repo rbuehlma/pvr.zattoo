@@ -1181,12 +1181,12 @@ bool ZatData::DeleteRecording(string recordingId)
 
 bool ZatData::IsPlayable(const EPG_TAG *tag)
 {
-  time_t current_time;
-  time(&current_time);
   if (!recallEnabled)
   {
-    return (current_time < tag->endTime) && (tag->startTime < current_time);
+    return false;
   }
+  time_t current_time;
+  time(&current_time);
   return ((current_time - tag->endTime) < maxRecallSeconds)
       && (tag->startTime < current_time);
 }
@@ -1225,5 +1225,9 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
 
   Document doc;
   doc.Parse(jsonString.c_str());
+  if (doc.GetParseError() || !doc["success"].GetBool())
+  {
+    return "";
+  }
   return doc["stream"]["url"].GetString();
 }
