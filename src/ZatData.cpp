@@ -347,6 +347,7 @@ bool ZatData::InitSession()
 
   countryCode = session["aliased_country_code"].GetString();
   recallEnabled = streamType == "dash" && session["recall_eligible"].GetBool();
+  selectiveRecallEnabled = session.HasMember("selective_recall_eligible") ? session["selective_recall_eligible"].GetBool() : false;
   recordingEnabled = session["recording_eligible"].GetBool();
   XBMC->Log(LOG_NOTICE, "Country code: %s", countryCode.c_str());
   XBMC->Log(LOG_NOTICE, "Stream type: %s", streamType.c_str());
@@ -359,6 +360,7 @@ bool ZatData::InitSession()
   {
     XBMC->Log(LOG_NOTICE, "Recall is disabled");
   }
+  XBMC->Log(LOG_NOTICE, "Selective recall is %s", selectiveRecallEnabled ? "enabled" : "disabled");
   XBMC->Log(LOG_NOTICE, "Recordings are %s", recordingEnabled ? "enabled" : "disabled");
   powerHash = session["power_guide_hash"].GetString();
   return true;
@@ -421,6 +423,8 @@ bool ZatData::LoadChannels()
           channel.iChannelNumber = ++channelNumber;
           channel.strLogoPath = "http://logos.zattic.com";
           channel.strLogoPath.append(qualityItem["logo_white_84"].GetString());
+          channel.selectiveRecallSeconds = channelItem.HasMember("selective_recall_seconds") ? channelItem["selective_recall_seconds"].GetInt() : 0;
+          channel.recordingEnabled = channelItem.HasMember("recording") ? channelItem["recording"].GetBool() : false;
           group.channels.insert(group.channels.end(), channel);
           allChannels[cid] = channel;
           channelsByCid[channel.cid] = channel;
@@ -1181,14 +1185,34 @@ bool ZatData::DeleteRecording(string recordingId)
 
 bool ZatData::IsPlayable(const EPG_TAG *tag)
 {
-  if (!recallEnabled)
+  time_t current_time;
+  time(&current_time);
+  if (tag->startTime > current_time) {
+    return false;
+  }
+  int recallSeconds = GetRecallSeconds(tag);
+  if (recallSeconds == 0)
   {
     return false;
   }
-  time_t current_time;
-  time(&current_time);
-  return ((current_time - tag->endTime) < maxRecallSeconds)
-      && (tag->startTime < current_time);
+  if (current_time < tag->endTime)
+  {
+    return true;    
+  }
+  return (current_time - tag->endTime) < recallSeconds;
+}
+
+int ZatData::GetRecallSeconds(const EPG_TAG *tag) {
+  if (recallEnabled)
+  {
+    return maxRecallSeconds;
+  }
+  if (selectiveRecallEnabled)
+  {
+    ZatChannel channel = channelsByUid[tag->iUniqueChannelId];
+    return channel.selectiveRecallSeconds;
+  }
+  return 0;
 }
 
 bool ZatData::IsRecordable(const EPG_TAG *tag)
@@ -1197,13 +1221,18 @@ bool ZatData::IsRecordable(const EPG_TAG *tag)
   {
     return false;
   }
+  ZatChannel channel = channelsByUid[tag->iUniqueChannelId];
+  if (!channel.recordingEnabled) {
+    return false;
+  }
+  int recallSeconds = GetRecallSeconds(tag);
   time_t current_time;
   time(&current_time);
-  if (!recallEnabled)
+  if (recallSeconds == 0)
   {
     return current_time < tag->startTime;
   }
-  return ((current_time - tag->endTime) < maxRecallSeconds);
+  return ((current_time - tag->endTime) < recallSeconds);
 }
 
 string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
@@ -1217,11 +1246,24 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   char timeEnd[sizeof "2011-10-08T07:07:09Z"];
   gmtime_r(&tag->endTime, &tm);
   strftime(timeEnd, sizeof timeEnd, "%FT%TZ", &tm);
-
-  dataStream << "cid=" << channel.cid << "&start=" << timeStart << "&end="
+  
+  string jsonString;
+  
+  if (recallEnabled)
+  {
+    dataStream << "cid=" << channel.cid << "&start=" << timeStart << "&end="
       << timeEnd << "&stream_type=" << streamType;
-
-  string jsonString = HttpPost(providerUrl + "/zapi/watch", dataStream.str());
+    jsonString = HttpPost(providerUrl + "/zapi/watch", dataStream.str());
+  }
+  else if (selectiveRecallEnabled)
+  {
+    dataStream << "https_watch_urls=True" << "&stream_type=" << streamType;
+    jsonString = HttpPost(providerUrl + "/zapi/watch/selective_recall/" + channel.cid + "/" + to_string(tag->iUniqueBroadcastId), dataStream.str());  
+  }
+  else
+  {
+    return "";
+  }
 
   Document doc;
   doc.Parse(jsonString.c_str());

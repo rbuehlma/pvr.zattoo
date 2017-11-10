@@ -48,6 +48,8 @@ struct ZatChannel
   int iChannelNumber;
   int iEncryptionSystem;
   int iTvgShift;
+  int selectiveRecallSeconds;
+  bool recordingEnabled;
   string name;
   string strLogoPath;
   string strStreamURL;
@@ -101,6 +103,7 @@ public:
       int lastplayedposition);
   virtual int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording);
   virtual bool IsPlayable(const EPG_TAG *tag);
+  virtual int GetRecallSeconds(const EPG_TAG *tag);
   virtual bool IsRecordable(const EPG_TAG *tag);
   virtual string GetEpgTagUrl(const EPG_TAG *tag);
   virtual bool RecordingEnabled()
@@ -113,6 +116,7 @@ private:
   string powerHash;
   string countryCode = "";
   bool recallEnabled = false;
+  bool selectiveRecallEnabled = false;
   bool recordingEnabled = false;
   string streamType;
   string username;

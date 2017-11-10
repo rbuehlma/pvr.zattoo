@@ -1,3 +1,5 @@
+v18.0.29
+ - Support selective recall and restart
 v18.0.28
  - Revert "Allow playing current program from start without recall"
 v18.0.27
