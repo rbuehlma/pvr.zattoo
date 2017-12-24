@@ -527,6 +527,9 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
     case 12:
       providerUrl = "https://tvonline.ewe.de";
       break;
+    case 13:
+      providerUrl = "https://www.quantum-tv.com";
+      break;
     default:
       providerUrl = "https://zattoo.com";
   }

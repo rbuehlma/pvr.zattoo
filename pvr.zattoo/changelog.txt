@@ -1,3 +1,5 @@
+v18.0.31
+ - Add quantum TV as reseller  
 v18.0.30
  - Set mime type to prevent HEAD request
  - Enable manifest refresh
