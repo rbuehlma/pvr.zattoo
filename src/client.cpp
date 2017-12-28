@@ -17,7 +17,6 @@ using namespace ADDON;
 
 ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
 ZatData *zat = NULL;
-time_t g_pvrZattooTimeShift;
 
 /* User adjustable settings are saved here.
  * Default values are defined inside client.h
@@ -79,8 +78,6 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
   {
     return ADDON_STATUS_UNKNOWN;
   }
-
-  g_pvrZattooTimeShift = 0;
 
   PVR_PROPERTIES *pvrprops = (PVR_PROPERTIES *) props;
 
@@ -649,13 +646,6 @@ int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording)
   return ret;
 }
 
-time_t GetPlayingTime()
-{
-  time_t current_time;
-  time(&current_time);
-  return current_time - g_pvrZattooTimeShift;
-}
-
 /** UNUSED API FUNCTIONS */
 bool CanPauseStream(void)
 {
@@ -675,10 +665,6 @@ PVR_ERROR DeleteChannel(const PVR_CHANNEL &channel)
   return PVR_ERROR_NOT_IMPLEMENTED;
 }
 PVR_ERROR RenameChannel(const PVR_CHANNEL &channel)
-{
-  return PVR_ERROR_NOT_IMPLEMENTED;
-}
-PVR_ERROR MoveChannel(const PVR_CHANNEL &channel)
 {
   return PVR_ERROR_NOT_IMPLEMENTED;
 }
@@ -705,10 +691,6 @@ long long SeekRecordedStream(long long iPosition, int iWhence /* = SEEK_SET */)
 {
   return 0;
 }
-long long PositionRecordedStream(void)
-{
-  return -1;
-}
 long long LengthRecordedStream(void)
 {
   return 0;
@@ -724,10 +706,6 @@ int ReadLiveStream(unsigned char *pBuffer, unsigned int iBufferSize)
   return 0;
 }
 long long SeekLiveStream(long long iPosition, int iWhence /* = SEEK_SET */)
-{
-  return -1;
-}
-long long PositionLiveStream(void)
 {
   return -1;
 }
@@ -780,15 +758,6 @@ bool SeekTime(double, bool, double*)
 }
 void SetSpeed(int)
 {
-}
-;
-time_t GetBufferTimeStart()
-{
-  return 0;
-}
-time_t GetBufferTimeEnd()
-{
-  return 0;
 }
 PVR_ERROR UndeleteRecording(const PVR_RECORDING& recording)
 {
