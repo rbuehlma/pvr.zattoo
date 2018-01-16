@@ -54,7 +54,7 @@ Categories::Categories() :
         m_categoriesByName[category] = it->first;
         p = strtok_r(NULL, "/", &saveptr);
       }
-      delete categories;
+      free(categories);
     }
   }
 }
