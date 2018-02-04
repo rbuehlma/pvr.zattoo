@@ -1,6 +1,6 @@
 # Zattoo PVR addon for Kodi
 
-This is a [Kodi] (http://kodi.tv) PVR addon for streaming live TV from [zattoo](https://zattoo.com).
+This is a [Kodi](https://kodi.tv) PVR addon for streaming live TV from [zattoo](https://zattoo.com).
 
 ## Build instructions
 
