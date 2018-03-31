@@ -348,10 +348,12 @@ bool ZatData::InitSession()
   const Value& session = doc["session"];
 
   countryCode = session["aliased_country_code"].GetString();
+  serviceRegionCountry = session["service_region_country"].GetString();
   recallEnabled = streamType == "dash" && session["recall_eligible"].GetBool();
   selectiveRecallEnabled = session.HasMember("selective_recall_eligible") ? session["selective_recall_eligible"].GetBool() : false;
   recordingEnabled = session["recording_eligible"].GetBool();
   XBMC->Log(LOG_NOTICE, "Country code: %s", countryCode.c_str());
+  XBMC->Log(LOG_NOTICE, "Service region country: %s", serviceRegionCountry.c_str());
   XBMC->Log(LOG_NOTICE, "Stream type: %s", streamType.c_str());
   if (recallEnabled)
   {
@@ -734,7 +736,7 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
   ZatChannel *zatChannel = FindChannel(uniqueChannelId);
   string cid = zatChannel->cid;
   ostringstream urlStream;
-  urlStream << "http://zattoo.buehlmann.net/epg/api/Epg/" << countryCode << "/"
+  urlStream << "http://zattoo.buehlmann.net/epg/api/Epg/" << serviceRegionCountry << "/"
       << powerHash << "/" << cid << "/" << iStart << "/" << iEnd;
   string jsonString = HttpGetCached(urlStream.str(), 3600);
   Document doc;

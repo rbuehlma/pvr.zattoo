@@ -115,6 +115,7 @@ private:
   string appToken;
   string powerHash;
   string countryCode = "";
+  string serviceRegionCountry = "";
   bool recallEnabled = false;
   bool selectiveRecallEnabled = false;
   bool recordingEnabled = false;
