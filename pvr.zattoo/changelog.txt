@@ -1,3 +1,5 @@
+v18.0.35
+ - Seek 5 minutes into replay stream
 v18.0.34
  - Use service region country for epg
 v18.0.33

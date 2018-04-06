@@ -231,6 +231,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
   runningRequests++;
   pCapabilities->bSupportsEPG = true;
+  pCapabilities->bSupportsEPGEdl = true;
   pCapabilities->bSupportsTV = true;
   pCapabilities->bSupportsRadio = true;
   pCapabilities->bSupportsChannelGroups = true;
@@ -366,32 +367,23 @@ PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle,
   return ret;
 }
 
-void setStreamProperties(PVR_NAMED_VALUE* properties,
-    unsigned int* propertiesCount, std::string url)
+void setStreamProperty(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, std::string name, std::string value)
 {
-  strncpy(properties[0].strName, PVR_STREAM_PROPERTY_STREAMURL,
-      sizeof(properties[0].strName));
-  strncpy(properties[0].strValue, url.c_str(), sizeof(properties[0].strValue));
-  strncpy(properties[1].strName, PVR_STREAM_PROPERTY_INPUTSTREAMADDON,
-      sizeof(properties[1].strName));
-  strncpy(properties[1].strValue, "inputstream.adaptive",
-      sizeof(properties[1].strValue));
-  strncpy(properties[2].strName, "inputstream.adaptive.manifest_type",
-      sizeof(properties[2].strName));
-  strncpy(properties[2].strValue, streamType ? "hls" : "mpd",
-      sizeof(properties[2].strValue));
-  strncpy(properties[3].strName, "mimetype",
-    sizeof(properties[3].strName));
-  strncpy(properties[3].strValue, streamType ? "application/x-mpegURL" : "application/xml+dash",
-    sizeof(properties[3].strValue));
-  *propertiesCount = 4;
+  strncpy(properties[*propertiesCount].strName, name.c_str(), sizeof(properties[*propertiesCount].strName));
+  strncpy(properties[*propertiesCount].strValue, value.c_str(), sizeof(properties[*propertiesCount].strValue));  
+  *propertiesCount = (*propertiesCount) + 1;
+}
+
+void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, std::string url)
+{
+  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_STREAMURL, url);
+  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAMADDON, "inputstream.adaptive");
+  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_type", streamType ? "hls" : "mpd");
+  setStreamProperty(properties, propertiesCount, "mimetype", streamType ? "application/x-mpegURL" : "application/xml+dash");
+
   if (!streamType)
   {
-    strncpy(properties[4].strName, "inputstream.adaptive.manifest_update_parameter",
-      sizeof(properties[4].strName));
-    strncpy(properties[4].strValue, "full",
-      sizeof(properties[4].strValue));
-    *propertiesCount = 5;
+    setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_update_parameter", "full");
   }
 }
 
@@ -403,6 +395,7 @@ PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel,
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
   {
+    *propertiesCount = 0;
     setStreamProperties(properties, propertiesCount, strUrl);
     ret = PVR_ERROR_NO_ERROR;
   }
@@ -418,6 +411,7 @@ PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING* recording,
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
   {
+    *propertiesCount = 0;
     setStreamProperties(properties, propertiesCount, strUrl);
     ret = PVR_ERROR_NO_ERROR;
   }
@@ -600,11 +594,21 @@ PVR_ERROR GetEPGTagStreamProperties(const EPG_TAG* tag,
   std::string strUrl = zat->GetEpgTagUrl(tag);
   if (!strUrl.empty())
   {
+    *iPropertiesCount = 0;
     setStreamProperties(properties, iPropertiesCount, strUrl);
     ret = PVR_ERROR_NO_ERROR;
   }
   runningRequests--;
   return ret;
+}
+
+PVR_ERROR GetEPGTagEdl(const EPG_TAG* epgTag, PVR_EDL_ENTRY edl[], int *size)
+{
+  edl[0].start=0;
+  edl[0].end = 300000;
+  edl[0].type = PVR_EDL_TYPE_COMBREAK;
+  *size = 1;
+  return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count)
