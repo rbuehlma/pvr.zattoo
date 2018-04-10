@@ -1,3 +1,5 @@
+v18.0.36
+ - Seek 5 minutes into recording stream
 v18.0.35
  - Seek 5 minutes into replay stream
 v18.0.34

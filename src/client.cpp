@@ -240,6 +240,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsRecordingsRename = true;
   pCapabilities->bSupportsRecordingsLifetimeChange = false;
   pCapabilities->bSupportsDescrambleInfo = false;
+  pCapabilities->bSupportsRecordingEdl = true;
 
   if (zat)
   {
@@ -721,11 +722,14 @@ PVR_ERROR RenameRecording(const PVR_RECORDING &recording)
 {
   return PVR_ERROR_NOT_IMPLEMENTED;
 }
-PVR_ERROR GetRecordingEdl(const PVR_RECORDING&, PVR_EDL_ENTRY[], int*)
+PVR_ERROR GetRecordingEdl(const PVR_RECORDING& recording, PVR_EDL_ENTRY edl[], int *size)
 {
-  return PVR_ERROR_NOT_IMPLEMENTED;
+  edl[0].start=0;
+  edl[0].end = 300000;
+  edl[0].type = PVR_EDL_TYPE_COMBREAK;
+  *size = 1;
+  return PVR_ERROR_NO_ERROR;
 }
-;
 PVR_ERROR UpdateTimer(const PVR_TIMER &timer)
 {
   return PVR_ERROR_NOT_IMPLEMENTED;
