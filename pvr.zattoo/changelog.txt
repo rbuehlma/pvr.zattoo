@@ -1,3 +1,6 @@
+v18.0.37
+ - Cleanup cache also when recordings are not avialable
+ - Provide addon version to Zattoo upon login 
 v18.0.36
  - Seek 5 minutes into recording stream
 v18.0.35

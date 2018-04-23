@@ -15,7 +15,7 @@ struct EpgQueueEntry
 class UpdateThread: public P8PLATFORM::CThread
 {
 public:
-  UpdateThread(void *zat);
+  UpdateThread(int threadIdx, void *zat);
   ~UpdateThread();
   static void SetNextRecordingUpdate(time_t nextRecordingsUpdate);
   static void LoadEpg(int uniqueChannelId, time_t startTime, time_t endTime);
@@ -23,6 +23,7 @@ public:
 
 private:
   void *zat;
+  int threadIdx;
   static std::queue<EpgQueueEntry> loadEpgQueue;
   static time_t nextRecordingsUpdate;
   static P8PLATFORM::CMutex mutex;
