@@ -2,6 +2,7 @@
 #include <time.h>
 #include "client.h"
 #include "ZatData.h"
+#include "Cache.h"
 
 using namespace ADDON;
 
@@ -69,6 +70,8 @@ void* UpdateThread::Process()
     {
       continue;
     }
+
+    Cache::Cleanup();
 
     while (!loadEpgQueue.empty())
     {
