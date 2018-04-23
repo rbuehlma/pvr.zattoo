@@ -44,6 +44,9 @@ if ( MSVC )
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /W4")
 endif ( MSVC )
 
+addon_version(pvr.zattoo ZATTOO)
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DZATTOO_VERSION=${ZATTOO_VERSION} -DKODI_VERSION=${kodiplatform_VERSION}")
+
 build_addon(pvr.zattoo ZATTOO DEPLIBS)
 
 include(CPack)

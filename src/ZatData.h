@@ -143,11 +143,11 @@ private:
   bool SendHello(string uuid);
   bool Login();
   bool InitSession();
-  string HttpGetCached(string url, time_t cacheDuration);
-  string HttpGet(string url, bool isInit = false);
+  string HttpGetCached(string url, time_t cacheDuration, string userAgent = "");
+  string HttpGet(string url, bool isInit = false, string userAgent = "");
   string HttpDelete(string url, bool isInit = false);
-  string HttpPost(string url, string postData, bool isInit = false);
-  string HttpRequest(string action, string url, string postData, bool isInit);
+  string HttpPost(string url, string postData, bool isInit = false, string userAgent = "");
+  string HttpRequest(string action, string url, string postData, bool isInit, string userAgent);
   string HttpRequestToCurl(Curl &curl, string action, string url,
       string postData, int &statusCode);
   virtual map<time_t, PVRIptvEpgEntry>* LoadEPG(time_t iStart, time_t iEnd,

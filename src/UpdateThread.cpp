@@ -2,6 +2,7 @@
 #include <time.h>
 #include "client.h"
 #include "ZatData.h"
+#include "Cache.h"
 
 using namespace ADDON;
 
@@ -11,9 +12,10 @@ std::queue<EpgQueueEntry> UpdateThread::loadEpgQueue;
 time_t UpdateThread::nextRecordingsUpdate;
 P8PLATFORM::CMutex UpdateThread::mutex;
 
-UpdateThread::UpdateThread(void *zat) :
+UpdateThread::UpdateThread(int threadIdx, void *zat) :
     CThread()
 {
+  this->threadIdx = threadIdx;
   this->zat = zat;
   time(&UpdateThread::nextRecordingsUpdate);
   UpdateThread::nextRecordingsUpdate += maximumUpdateInterval;
@@ -68,6 +70,10 @@ void* UpdateThread::Process()
     if (IsStopped())
     {
       continue;
+    }
+    
+    if (this->threadIdx == 0) {
+      Cache::Cleanup();
     }
 
     while (!loadEpgQueue.empty())

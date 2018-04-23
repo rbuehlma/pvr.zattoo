@@ -23,15 +23,16 @@ using namespace rapidjson;
 
 static const string addon_datadir = "special://profile/addon_data/pvr.zattoo/";
 static const string data_file = addon_datadir + "data.json";
+static const string user_agent = string("Kodi/") + string(STR(KODI_VERSION)) + string(" pvr.zattoo/") + string(STR(ZATTOO_VERSION)) + string(" (Kodi PVR addon)");
 
-string ZatData::HttpGetCached(string url, time_t cacheDuration)
+string ZatData::HttpGetCached(string url, time_t cacheDuration, string userAgent)
 {
 
   string content;
   string cacheKey = md5(url);
   if (!Cache::Read(cacheKey, content))
   {
-    content = HttpGet(url);
+    content = HttpGet(url, false, userAgent);
     if (!content.empty())
     {
       time_t validUntil;
@@ -43,23 +44,23 @@ string ZatData::HttpGetCached(string url, time_t cacheDuration)
   return content;
 }
 
-string ZatData::HttpGet(string url, bool isInit)
+string ZatData::HttpGet(string url, bool isInit, string userAgent)
 {
-  return HttpRequest("GET", url, "", isInit);
+  return HttpRequest("GET", url, "", isInit, userAgent);
 }
 
 string ZatData::HttpDelete(string url, bool isInit)
 {
-  return HttpRequest("DELETE", url, "", isInit);
+  return HttpRequest("DELETE", url, "", isInit, "");
 }
 
-string ZatData::HttpPost(string url, string postData, bool isInit)
+string ZatData::HttpPost(string url, string postData, bool isInit, string userAgent)
 {
-  return HttpRequest("POST", url, postData, isInit);
+  return HttpRequest("POST", url, postData, isInit, userAgent);
 }
 
 string ZatData::HttpRequest(string action, string url, string postData,
-    bool isInit)
+    bool isInit, string userAgent)
 {
   Curl curl;
   int statusCode;
@@ -69,6 +70,10 @@ string ZatData::HttpRequest(string action, string url, string postData,
   if (!beakerSessionId.empty())
   {
     curl.AddOption("cookie", "beaker.session.id=" + beakerSessionId);
+  }
+
+  if (!userAgent.empty()) {
+    curl.AddHeader("User-Agent", userAgent);
   }
 
   string content = HttpRequestToCurl(curl, action, url, postData, statusCode);
@@ -293,7 +298,7 @@ bool ZatData::Login()
   dataStream << "login=" << Utils::UrlEncode(username) << "&password="
       << Utils::UrlEncode(password) << "&format=json";
   string jsonString = HttpPost(providerUrl + "/zapi/account/login",
-      dataStream.str(), true);
+      dataStream.str(), true, user_agent);
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -482,6 +487,7 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
     bool alternativeEpgService, string streamType, int provider) :
     recordingEnabled(false), uuid("")
 {
+  XBMC->Log(LOG_NOTICE, "Using useragent: %s", user_agent.c_str());
   username = u;
   password = p;
   this->alternativeEpgService = alternativeEpgService;
@@ -489,7 +495,7 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
   this->streamType = streamType;
   for (int i = 0; i < 5; ++i)
   {
-    updateThreads.emplace_back(new UpdateThread(this));
+    updateThreads.emplace_back(new UpdateThread(i, this));
   }
   
   switch (provider) {
@@ -738,7 +744,7 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
   ostringstream urlStream;
   urlStream << "http://zattoo.buehlmann.net/epg/api/Epg/" << serviceRegionCountry << "/"
       << powerHash << "/" << cid << "/" << iStart << "/" << iEnd;
-  string jsonString = HttpGetCached(urlStream.str(), 3600);
+  string jsonString = HttpGetCached(urlStream.str(), 3600, user_agent);
   Document doc;
   doc.Parse(jsonString.c_str());
   if (doc.GetParseError())
@@ -1005,7 +1011,6 @@ int ZatData::GetRecordingLastPlayedPosition(const PVR_RECORDING &recording)
 
 void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
 {
-  Cache::Cleanup();
   string jsonString = HttpGetCached(providerUrl + "/zapi/playlist", 60);
 
   Document doc;
