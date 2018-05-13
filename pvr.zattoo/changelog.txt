@@ -1,3 +1,5 @@
+v18.0.41
+ - Store uuid after generating
 v18.0.40
  - Improve storing session cookie
 v18.0.39

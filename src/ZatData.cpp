@@ -248,6 +248,7 @@ string ZatData::GetUUID()
   }
 
   uuid = GenerateUUID();
+  WriteDataJson();
   return uuid;
 }
 
