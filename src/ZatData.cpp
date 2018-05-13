@@ -106,6 +106,7 @@ string ZatData::HttpRequest(string action, string url, string postData,
   {
     XBMC->Log(LOG_NOTICE, "Got new pzuid: %s..", pzuid.substr(0,5).c_str());
     this->pzuid = pzuid;
+    WriteDataJson();
   }
 
   return content;
@@ -580,8 +581,6 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
 
 ZatData::~ZatData()
 {
-  WriteDataJson();
-
   for (auto const &updateThread : updateThreads)
   {
     updateThread->StopThread(200);

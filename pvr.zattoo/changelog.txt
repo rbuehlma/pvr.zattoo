@@ -1,3 +1,5 @@
+v18.0.40
+ - Improve storing session cookie
 v18.0.39
  - Shorten session cookies in log
 v18.0.38
