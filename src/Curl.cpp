@@ -111,8 +111,7 @@ string Curl::Request(string action, string url, string postData,
         continue;
       }
       cookies[parts[0]] = parts[1];
-      XBMC->Log(LOG_DEBUG, "Got cookie: %s=%s.", parts[0].c_str(),
-          parts[1].c_str());
+      XBMC->Log(LOG_DEBUG, "Got cookie: %s.", parts[0].c_str());
     }
   }
   XBMC->FreeStringArray(cookiesPtr, numValues);
