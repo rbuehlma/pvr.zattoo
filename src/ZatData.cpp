@@ -72,6 +72,12 @@ string ZatData::HttpRequest(string action, string url, string postData,
     curl.AddOption("cookie", "beaker.session.id=" + beakerSessionId);
   }
 
+  if (!pzuid.empty())
+  {
+    curl.AddOption("Cookie", "pzuid=" + pzuid);
+  }
+
+  
   if (!userAgent.empty()) {
     curl.AddHeader("User-Agent", userAgent);
   }
@@ -94,6 +100,14 @@ string ZatData::HttpRequest(string action, string url, string postData,
     XBMC->Log(LOG_NOTICE, "Got new beaker.session.id: %s", sessionId.c_str());
     beakerSessionId = sessionId;
   }
+  
+  string pzuid = curl.GetCookie("pzuid");
+  if (!pzuid.empty() && this->pzuid != pzuid)
+  {
+    XBMC->Log(LOG_NOTICE, "Got new pzuid: %s", pzuid.c_str());
+    this->pzuid = pzuid;
+  }
+
   return content;
 }
 
@@ -151,7 +165,19 @@ bool ZatData::ReadDataJson()
     recData->stillValid = false;
     recordingsData[recData->recordingId] = recData;
   }
-
+  
+  if (doc.HasMember("pzuid"))
+  {
+    pzuid = doc["pzuid"].GetString();
+    XBMC->Log(LOG_DEBUG, "Loaded pzuid: %s", pzuid.c_str());
+  }
+  
+  if (doc.HasMember("uuid"))
+  {
+    uuid = doc["uuid"].GetString();
+    XBMC->Log(LOG_DEBUG, "Loaded uuid: %s", uuid.c_str());
+  }
+  
   XBMC->Log(LOG_DEBUG, "Loaded data.json.");
   return true;
 }
@@ -172,7 +198,7 @@ bool ZatData::WriteDataJson()
   Document::AllocatorType& allocator = d.GetAllocator();
   for (auto const& item : recordingsData)
   {
-    if (!item.second->stillValid)
+    if (!countryCode.empty() &&  !item.second->stillValid)
     {
       continue;
     }
@@ -189,6 +215,20 @@ bool ZatData::WriteDataJson()
     a.PushBack(r, allocator);
   }
   d.AddMember("recordings", a, allocator);
+  
+  if (!pzuid.empty()) {
+    Value pzuidValue;
+    pzuidValue.SetString(pzuid.c_str(),
+        pzuid.length(), allocator);
+    d.AddMember("pzuid", pzuidValue, allocator);
+  }
+  
+  if (!uuid.empty()) {
+    Value uuidValue;
+    uuidValue.SetString(uuid.c_str(),
+        uuid.length(), allocator);
+    d.AddMember("uuid", uuidValue, allocator);
+  }
 
   StringBuffer buffer;
   Writer<StringBuffer> writer(buffer);
@@ -256,8 +296,7 @@ bool ZatData::LoadAppId()
 
   if (appToken.empty())
   {
-    XBMC->Log(LOG_NOTICE, "Error getting app token. Maybe already logged in. Logout and try to login anyway");
-    HttpPost(providerUrl + "/zapi/account/logout", " ", true);
+    XBMC->Log(LOG_NOTICE, "Error getting app token.");
     return false;
   }
 
@@ -296,7 +335,7 @@ bool ZatData::Login()
 
   ostringstream dataStream;
   dataStream << "login=" << Utils::UrlEncode(username) << "&password="
-      << Utils::UrlEncode(password) << "&format=json";
+      << Utils::UrlEncode(password) << "&format=json&remember=true";
   string jsonString = HttpPost(providerUrl + "/zapi/account/login",
       dataStream.str(), true, user_agent);
 
@@ -326,15 +365,9 @@ bool ZatData::InitSession()
   if (!doc["session"]["loggedin"].GetBool())
   {
     XBMC->Log(LOG_DEBUG, "Need to login.");
-
-    string uuid = GetUUID();
-    if (uuid.empty())
-    {
-      return false;
-    }
-
-    SendHello(uuid);
-    //Ignore if hello fails
+    pzuid = "";
+    beakerSessionId = "";
+    WriteDataJson();
 
     if (!Login())
     {
@@ -541,10 +574,14 @@ ZatData::ZatData(string u, string p, bool favoritesOnly,
     default:
       providerUrl = "https://zattoo.com";
   }
+  
+  ReadDataJson();
 }
 
 ZatData::~ZatData()
 {
+  WriteDataJson();
+
   for (auto const &updateThread : updateThreads)
   {
     updateThread->StopThread(200);
@@ -559,15 +596,23 @@ ZatData::~ZatData()
 
 bool ZatData::Initialize()
 {
-
-  LoadAppId();
+  if (!LoadAppId()) {
+      return false;
+  }
+  
+  SendHello(uuid);
+  //Ignore if hello fails
 
   if (!InitSession())
   {
     return false;
   }
-
-  ReadDataJson();
+  
+  string uuid = GetUUID();
+  if (uuid.empty())
+  {
+    return false;
+  }
 
   return true;
 }

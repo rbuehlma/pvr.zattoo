@@ -1,3 +1,5 @@
+v18.0.38
+ - Persist Zattoo session
 v18.0.37
  - Cleanup cache also when recordings are not avialable
  - Provide addon version to Zattoo upon login 

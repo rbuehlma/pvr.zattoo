@@ -130,6 +130,7 @@ private:
   map<string, ZatRecordingData*> recordingsData;
   int64_t maxRecallSeconds = 0;
   string beakerSessionId;
+  string pzuid;
   vector<UpdateThread*> updateThreads;
   string uuid;
   Categories categories;
