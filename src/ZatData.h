@@ -135,6 +135,7 @@ private:
   string uuid;
   Categories categories;
   string providerUrl;
+  bool recordingsLoaded = false;
 
   bool LoadAppId();
   bool ReadDataJson();

@@ -167,6 +167,8 @@ bool ZatData::ReadDataJson()
     recordingsData[recData->recordingId] = recData;
   }
   
+  recordingsLoaded = false;
+
   if (doc.HasMember("pzuid"))
   {
     pzuid = doc["pzuid"].GetString();
@@ -199,7 +201,7 @@ bool ZatData::WriteDataJson()
   Document::AllocatorType& allocator = d.GetAllocator();
   for (auto const& item : recordingsData)
   {
-    if (!countryCode.empty() &&  !item.second->stillValid)
+    if (recordingsLoaded &&  !item.second->stillValid)
     {
       continue;
     }
@@ -1162,6 +1164,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       }
 
       PVR->TransferRecordingEntry(handle, &tag);
+      recordingsLoaded = true;
     }
   }
 }

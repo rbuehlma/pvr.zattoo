@@ -1,3 +1,5 @@
+v18.0.42
+ - Do not drop recording state if recordings are not yet loaded
 v18.0.41
  - Store uuid after generating
 v18.0.40
