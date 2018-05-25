@@ -33,6 +33,18 @@ set(ZATTOO_SOURCES
 		src/md5.cpp
 )
 
+set(ZATTOO_HEADERS
+		src/Cache.h
+		src/Curl.h
+		src/UpdateThread.h
+		src/Utils.h
+		src/ZatData.h
+		src/categories.h
+		src/client.h
+		src/md5.h
+		src/to_string.h
+)
+
 if(WIN32)
 	list(APPEND DEPLIBS ws2_32)
 endif()
