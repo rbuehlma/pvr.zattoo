@@ -1081,21 +1081,36 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
     urlStream << providerUrl + "/zapi/program/details?program_id="
         << programId;
     jsonString = HttpGetCached(urlStream.str(), 60 * 60 * 24 * 30);
+
+    string cid = recording["cid"].GetString();
+    map<string, ZatChannel>::iterator iterator = channelsByCid.find(cid);
+    if (iterator == channelsByCid.end()) {
+      XBMC->Log(LOG_ERROR, "Channel %s not found for recording: %i", cid.c_str(), programId);
+      continue;
+    }
+    ZatChannel channel = iterator->second;
+ 
     Document detailDoc;
+    bool hasDetailDoc = true;
     detailDoc.Parse(jsonString.c_str());
     if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
     {
-      continue;
+      hasDetailDoc = false;
+    } else if (!detailDoc.HasMember("program")) {
+      XBMC->Log(LOG_ERROR, "Ignoring detail dock for recording: %i", programId);
+      hasDetailDoc = false;
     }
-
+    
     //genre
-    const Value& genres = detailDoc["program"]["genres"];
-    //Only get the first genre
     int genre = 0;
-    if (genres.Size() > 0)
-    {
-      string genreName = genres[0].GetString();
-      genre = categories.Category(genreName);
+    if (hasDetailDoc && detailDoc["program"].HasMember("genres")) {
+      const Value& genres = detailDoc["program"]["genres"];
+      //Only get the first genre
+      if (genres.Size() > 0)
+      {
+        string genreName = genres[0].GetString();
+        genre = categories.Category(genreName);
+      }
     }
 
     time_t startTime = Utils::StringToTime(recording["start"].GetString());
@@ -1115,7 +1130,6 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       tag.state = PVR_TIMER_STATE_SCHEDULED;
       tag.iTimerType = 1;
       tag.iEpgUid = recording["program_id"].GetInt();
-      ZatChannel channel = channelsByCid[recording["cid"].GetString()];
       tag.iClientChannelUid = channel.iUniqueId;
       PVR->TransferTimerEntry(handle, &tag);
       UpdateThread::SetNextRecordingUpdate(startTime);
@@ -1139,10 +1153,9 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
           recording["episode_title"].IsString() ?
               recording["episode_title"].GetString() : "");
       PVR_STRCPY(tag.strPlot,
-          detailDoc["program"]["description"].IsString() ?
+          hasDetailDoc && detailDoc["program"].HasMember("description") && detailDoc["program"]["description"].IsString() ?
               detailDoc["program"]["description"].GetString() : "");
       PVR_STRCPY(tag.strIconPath, recording["image_url"].GetString());
-      ZatChannel channel = channelsByCid[recording["cid"].GetString()];
       tag.iChannelUid = channel.iUniqueId;
       PVR_STRCPY(tag.strChannelName, channel.name.c_str());
       time_t endTime = Utils::StringToTime(recording["end"].GetString());
