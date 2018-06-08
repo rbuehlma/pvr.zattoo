@@ -340,7 +340,7 @@ bool ZatData::Login()
   ostringstream dataStream;
   dataStream << "login=" << Utils::UrlEncode(username) << "&password="
       << Utils::UrlEncode(password) << "&format=json&remember=true";
-  string jsonString = HttpPost(providerUrl + "/zapi/account/login",
+  string jsonString = HttpPost(providerUrl + "/zapi/v2/account/login",
       dataStream.str(), true, user_agent);
 
   Document doc;
