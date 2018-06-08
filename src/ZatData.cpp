@@ -333,7 +333,7 @@ bool ZatData::SendHello(string uuid)
   }
 }
 
-bool ZatData::Login()
+Document ZatData::Login()
 {
   XBMC->Log(LOG_DEBUG, "Try to login.");
 
@@ -345,14 +345,7 @@ bool ZatData::Login()
 
   Document doc;
   doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["success"].GetBool())
-  {
-    XBMC->Log(LOG_ERROR, "Login failed.");
-    return false;
-  }
-
-  XBMC->Log(LOG_DEBUG, "Login was successful.");
-  return true;
+  return doc;
 }
 
 bool ZatData::InitSession()
@@ -372,18 +365,16 @@ bool ZatData::InitSession()
     pzuid = "";
     beakerSessionId = "";
     WriteDataJson();
-
-    if (!Login())
-    {
-      return false;
-    }
-    jsonString = HttpGet(providerUrl + "/zapi/v2/session", true);
-    doc.Parse(jsonString.c_str());
+    doc = Login(); 
     if (doc.GetParseError() || !doc["success"].GetBool()
         || !doc["session"]["loggedin"].GetBool())
     {
-      XBMC->Log(LOG_ERROR, "Initialize session failed.");
+      XBMC->Log(LOG_ERROR, "Login failed.");
       return false;
+    }
+    else
+    {
+        XBMC->Log(LOG_DEBUG, "Login was successful.");
     }
   }
 
