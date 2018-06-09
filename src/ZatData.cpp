@@ -732,7 +732,7 @@ string ZatData::GetChannelStreamUrl(int uniqueId)
 {
 
   ZatChannel *channel = FindChannel(uniqueId);
-  //XBMC->QueueNotification(QUEUE_INFO, "Getting URL for channel %s", XBMC->UnknownToUTF8(channel->name.c_str()));
+  XBMC->Log(LOG_DEBUG, "Get live url for channel %s", channel->cid.c_str());
 
   ostringstream dataStream;
   dataStream << "cid=" << channel->cid << "&stream_type=" << streamType
@@ -752,6 +752,7 @@ string ZatData::GetChannelStreamUrl(int uniqueId)
     return "";
   }
   string url = doc["stream"]["url"].GetString();
+  XBMC->Log(LOG_DEBUG, "Got url: %s", doc["stream"]["url"].GetString());
   return url;
 
 }
@@ -1205,6 +1206,8 @@ int ZatData::GetRecordingsAmount(bool future)
 
 string ZatData::GetRecordingStreamUrl(string recordingId)
 {
+  XBMC->Log(LOG_DEBUG, "Get url for recording %s", recordingId.c_str());
+  
   ostringstream dataStream;
   dataStream << "recording_id=" << recordingId << "&stream_type=" << streamType;
 
@@ -1218,6 +1221,7 @@ string ZatData::GetRecordingStreamUrl(string recordingId)
   }
 
   string url = doc["stream"]["url"].GetString();
+  XBMC->Log(LOG_DEBUG, "Got url: %s", doc["stream"]["url"].GetString());
   return url;
 
 }
@@ -1313,6 +1317,8 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   
   string jsonString;
   
+  XBMC->Log(LOG_DEBUG, "Get timeshift url for channel %s at %s", channel.cid.c_str(), timeStart);
+  
   if (recallEnabled)
   {
     dataStream << "cid=" << channel.cid << "&start=" << timeStart << "&end="
@@ -1335,5 +1341,6 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   {
     return "";
   }
+  XBMC->Log(LOG_DEBUG, "Got url: %s", doc["stream"]["url"].GetString());
   return doc["stream"]["url"].GetString();
 }
