@@ -800,4 +800,9 @@ PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
 {
   return PVR_ERROR_NOT_IMPLEMENTED;
 }
+PVR_ERROR GetStreamReadChunkSize(int* chunksize)
+{
+  return PVR_ERROR_NOT_IMPLEMENTED;
+}
+
 }

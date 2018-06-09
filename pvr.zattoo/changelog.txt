@@ -1,3 +1,5 @@
+v18.0.44
+ - Update to PVR addon API v5.10.0
 v18.0.43
  - Improve handling of recordings
 v18.0.42
