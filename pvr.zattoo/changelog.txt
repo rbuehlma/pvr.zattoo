@@ -1,3 +1,6 @@
+v18.0.45
+ - Use v4 login api
+ - Improve logging
 v18.0.44
  - Update to PVR addon API v5.10.0
 v18.0.43
