@@ -9,7 +9,9 @@
 #include <map>
 #include <thread>
 #include <p8-platform/threads/mutex.h>
+#include "rapidjson/document.h"
 
+using namespace rapidjson;
 using namespace std;
 
 /*!
@@ -143,7 +145,7 @@ private:
   string GetUUID();
   string GenerateUUID();
   bool SendHello(string uuid);
-  bool Login();
+  Document Login();
   bool InitSession();
   string HttpGetCached(string url, time_t cacheDuration, string userAgent = "");
   string HttpGet(string url, bool isInit = false, string userAgent = "");

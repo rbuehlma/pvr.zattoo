@@ -333,26 +333,19 @@ bool ZatData::SendHello(string uuid)
   }
 }
 
-bool ZatData::Login()
+Document ZatData::Login()
 {
   XBMC->Log(LOG_DEBUG, "Try to login.");
 
   ostringstream dataStream;
   dataStream << "login=" << Utils::UrlEncode(username) << "&password="
       << Utils::UrlEncode(password) << "&format=json&remember=true";
-  string jsonString = HttpPost(providerUrl + "/zapi/account/login",
+  string jsonString = HttpPost(providerUrl + "/zapi/v2/account/login",
       dataStream.str(), true, user_agent);
 
   Document doc;
   doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["success"].GetBool())
-  {
-    XBMC->Log(LOG_ERROR, "Login failed.");
-    return false;
-  }
-
-  XBMC->Log(LOG_DEBUG, "Login was successful.");
-  return true;
+  return doc;
 }
 
 bool ZatData::InitSession()
@@ -372,18 +365,16 @@ bool ZatData::InitSession()
     pzuid = "";
     beakerSessionId = "";
     WriteDataJson();
-
-    if (!Login())
-    {
-      return false;
-    }
-    jsonString = HttpGet(providerUrl + "/zapi/v2/session", true);
-    doc.Parse(jsonString.c_str());
+    doc = Login(); 
     if (doc.GetParseError() || !doc["success"].GetBool()
         || !doc["session"]["loggedin"].GetBool())
     {
-      XBMC->Log(LOG_ERROR, "Initialize session failed.");
+      XBMC->Log(LOG_ERROR, "Login failed.");
       return false;
+    }
+    else
+    {
+        XBMC->Log(LOG_DEBUG, "Login was successful.");
     }
   }
 
@@ -741,7 +732,7 @@ string ZatData::GetChannelStreamUrl(int uniqueId)
 {
 
   ZatChannel *channel = FindChannel(uniqueId);
-  //XBMC->QueueNotification(QUEUE_INFO, "Getting URL for channel %s", XBMC->UnknownToUTF8(channel->name.c_str()));
+  XBMC->Log(LOG_DEBUG, "Get live url for channel %s", channel->cid.c_str());
 
   ostringstream dataStream;
   dataStream << "cid=" << channel->cid << "&stream_type=" << streamType
@@ -761,6 +752,7 @@ string ZatData::GetChannelStreamUrl(int uniqueId)
     return "";
   }
   string url = doc["stream"]["url"].GetString();
+  XBMC->Log(LOG_DEBUG, "Got url: %s", doc["stream"]["url"].GetString());
   return url;
 
 }
@@ -1214,6 +1206,8 @@ int ZatData::GetRecordingsAmount(bool future)
 
 string ZatData::GetRecordingStreamUrl(string recordingId)
 {
+  XBMC->Log(LOG_DEBUG, "Get url for recording %s", recordingId.c_str());
+  
   ostringstream dataStream;
   dataStream << "recording_id=" << recordingId << "&stream_type=" << streamType;
 
@@ -1227,6 +1221,7 @@ string ZatData::GetRecordingStreamUrl(string recordingId)
   }
 
   string url = doc["stream"]["url"].GetString();
+  XBMC->Log(LOG_DEBUG, "Got url: %s", doc["stream"]["url"].GetString());
   return url;
 
 }
@@ -1322,6 +1317,8 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   
   string jsonString;
   
+  XBMC->Log(LOG_DEBUG, "Get timeshift url for channel %s at %s", channel.cid.c_str(), timeStart);
+  
   if (recallEnabled)
   {
     dataStream << "cid=" << channel.cid << "&start=" << timeStart << "&end="
@@ -1344,5 +1341,6 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   {
     return "";
   }
+  XBMC->Log(LOG_DEBUG, "Got url: %s", doc["stream"]["url"].GetString());
   return doc["stream"]["url"].GetString();
 }
