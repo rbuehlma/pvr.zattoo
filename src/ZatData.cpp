@@ -929,7 +929,7 @@ map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd, int u
   while (tempEnd <= iEnd)
   {
     ostringstream urlStream;
-    urlStream << providerUrl + "/zapi/v2/cached/program/power_guide/"
+    urlStream << providerUrl << "/zapi/v2/cached/program/power_guide/"
         << powerHash << "?end=" << tempEnd << "&start=" << tempStart
         << "&format=json";
 
@@ -1063,16 +1063,47 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
 
   time_t current_time;
   time(&current_time);
+  
+  string idList = "";
+  
+  ostringstream urlStream;
+  urlStream << providerUrl << "/zapi/v2/cached/program/power_details/" << powerHash  << "?complete=True&program_ids=";
+  bool first = true;
+  for (Value::ConstValueIterator itr = recordings.Begin();
+      itr != recordings.End(); ++itr)
+  {
+    const Value& recording = (*itr);
+    if (!first) {
+      urlStream << ",";
+    }
+    first = false;
+    urlStream << recording["program_id"].GetInt();
+  }
+  
+  jsonString = HttpGetCached(urlStream.str(), 60 * 60 * 24 * 30);
+  Document detailDoc;
+  detailDoc.Parse(jsonString.c_str());
+  map<int, const Value&> detailsById;
+  if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
+  {
+    XBMC->Log(LOG_ERROR, "Failed to load details for recordings.");
+  }
+  else
+  {
+    const Value& programs = detailDoc["programs"];
+    for (Value::ConstValueIterator itr = programs.Begin();
+        itr != programs.End(); ++itr)
+    {
+      const Value& program = (*itr);
+      detailsById.insert(pair<int, const Value&>(program["id"].GetInt(), program));
+    }
+  }
 
   for (Value::ConstValueIterator itr = recordings.Begin();
       itr != recordings.End(); ++itr)
   {
     const Value& recording = (*itr);
     int programId = recording["program_id"].GetInt();
-    ostringstream urlStream;
-    urlStream << providerUrl + "/zapi/program/details?program_id="
-        << programId;
-    jsonString = HttpGetCached(urlStream.str(), 60 * 60 * 24 * 30);
 
     string cid = recording["cid"].GetString();
     map<string, ZatChannel>::iterator iterator = channelsByCid.find(cid);
@@ -1081,22 +1112,14 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       continue;
     }
     ZatChannel channel = iterator->second;
- 
-    Document detailDoc;
-    bool hasDetailDoc = true;
-    detailDoc.Parse(jsonString.c_str());
-    if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
-    {
-      hasDetailDoc = false;
-    } else if (!detailDoc.HasMember("program")) {
-      XBMC->Log(LOG_ERROR, "Ignoring detail dock for recording: %i", programId);
-      hasDetailDoc = false;
-    }
+
+    auto detailIterator = detailsById.find(programId);
+    bool hasDetails = detailIterator != detailsById.end();
     
     //genre
     int genre = 0;
-    if (hasDetailDoc && detailDoc["program"].HasMember("genres")) {
-      const Value& genres = detailDoc["program"]["genres"];
+    if (hasDetails && detailIterator->second.HasMember("g")) {
+      const Value& genres = detailIterator->second["g"];
       //Only get the first genre
       if (genres.Size() > 0)
       {
@@ -1145,8 +1168,8 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
           recording["episode_title"].IsString() ?
               recording["episode_title"].GetString() : "");
       PVR_STRCPY(tag.strPlot,
-          hasDetailDoc && detailDoc["program"].HasMember("description") && detailDoc["program"]["description"].IsString() ?
-              detailDoc["program"]["description"].GetString() : "");
+          hasDetails && detailIterator->second.HasMember("d") && detailIterator->second["d"].IsString() ?
+              detailIterator->second["d"].GetString() : "");
       PVR_STRCPY(tag.strIconPath, recording["image_url"].GetString());
       tag.iChannelUid = channel.iUniqueId;
       PVR_STRCPY(tag.strChannelName, channel.name.c_str());

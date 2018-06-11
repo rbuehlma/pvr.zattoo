@@ -1,3 +1,5 @@
+v18.0.46
+ - Fix loading recordings data
 v18.0.45
  - Use v4 login api
  - Improve logging
