@@ -1,3 +1,5 @@
+v18.0.47
+ - Fix deadlock due to missing mutex.unlock()
 v18.0.46
  - Fix loading recordings data
 v18.0.45

@@ -118,6 +118,10 @@ void* UpdateThread::Process()
         PVR->TriggerRecordingUpdate();
         XBMC->Log(LOG_DEBUG, "Update thread triggered update.");
       }
+      else
+      {
+        mutex.Unlock();
+      }
     }
   }
 
