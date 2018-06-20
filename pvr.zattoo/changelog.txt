@@ -1,3 +1,5 @@
+v18.0.48
+ - Update to PVR addon API v5.10.1
 v18.0.47
  - Fix deadlock due to missing mutex.unlock()
 v18.0.46
