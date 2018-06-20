@@ -380,7 +380,7 @@ void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCo
   setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_STREAMURL, url);
   setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAMADDON, "inputstream.adaptive");
   setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_type", streamType ? "hls" : "mpd");
-  setStreamProperty(properties, propertiesCount, "mimetype", streamType ? "application/x-mpegURL" : "application/xml+dash");
+  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_MIMETYPE, streamType ? "application/x-mpegURL" : "application/xml+dash");
 
   if (!streamType)
   {
@@ -398,6 +398,7 @@ PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel,
   {
     *propertiesCount = 0;
     setStreamProperties(properties, propertiesCount, strUrl);
+    setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true");
     ret = PVR_ERROR_NO_ERROR;
   }
   runningRequests--;
