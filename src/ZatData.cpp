@@ -1080,22 +1080,25 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
     urlStream << recording["program_id"].GetInt();
   }
   
-  jsonString = HttpGetCached(urlStream.str(), 60 * 60 * 24 * 30);
-  Document detailDoc;
-  detailDoc.Parse(jsonString.c_str());
   map<int, const Value&> detailsById;
-  if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
+  if (first)
   {
-    XBMC->Log(LOG_ERROR, "Failed to load details for recordings.");
-  }
-  else
-  {
-    const Value& programs = detailDoc["programs"];
-    for (Value::ConstValueIterator itr = programs.Begin();
-        itr != programs.End(); ++itr)
+    jsonString = HttpGetCached(urlStream.str(), 60 * 60 * 24 * 30);
+    Document detailDoc;
+    detailDoc.Parse(jsonString.c_str());
+    if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
     {
-      const Value& program = (*itr);
-      detailsById.insert(pair<int, const Value&>(program["id"].GetInt(), program));
+      XBMC->Log(LOG_ERROR, "Failed to load details for recordings.");
+    }
+    else
+    {
+      const Value& programs = detailDoc["programs"];
+      for (Value::ConstValueIterator itr = programs.Begin();
+          itr != programs.End(); ++itr)
+      {
+        const Value& program = (*itr);
+        detailsById.insert(pair<int, const Value&>(program["id"].GetInt(), program));
+      }
     }
   }
 
