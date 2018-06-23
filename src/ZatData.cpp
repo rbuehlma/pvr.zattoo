@@ -22,6 +22,7 @@ using namespace std;
 using namespace rapidjson;
 
 static const string addon_datadir = "special://profile/addon_data/pvr.zattoo/";
+static const string app_token_file = "special://temp/zattoo_app_token";
 static const string data_file = addon_datadir + "data.json";
 static const string user_agent = string("Kodi/") + string(STR(KODI_VERSION)) + string(" pvr.zattoo/") + string(STR(ZATTOO_VERSION)) + string(" (Kodi PVR addon)");
 
@@ -296,15 +297,32 @@ bool ZatData::LoadAppId()
   {
     int endPos = html.find("'", basePos);
     appToken = html.substr(basePos, endPos - basePos);
+    
+    void* file;
+    if (!(file = XBMC->OpenFileForWrite(app_token_file.c_str(), true)))
+    {
+      XBMC->Log(LOG_ERROR, "Could not save app taken to %s", app_token_file.c_str());
+    }
+    else
+    {
+      XBMC->WriteFile(file, appToken.c_str(), appToken.length());
+      XBMC->CloseFile(file);
+    }
   }
 
+  if (appToken.empty() && XBMC->FileExists(app_token_file.c_str(), true))
+  {
+    XBMC->Log(LOG_NOTICE, "Could not get app token from page. Try to load from file.");
+    appToken = Utils::ReadFile(app_token_file.c_str());
+  }
+  
   if (appToken.empty())
   {
-    XBMC->Log(LOG_NOTICE, "Error getting app token.");
+    XBMC->Log(LOG_ERROR, "Unable to get app token.");
     return false;
   }
 
-  XBMC->Log(LOG_DEBUG, "Loaded App token %s", appToken.c_str());
+  XBMC->Log(LOG_DEBUG, "Loaded app token %s", appToken.c_str());
   return true;
 
 }
