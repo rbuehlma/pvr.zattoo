@@ -400,7 +400,7 @@ bool ZatData::InitSession()
 
   countryCode = session["aliased_country_code"].GetString();
   serviceRegionCountry = session["service_region_country"].GetString();
-  recallEnabled = streamType == "dash" && session["recall_eligible"].GetBool();
+  recallEnabled = session["recall_eligible"].GetBool();
   selectiveRecallEnabled = session.HasMember("selective_recall_eligible") ? session["selective_recall_eligible"].GetBool() : false;
   recordingEnabled = session["recording_eligible"].GetBool();
   XBMC->Log(LOG_NOTICE, "Country code: %s", countryCode.c_str());
