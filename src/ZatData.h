@@ -69,6 +69,12 @@ struct ZatRecordingData
   bool stillValid;
 };
 
+struct ZatRecordingDetails
+{
+  string genre;
+  string description;
+};
+
 struct PVRZattooChannelGroup
 {
   string name;

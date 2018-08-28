@@ -1084,40 +1084,45 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
   
   string idList = "";
   
-  ostringstream urlStream;
-  urlStream << providerUrl << "/zapi/v2/cached/program/power_details/" << powerHash  << "?complete=True&program_ids=";
-  bool first = true;
-  for (Value::ConstValueIterator itr = recordings.Begin();
-      itr != recordings.End(); ++itr)
-  {
-    const Value& recording = (*itr);
-    if (!first) {
-      urlStream << ",";
+  map<int, ZatRecordingDetails> detailsById;
+  Value::ConstValueIterator recordingsItr = recordings.Begin();
+  while (recordingsItr != recordings.End()) {
+    int bucketSize = 100;
+    ostringstream urlStream;
+    urlStream << providerUrl << "/zapi/v2/cached/program/power_details/" << powerHash  << "?complete=True&program_ids=";
+    while (bucketSize > 0 && recordingsItr != recordings.End()) {
+      const Value& recording = (*recordingsItr);
+      if (bucketSize < 100) {
+        urlStream << ",";
+      }
+      urlStream << recording["program_id"].GetInt();
+      ++recordingsItr;
+      bucketSize--;
     }
-    first = false;
-    urlStream << recording["program_id"].GetInt();
-  }
-  
-  map<int, const Value&> detailsById;
-
-  jsonString = HttpGetCached(urlStream.str(), 60 * 60 * 24 * 30);
-  Document detailDoc;
-  detailDoc.Parse(jsonString.c_str());
-  if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
-  {
-    XBMC->Log(LOG_ERROR, "Failed to load details for recordings.");
-  }
-  else
-  {
-    const Value& programs = detailDoc["programs"];
-    for (Value::ConstValueIterator itr = programs.Begin();
-        itr != programs.End(); ++itr)
+    
+    jsonString = HttpGetCached(urlStream.str(), 60 * 60 * 24 * 30);
+    Document detailDoc;
+    detailDoc.Parse(jsonString.c_str());
+    if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
     {
-      const Value& program = (*itr);
-      detailsById.insert(pair<int, const Value&>(program["id"].GetInt(), program));
+      XBMC->Log(LOG_ERROR, "Failed to load details for recordings.");
     }
-  }
+    else
+    {
+      const Value& programs = detailDoc["programs"];
+      for (Value::ConstValueIterator progItr = programs.Begin();
+          progItr != programs.End(); ++progItr)
+      {
+        const Value &program = *progItr;
+        ZatRecordingDetails details;
+        details.genre = program.HasMember("g") && program["g"].IsArray() && program["g"].GetArray().Size() > 0 ? program["g"].GetArray()[0].GetString() : "";
+        details.description = program.HasMember("d") && program["d"].IsString() ? program["d"].GetString() : "";
+        detailsById.insert(pair<int, ZatRecordingDetails>(program["id"].GetInt(), details));
+      }
+    }
 
+  }
+    
   for (Value::ConstValueIterator itr = recordings.Begin();
       itr != recordings.End(); ++itr)
   {
@@ -1137,14 +1142,8 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
     
     //genre
     int genre = 0;
-    if (hasDetails && detailIterator->second.HasMember("g")) {
-      const Value& genres = detailIterator->second["g"];
-      //Only get the first genre
-      if (genres.Size() > 0)
-      {
-        string genreName = genres[0].GetString();
-        genre = categories.Category(genreName);
-      }
+    if (hasDetails) {
+      genre = categories.Category(detailIterator->second.genre);
     }
 
     time_t startTime = Utils::StringToTime(recording["start"].GetString());
@@ -1187,8 +1186,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
           recording["episode_title"].IsString() ?
               recording["episode_title"].GetString() : "");
       PVR_STRCPY(tag.strPlot,
-          hasDetails && detailIterator->second.HasMember("d") && detailIterator->second["d"].IsString() ?
-              detailIterator->second["d"].GetString() : "");
+          hasDetails ? detailIterator->second.description.c_str() : "");
       PVR_STRCPY(tag.strIconPath, recording["image_url"].GetString());
       tag.iChannelUid = channel.iUniqueId;
       PVR_STRCPY(tag.strChannelName, channel.name.c_str());
