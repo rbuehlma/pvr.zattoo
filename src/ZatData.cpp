@@ -1115,7 +1115,11 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       {
         const Value &program = *progItr;
         ZatRecordingDetails details;
-        details.genre = program.HasMember("g") && program["g"].IsArray() && program["g"].GetArray().Size() > 0 ? program["g"].GetArray()[0].GetString() : "";
+        if (program.HasMember("g") && program["g"].IsArray() && program["g"].Begin() != program["g"].End()) {
+          details.genre = program["g"].Begin()->GetString();
+        } else {
+          details.genre = "";
+        }
         details.description = program.HasMember("d") && program["d"].IsString() ? program["d"].GetString() : "";
         detailsById.insert(pair<int, ZatRecordingDetails>(program["id"].GetInt(), details));
       }
