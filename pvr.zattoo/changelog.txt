@@ -1,3 +1,5 @@
+v18.0.54
+ - Fix build with rapid json used by kodi
 v18.0.53
  - Fix loading details of more than 200 recordings
 v18.0.52
