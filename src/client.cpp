@@ -644,7 +644,7 @@ int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording)
 {
   runningRequests++;
   int ret = -1;
-  if (!zat)
+  if (zat)
   {
     ret = zat->GetRecordingLastPlayedPosition(recording);
   }
