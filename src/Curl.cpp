@@ -1,4 +1,5 @@
 #include "Curl.h"
+#include <utility>
 #include "client.h"
 #include "Utils.h"
 
@@ -6,14 +7,12 @@ using namespace std;
 using namespace ADDON;
 
 Curl::Curl()
-{
-}
+= default;
 
 Curl::~Curl()
-{
-}
+= default;
 
-string Curl::GetCookie(string name)
+string Curl::GetCookie(const string& name)
 {
   if (cookies.find(name) == cookies.end())
   {
@@ -22,12 +21,12 @@ string Curl::GetCookie(string name)
   return cookies[name];
 }
 
-void Curl::AddHeader(std::string name, std::string value)
+void Curl::AddHeader(const string& name, const string& value)
 {
   headers[name] = value;
 }
 
-void Curl::AddOption(std::string name, std::string value)
+void Curl::AddOption(const string& name, const string& value)
 {
   options[name] = value;
 }
@@ -37,22 +36,22 @@ void Curl::ResetHeaders()
   headers.clear();
 }
 
-string Curl::Delete(string url, int &statusCode)
+string Curl::Delete(const string& url, int &statusCode)
 {
   return Request("DELETE", url, "", statusCode);
 }
 
-string Curl::Get(string url, int &statusCode)
+string Curl::Get(const string& url, int &statusCode)
 {
   return Request("GET", url, "", statusCode);
 }
 
-string Curl::Post(string url, string postData, int &statusCode)
+string Curl::Post(const string& url, const string& postData, int &statusCode)
 {
   return Request("POST", url, postData, statusCode);
 }
 
-string Curl::Request(string action, string url, string postData,
+string Curl::Request(const string& action, const string& url, const string& postData,
     int &statusCode)
 {
   void* file = XBMC->CURLCreate(url.c_str());
@@ -67,7 +66,7 @@ string Curl::Request(string action, string url, string postData,
 
   XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "acceptencoding",
       "gzip");
-  if (postData.size() != 0)
+  if (!postData.empty())
   {
     string base64 = Base64Encode((const unsigned char *) postData.c_str(),
         postData.size(), false);
@@ -119,8 +118,8 @@ string Curl::Request(string action, string url, string postData,
   // read the file
   static const unsigned int CHUNKSIZE = 16384;
   char buf[CHUNKSIZE + 1];
-  size_t nbRead;
-  string body = "";
+  ssize_t nbRead;
+  string body;
   while ((nbRead = XBMC->ReadFile(file, buf, CHUNKSIZE)) > 0 && ~nbRead)
   {
     buf[nbRead] = 0x0;

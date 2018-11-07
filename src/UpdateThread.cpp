@@ -1,5 +1,5 @@
 #include "UpdateThread.h"
-#include <time.h>
+#include <ctime>
 #include "client.h"
 #include "ZatData.h"
 #include "Cache.h"
@@ -23,9 +23,7 @@ UpdateThread::UpdateThread(int threadIdx, void *zat) :
 }
 
 UpdateThread::~UpdateThread()
-{
-
-}
+= default;
 
 void UpdateThread::SetNextRecordingUpdate(time_t nextRecordingsUpdate)
 {
@@ -48,7 +46,7 @@ void UpdateThread::SetNextRecordingUpdate(time_t nextRecordingsUpdate)
 void UpdateThread::LoadEpg(int uniqueChannelId, time_t startTime,
     time_t endTime)
 {
-  EpgQueueEntry entry;
+  EpgQueueEntry entry{};
   entry.uniqueChannelId = uniqueChannelId;
   entry.startTime = startTime;
   entry.endTime = endTime;
@@ -126,6 +124,6 @@ void* UpdateThread::Process()
   }
 
   XBMC->Log(LOG_DEBUG, "Update thread stopped.");
-  return 0;
+  return nullptr;
 }
 

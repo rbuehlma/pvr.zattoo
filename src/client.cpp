@@ -4,6 +4,7 @@
 #include "kodi/libKODI_guilib.h"
 #include <chrono>
 #include <thread>
+#include <utility>
 
 using namespace ADDON;
 
@@ -16,23 +17,23 @@ using namespace ADDON;
 #endif
 
 ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
-ZatData *zat = NULL;
+ZatData *zat = nullptr;
 
 /* User adjustable settings are saved here.
  * Default values are defined inside client.h
  * and exported to the other source files.
  */
-std::string g_strUserPath = "";
-std::string g_strClientPath = "";
+std::string g_strUserPath;
+std::string g_strClientPath;
 
-CHelper_libXBMC_addon *XBMC = NULL;
-CHelper_libXBMC_pvr *PVR = NULL;
+CHelper_libXBMC_addon *XBMC = nullptr;
+CHelper_libXBMC_pvr *PVR = nullptr;
 
-std::string zatUsername = "";
-std::string zatPassword = "";
+std::string zatUsername;
+std::string zatPassword;
 bool zatFavoritesOnly = false;
 bool zatAlternativeEpgService = false;
-bool streamType = 0;
+bool streamType = false;
 int provider = 0;
 int runningRequests = 0;
 
@@ -63,7 +64,7 @@ void ADDON_ReadSettings(void)
   }
   if (XBMC->GetSetting("streamtype", &intBuffer))
   {
-    streamType = intBuffer;
+    streamType = static_cast<bool>(intBuffer);
   }
   if (XBMC->GetSetting("provider", &intBuffer))
   {
@@ -79,7 +80,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
     return ADDON_STATUS_UNKNOWN;
   }
 
-  PVR_PROPERTIES *pvrprops = (PVR_PROPERTIES *) props;
+    auto *pvrprops = (PVR_PROPERTIES *) props;
 
   XBMC = new CHelper_libXBMC_addon;
   XBMC->RegisterMe(hdl);
@@ -187,7 +188,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
     int type = *(int *) settingValue;
     if (type != streamType)
     {
-      streamType = type;
+      streamType = static_cast<bool>(type);
       return ADDON_STATUS_NEED_RESTART;
     }
   }
@@ -368,14 +369,14 @@ PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle,
   return ret;
 }
 
-void setStreamProperty(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, std::string name, std::string value)
+void setStreamProperty(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, const std::string &name, const std::string &value)
 {
   strncpy(properties[*propertiesCount].strName, name.c_str(), sizeof(properties[*propertiesCount].strName));
   strncpy(properties[*propertiesCount].strValue, value.c_str(), sizeof(properties[*propertiesCount].strValue));  
   *propertiesCount = (*propertiesCount) + 1;
 }
 
-void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, std::string url)
+void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, const std::string& url)
 {
   setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_STREAMURL, url);
   setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAMADDON, "inputstream.adaptive");
@@ -392,7 +393,7 @@ PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel,
     PVR_NAMED_VALUE* properties, unsigned int* propertiesCount)
 {
   runningRequests++;
-  std::string strUrl = zat->GetChannelStreamUrl(channel->iUniqueId);
+	  std::string strUrl = zat->GetChannelStreamUrl(channel->iUniqueId);
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
   {
@@ -544,8 +545,8 @@ PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete)
 
 void addTimerType(PVR_TIMER_TYPE types[], int idx, int attributes)
 {
-  types[idx].iId = idx + 1;
-  types[idx].iAttributes = attributes;
+  types[idx].iId = static_cast<unsigned int>(idx + 1);
+  types[idx].iAttributes = static_cast<unsigned int>(attributes);
   types[idx].iPrioritiesSize = 0;
   types[idx].iLifetimesSize = 0;
   types[idx].iPreventDuplicateEpisodesSize = 0;
@@ -740,7 +741,7 @@ void DemuxAbort(void)
 }
 DemuxPacket* DemuxRead(void)
 {
-  return NULL;
+  return nullptr;
 }
 unsigned int GetChannelSwitchDelay(void)
 {

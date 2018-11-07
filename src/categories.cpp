@@ -22,7 +22,7 @@
 
 #include "categories.h"
 #include "client.h"
-#include <string.h>
+#include <cstring>
 #include <p8-platform/os.h>
 
 #define CATEGORIES_MAXLINESIZE    255
@@ -48,11 +48,11 @@ Categories::Categories() :
     {
       char *categories = strdup(it->second.c_str());
       char *p = strtok_r(categories, "/", &saveptr);
-      while (p != NULL)
+      while (p != nullptr)
       {
         std::string category = p;
         m_categoriesByName[category] = it->first;
-        p = strtok_r(NULL, "/", &saveptr);
+        p = strtok_r(nullptr, "/", &saveptr);
       }
       free(categories);
     }
@@ -61,7 +61,7 @@ Categories::Categories() :
 
 std::string Categories::Category(int category) const
 {
-  CategoryByIdMap::const_iterator it = m_categoriesById.find(category);
+  auto it = m_categoriesById.find(category);
   if (it != m_categoriesById.end())
     return it->second;
   return "";
@@ -72,7 +72,7 @@ int Categories::Category(const std::string& category) const
   if (category.empty()) {
     return 0;
   }
-  CategoryByNameMap::const_iterator it = m_categoriesByName.find(category);
+  auto it = m_categoriesByName.find(category);
   if (it != m_categoriesByName.end())
     return it->second;
   XBMC->Log(LOG_NOTICE, "Missing category: %s", category.c_str());
@@ -91,13 +91,13 @@ void Categories::LoadEITCategories()
     XBMC->Log(LOG_DEBUG, "%s: Loading EIT categories from file '%s'",
         __FUNCTION__, filePath);
     void *file = XBMC->OpenFile(filePath, 0);
-    char *line = new char[CATEGORIES_MAXLINESIZE + 1];
-    char *name = new char[CATEGORIES_MAXLINESIZE + 1];
+    auto *line = new char[CATEGORIES_MAXLINESIZE + 1];
+    auto *name = new char[CATEGORIES_MAXLINESIZE + 1];
     while (XBMC->ReadFileString(file, line, CATEGORIES_MAXLINESIZE))
     {
       char* end = line + strlen(line);
       char* pos = strchr(line, ';');
-      if (pos != NULL)
+      if (pos != nullptr)
       {
         bool encaps = false;
         int catId;
