@@ -16,10 +16,10 @@ class UpdateThread: public P8PLATFORM::CThread
 {
 public:
   UpdateThread(int threadIdx, void *zat);
-  ~UpdateThread();
+  ~UpdateThread() override;
   static void SetNextRecordingUpdate(time_t nextRecordingsUpdate);
   static void LoadEpg(int uniqueChannelId, time_t startTime, time_t endTime);
-  void* Process();
+  void* Process() override;
 
 private:
   void *zat;

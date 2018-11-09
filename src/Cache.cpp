@@ -19,11 +19,11 @@ using namespace rapidjson;
 using namespace std;
 using namespace ADDON;
 
-static const string CACHE_DIR = "special://profile/addon_data/pvr.zattoo/cache/";
+constexpr char CACHE_DIR[] = "special://profile/addon_data/pvr.zattoo/cache/";
 
 time_t Cache::lastCleanup = 0;
 
-bool Cache::Read(string key, std::string& data)
+bool Cache::Read(const string& key, std::string& data)
 {
   string cacheFile = CACHE_DIR + key;
   if (!XBMC->FileExists(cacheFile.c_str(), true))
@@ -31,7 +31,7 @@ bool Cache::Read(string key, std::string& data)
     return false;
   }
   string jsonString = Utils::ReadFile(cacheFile);
-  if (jsonString == "")
+  if (jsonString.empty())
   {
     return false;
   }
@@ -55,14 +55,13 @@ bool Cache::Read(string key, std::string& data)
   return !data.empty();
 }
 
-void Cache::Write(string key, const std::string& data, time_t validUntil)
+void Cache::Write(const string& key, const std::string& data, time_t validUntil)
 {
-  if (!XBMC->DirectoryExists(CACHE_DIR.c_str()))
+  if (!XBMC->DirectoryExists(CACHE_DIR))
   {
-    if (!XBMC->CreateDirectory(CACHE_DIR.c_str()))
+    if (!XBMC->CreateDirectory(CACHE_DIR))
     {
-      XBMC->Log(LOG_ERROR, "Could not crate cache directory [%s].",
-          CACHE_DIR.c_str());
+      XBMC->Log(LOG_ERROR, "Could not crate cache directory [%s].", CACHE_DIR);
       return;
     }
   }
@@ -79,7 +78,7 @@ void Cache::Write(string key, const std::string& data, time_t validUntil)
   d.SetObject();
   d.AddMember("validUntil", static_cast<uint64_t>(validUntil), d.GetAllocator());
   Value value;
-  value.SetString(data.c_str(), data.length(), d.GetAllocator());
+  value.SetString(data.c_str(), static_cast<SizeType>(data.length()), d.GetAllocator());
   d.AddMember("data", value, d.GetAllocator());
 
   StringBuffer buffer;
@@ -99,13 +98,13 @@ void Cache::Cleanup()
    return;
   }
   lastCleanup = currTime;
-  if (!XBMC->DirectoryExists(CACHE_DIR.c_str()))
+  if (!XBMC->DirectoryExists(CACHE_DIR))
   {
     return;
   }
   VFSDirEntry *items;
   unsigned int itemCount;
-  if (!XBMC->GetDirectory(CACHE_DIR.c_str(), "", &items, &itemCount))
+  if (!XBMC->GetDirectory(CACHE_DIR, "", &items, &itemCount))
   {
     XBMC->Log(LOG_ERROR, "Could not get cache directory.");
     return;
@@ -118,7 +117,7 @@ void Cache::Cleanup()
     }
     char *path = items[i].path;
     string jsonString = Utils::ReadFile(path);
-    if (jsonString == "")
+    if (jsonString.empty())
     {
       continue;
     }
@@ -146,7 +145,7 @@ void Cache::Cleanup()
 
 bool Cache::IsStillValid(const Value& cache)
 {
-  time_t validUntil = cache["validUntil"].GetUint64();
+  time_t validUntil = static_cast<time_t>(cache["validUntil"].GetUint64());
   time_t current_time;
   time(&current_time);
   return validUntil >= current_time;

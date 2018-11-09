@@ -10,3 +10,8 @@ depends/target/rapidjson/
 .cproject
 .project
 .settings/
+
+# General MacOS
+.DS_Store
+.AppleDouble
+.LSOverride

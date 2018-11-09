@@ -17,47 +17,28 @@ using namespace std;
 /*!
  * @brief PVR macros for string exchange
  */
-#define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); dest[sizeof(dest)-1] = '\0'; } while(0)
-#define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
+#define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); (dest)[sizeof(dest)-1] = '\0'; } while(0)
 
 struct PVRIptvEpgEntry
 {
   int iBroadcastId;
   int iChannelId;
-  int iGenreType;
-  int iGenreSubType;
   time_t startTime;
   time_t endTime;
   string strTitle;
-  string strPlotOutline;
   string strPlot;
   string strIconPath;
   string strGenreString;
 };
 
-struct PVRIptvEpgChannel
-{
-  string strId;
-  string strName;
-  string strIcon;
-  vector<PVRIptvEpgEntry> epg;
-};
-
 struct ZatChannel
 {
-  bool bRadio;
   int iUniqueId;
   int iChannelNumber;
-  int iEncryptionSystem;
-  int iTvgShift;
   int selectiveRecallSeconds;
   bool recordingEnabled;
   string name;
   string strLogoPath;
-  string strStreamURL;
-  string strTvgId;
-  string strTvgName;
-  string strTvgLogo;
   string cid;
 };
 
@@ -84,15 +65,15 @@ struct PVRZattooChannelGroup
 class ZatData
 {
 public:
-  ZatData(string username, string password, bool favoritesOnly,
-      bool alternativeEpgService, string streamType, int provider);
+  ZatData(const string& username, const string& password, bool favoritesOnly,
+      bool alternativeEpgService, const string& streamType, int provider);
   virtual ~ZatData();
   virtual bool Initialize();
   virtual bool LoadChannels();
   virtual void GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
-  virtual int GetChannelsAmount(void);
+  virtual int GetChannelsAmount();
   virtual PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
-  virtual int GetChannelGroupsAmount(void);
+  virtual int GetChannelGroupsAmount();
   virtual PVR_ERROR GetChannelGroups(ADDON_HANDLE handle);
   virtual PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle,
       const PVR_CHANNEL_GROUP &group);
@@ -103,9 +84,9 @@ public:
   virtual string GetChannelStreamUrl(int uniqueId);
   virtual void GetRecordings(ADDON_HANDLE handle, bool future);
   virtual int GetRecordingsAmount(bool future);
-  virtual string GetRecordingStreamUrl(string recordingId);
+  virtual string GetRecordingStreamUrl(const string& recordingId);
   virtual bool Record(int programId);
-  virtual bool DeleteRecording(string recordingId);
+  virtual bool DeleteRecording(const string& recordingId);
   virtual void SetRecordingPlayCount(const PVR_RECORDING &recording, int count);
   virtual void SetRecordingLastPlayedPosition(const PVR_RECORDING &recording,
       int lastplayedposition);
@@ -122,8 +103,8 @@ public:
 private:
   string appToken;
   string powerHash;
-  string countryCode = "";
-  string serviceRegionCountry = "";
+  string countryCode;
+  string serviceRegionCountry;
   bool recallEnabled = false;
   bool selectiveRecallEnabled = false;
   bool recordingEnabled = false;
@@ -153,17 +134,17 @@ private:
   bool SendHello(string uuid);
   Document Login();
   bool InitSession();
-  string HttpGetCached(string url, time_t cacheDuration, string userAgent = "");
-  string HttpGet(string url, bool isInit = false, string userAgent = "");
-  string HttpDelete(string url, bool isInit = false);
-  string HttpPost(string url, string postData, bool isInit = false, string userAgent = "");
-  string HttpRequest(string action, string url, string postData, bool isInit, string userAgent);
-  string HttpRequestToCurl(Curl &curl, string action, string url,
-      string postData, int &statusCode);
+  string HttpGetCached(const string& url, time_t cacheDuration, const string& userAgent = "");
+  string HttpGet(const string& url, bool isInit = false, const string& userAgent = "");
+  string HttpDelete(const string& url, bool isInit = false);
+  string HttpPost(const string& url, const string& postData, bool isInit = false, const string& userAgent = "");
+  string HttpRequest(const string& action, const string& url, const string& postData, bool isInit, const string& userAgent);
+  string HttpRequestToCurl(Curl &curl, const string& action, const string& url,
+                           const string& postData, int &statusCode);
   virtual map<time_t, PVRIptvEpgEntry>* LoadEPG(time_t iStart, time_t iEnd,
       int uniqueChannelId);
   virtual ZatChannel* FindChannel(int uniqueId);
-  virtual PVRZattooChannelGroup* FindGroup(const string &strName);
+  virtual PVRZattooChannelGroup* FindGroup(const string& strName);
   virtual int GetChannelId(const char * strChannelName);
   virtual void GetEPGForChannelExternalService(int uniqueChannelId,
       time_t iStart, time_t iEnd);

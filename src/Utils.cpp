@@ -5,6 +5,8 @@
 #include <iterator>
 #include <sstream>
 
+#include <iostream>
+
 #include "p8-platform/os.h"
 
 #include "client.h"
@@ -24,12 +26,8 @@ std::string Utils::UrlEncode(const std::string &value)
   escaped.fill('0');
   escaped << std::hex;
 
-  for (std::string::const_iterator i = value.begin(), n = value.end(); i != n;
-      ++i)
-  {
-    std::string::value_type c = (*i);
-
-    // Keep alphanumeric and other accepted characters intact
+  for (char c : value) {
+      // Keep alphanumeric and other accepted characters intact
     if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
     {
       escaped << c;
@@ -69,13 +67,13 @@ std::vector<std::string> Utils::SplitString(const std::string &str,
   {
     if (maxParts == 1)
     {
-      tokens.push_back(std::string(beg, str.end()));
+      tokens.emplace_back(beg, str.end());
       break;
     }
     maxParts--;
     iter temp = find(beg, str.end(), delim);
     if (beg != str.end())
-      tokens.push_back(std::string(beg, temp));
+      tokens.emplace_back(beg, temp);
     beg = temp;
     while ((beg != str.end()) && (*beg == delim))
       beg++;
@@ -84,7 +82,7 @@ std::vector<std::string> Utils::SplitString(const std::string &str,
   return tokens;
 }
 
-std::string Utils::ReadFile(const std::string path)
+std::string Utils::ReadFile(const std::string& path)
 {
   void* file;
   file = XBMC->CURLCreate(path.c_str());
@@ -95,7 +93,7 @@ std::string Utils::ReadFile(const std::string path)
   }
 
   char buf[1025];
-  size_t nbRead;
+  ssize_t nbRead;
   std::string content;
   while ((nbRead = XBMC->ReadFile(file, buf, 1024)) > 0)
   {
@@ -103,13 +101,14 @@ std::string Utils::ReadFile(const std::string path)
     content.append(buf);
   }
   XBMC->CloseFile(file);
+  
   return content;
 
 }
 
 time_t Utils::StringToTime(std::string timeString)
 {
-  struct tm tm;
+  struct tm tm{};
 
   int year, month, day, h, m, s, tzh, tzm;
   if (sscanf(timeString.c_str(), "%d-%d-%dT%d:%d:%d%d", &year, &month, &day, &h,

@@ -4,8 +4,9 @@
 #include <sstream>
 #include "p8-platform/sockets/tcp.h"
 #include <map>
-#include <time.h>
+#include <ctime>
 #include <random>
+#include <utility>
 #include "Utils.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
@@ -21,12 +22,11 @@ using namespace ADDON;
 using namespace std;
 using namespace rapidjson;
 
-static const string addon_datadir = "special://profile/addon_data/pvr.zattoo/";
-static const string app_token_file = "special://temp/zattoo_app_token";
-static const string data_file = addon_datadir + "data.json";
-static const string user_agent = string("Kodi/") + string(STR(KODI_VERSION)) + string(" pvr.zattoo/") + string(STR(ZATTOO_VERSION)) + string(" (Kodi PVR addon)");
+constexpr char app_token_file[] = "special://temp/zattoo_app_token";
+const char data_file[] = "special://profile/addon_data/pvr.zattoo/data.json";
+static const std::string user_agent = string("Kodi/") + string(STR(KODI_VERSION)) + string(" pvr.zattoo/") + string(STR(ZATTOO_VERSION)) + string(" (Kodi PVR addon)");
 
-string ZatData::HttpGetCached(string url, time_t cacheDuration, string userAgent)
+string ZatData::HttpGetCached(const string& url, time_t cacheDuration, const string& userAgent)
 {
 
   string content;
@@ -45,23 +45,23 @@ string ZatData::HttpGetCached(string url, time_t cacheDuration, string userAgent
   return content;
 }
 
-string ZatData::HttpGet(string url, bool isInit, string userAgent)
+string ZatData::HttpGet(const string& url, bool isInit, const string& userAgent)
 {
   return HttpRequest("GET", url, "", isInit, userAgent);
 }
 
-string ZatData::HttpDelete(string url, bool isInit)
+string ZatData::HttpDelete(const string& url, bool isInit)
 {
   return HttpRequest("DELETE", url, "", isInit, "");
 }
 
-string ZatData::HttpPost(string url, string postData, bool isInit, string userAgent)
+string ZatData::HttpPost(const string& url, const string& postData, bool isInit, const string& userAgent)
 {
   return HttpRequest("POST", url, postData, isInit, userAgent);
 }
 
-string ZatData::HttpRequest(string action, string url, string postData,
-    bool isInit, string userAgent)
+string ZatData::HttpRequest(const string& action, const string& url, const string& postData,
+                            bool isInit, const string& userAgent)
 {
   Curl curl;
   int statusCode;
@@ -78,7 +78,6 @@ string ZatData::HttpRequest(string action, string url, string postData,
     curl.AddOption("Cookie", "pzuid=" + pzuid);
   }
 
-  
   if (!userAgent.empty()) {
     curl.AddHeader("User-Agent", userAgent);
   }
@@ -113,16 +112,16 @@ string ZatData::HttpRequest(string action, string url, string postData,
   return content;
 }
 
-string ZatData::HttpRequestToCurl(Curl &curl, string action, string url,
-    string postData, int &statusCode)
+string ZatData::HttpRequestToCurl(Curl &curl, const string& action, const string& url,
+                                  const string& postData, int &statusCode)
 {
   XBMC->Log(LOG_DEBUG, "Http-Request: %s %s.", action.c_str(), url.c_str());
   string content;
-  if (action.compare("POST") == 0)
+  if (action == "POST")
   {
     content = curl.Post(url, postData, statusCode);
   }
-  else if (action.compare("DELETE") == 0)
+  else if (action == "DELETE")
   {
     content = curl.Delete(url, statusCode);
   }
@@ -136,12 +135,12 @@ string ZatData::HttpRequestToCurl(Curl &curl, string action, string url,
 
 bool ZatData::ReadDataJson()
 {
-  if (!XBMC->FileExists(data_file.c_str(), true))
+  if (!XBMC->FileExists(data_file, true))
   {
     return true;
   }
-  string jsonString = Utils::ReadFile(data_file.c_str());
-  if (jsonString == "")
+  string jsonString = Utils::ReadFile(data_file);
+  if (jsonString.empty())
   {
     XBMC->Log(LOG_ERROR, "Loading data.json failed.");
     return false;
@@ -160,7 +159,7 @@ bool ZatData::ReadDataJson()
       itr != recordings.End(); ++itr)
   {
     const Value& recording = (*itr);
-    ZatRecordingData *recData = new ZatRecordingData();
+    auto *recData = new ZatRecordingData();
     recData->recordingId = GetStringOrEmpty(recording, "recordingId");
     recData->playCount = recording["playCount"].GetInt();
     recData->lastPlayedPosition = recording["lastPlayedPosition"].GetInt();
@@ -189,7 +188,7 @@ bool ZatData::ReadDataJson()
 bool ZatData::WriteDataJson()
 {
   void* file;
-  if (!(file = XBMC->OpenFileForWrite(data_file.c_str(), true)))
+  if (!(file = XBMC->OpenFileForWrite(data_file, true)))
   {
     XBMC->Log(LOG_ERROR, "Save data.json failed.");
     return false;
@@ -292,16 +291,16 @@ bool ZatData::LoadAppId()
 
   appToken = "";
   //There seems to be a problem with old gcc and osx with regex. Do it the dirty way:
-  int basePos = html.find("window.appToken = '") + 19;
+  size_t basePos = html.find("window.appToken = '") + 19;
   if (basePos > 19)
   {
-    int endPos = html.find("'", basePos);
+    size_t endPos = html.find("'", basePos);
     appToken = html.substr(basePos, endPos - basePos);
     
     void* file;
-    if (!(file = XBMC->OpenFileForWrite(app_token_file.c_str(), true)))
+    if (!(file = XBMC->OpenFileForWrite(app_token_file, true)))
     {
-      XBMC->Log(LOG_ERROR, "Could not save app taken to %s", app_token_file.c_str());
+      XBMC->Log(LOG_ERROR, "Could not save app taken to %s", app_token_file);
     }
     else
     {
@@ -310,10 +309,10 @@ bool ZatData::LoadAppId()
     }
   }
 
-  if (appToken.empty() && XBMC->FileExists(app_token_file.c_str(), true))
+  if (appToken.empty() && XBMC->FileExists(app_token_file, true))
   {
     XBMC->Log(LOG_NOTICE, "Could not get app token from page. Try to load from file.");
-    appToken = Utils::ReadFile(app_token_file.c_str());
+    appToken = Utils::ReadFile(app_token_file);
   }
   
   if (appToken.empty())
@@ -488,7 +487,7 @@ bool ZatData::LoadChannels()
         }
       }
     }
-    if (!favoritesOnly && group.channels.size() > 0)
+    if (!favoritesOnly && !group.channels.empty())
       channelGroups.insert(channelGroups.end(), group);
   }
 
@@ -502,14 +501,14 @@ bool ZatData::LoadChannels()
     if (allChannels.find(favCid) != allChannels.end())
     {
       ZatChannel channel = allChannels[favCid];
-      channel.iChannelNumber = favGroup.channels.size() + 1;
+      channel.iChannelNumber = static_cast<int>(favGroup.channels.size() + 1);
       favGroup.channels.insert(favGroup.channels.end(), channel);
       channelsByCid[channel.cid] = channel;
       channelsByUid[channel.iUniqueId] = channel;
     }
   }
 
-  if (favGroup.channels.size() > 0)
+  if (!favGroup.channels.empty())
     channelGroups.insert(channelGroups.end(), favGroup);
 
   return true;
@@ -526,11 +525,11 @@ int ZatData::GetChannelId(const char * strChannelName)
 
 int ZatData::GetChannelGroupsAmount()
 {
-  return channelGroups.size();
+  return static_cast<int>(channelGroups.size());
 }
 
-ZatData::ZatData(string u, string p, bool favoritesOnly,
-    bool alternativeEpgService, string streamType, int provider) :
+ZatData::ZatData(const string& u, const string& p, bool favoritesOnly,
+    bool alternativeEpgService, const string& streamType, int provider) :
     recordingEnabled(false), uuid("")
 {
   XBMC->Log(LOG_NOTICE, "Using useragent: %s", user_agent.c_str());
@@ -620,12 +619,8 @@ bool ZatData::Initialize()
   }
   
   string uuid = GetUUID();
-  if (uuid.empty())
-  {
-    return false;
-  }
+  return !uuid.empty();
 
-  return true;
 }
 
 void ZatData::GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
@@ -660,14 +655,14 @@ PVRZattooChannelGroup *ZatData::FindGroup(const string &strName)
       return &*it;
   }
 
-  return NULL;
+  return nullptr;
 }
 
 PVR_ERROR ZatData::GetChannelGroupMembers(ADDON_HANDLE handle,
     const PVR_CHANNEL_GROUP &group)
 {
   PVRZattooChannelGroup *myGroup;
-  if ((myGroup = FindGroup(group.strGroupName)) != NULL)
+  if ((myGroup = FindGroup(group.strGroupName)) != nullptr)
   {
     vector<ZatChannel>::iterator it;
     for (it = myGroup->channels.begin(); it != myGroup->channels.end(); ++it)
@@ -678,8 +673,8 @@ PVR_ERROR ZatData::GetChannelGroupMembers(ADDON_HANDLE handle,
 
       strncpy(xbmcGroupMember.strGroupName, group.strGroupName,
           sizeof(xbmcGroupMember.strGroupName) - 1);
-      xbmcGroupMember.iChannelUniqueId = channel.iUniqueId;
-      xbmcGroupMember.iChannelNumber = channel.iChannelNumber;
+      xbmcGroupMember.iChannelUniqueId = static_cast<unsigned int>(channel.iUniqueId);
+      xbmcGroupMember.iChannelNumber = static_cast<unsigned int>(channel.iChannelNumber);
 
       PVR->TransferChannelGroupMember(handle, &xbmcGroupMember);
     }
@@ -688,9 +683,9 @@ PVR_ERROR ZatData::GetChannelGroupMembers(ADDON_HANDLE handle,
   return PVR_ERROR_NO_ERROR;
 }
 
-int ZatData::GetChannelsAmount(void)
+int ZatData::GetChannelsAmount()
 {
-  return channelsByCid.size();
+  return static_cast<int>(channelsByCid.size());
 }
 
 PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio)
@@ -706,9 +701,9 @@ PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio)
       PVR_CHANNEL kodiChannel;
       memset(&kodiChannel, 0, sizeof(PVR_CHANNEL));
 
-      kodiChannel.iUniqueId = channel.iUniqueId;
+      kodiChannel.iUniqueId = static_cast<unsigned int>(channel.iUniqueId);
       kodiChannel.bIsRadio = false;
-      kodiChannel.iChannelNumber = channel.iChannelNumber;
+      kodiChannel.iChannelNumber = static_cast<unsigned int>(channel.iChannelNumber);
       strncpy(kodiChannel.strChannelName, channel.name.c_str(),
           sizeof(kodiChannel.strChannelName) - 1);
       kodiChannel.iEncryptionSystem = 0;
@@ -790,7 +785,7 @@ ZatChannel *ZatData::FindChannel(int uniqueId)
       }
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
@@ -814,21 +809,21 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     EPG_TAG tag;
     memset(&tag, 0, sizeof(EPG_TAG));
 
-    tag.iUniqueBroadcastId = program["Id"].GetInt();
+    tag.iUniqueBroadcastId = static_cast<unsigned int>(program["Id"].GetInt());
     string title = GetStringOrEmpty(program, "Title");
     tag.strTitle = title.c_str();
-    tag.iUniqueChannelId = zatChannel->iUniqueId;
+    tag.iUniqueChannelId = static_cast<unsigned int>(zatChannel->iUniqueId);
     tag.startTime = Utils::StringToTime(GetStringOrEmpty(program, "StartTime"));
     tag.endTime = Utils::StringToTime(GetStringOrEmpty(program, "EndTime"));
     string description = GetStringOrEmpty(program, "Description");
     tag.strPlotOutline = description.c_str();
     tag.strPlot = description.c_str();
-    tag.strOriginalTitle = NULL; /* not supported */
-    tag.strCast = NULL; /* not supported */
-    tag.strDirector = NULL; /*SA not supported */
-    tag.strWriter = NULL; /* not supported */
+    tag.strOriginalTitle = nullptr; /* not supported */
+    tag.strCast = nullptr; /* not supported */
+    tag.strDirector = nullptr; /*SA not supported */
+    tag.strWriter = nullptr; /* not supported */
     tag.iYear = 0; /* not supported */
-    tag.strIMDBNumber = NULL; /* not supported */
+    tag.strIMDBNumber = nullptr; /* not supported */
     tag.strIconPath = GetStringOrEmpty(program, "ImageUrl").c_str();
     tag.iParentalRating = 0; /* not supported */
     tag.iStarRating = 0; /* not supported */
@@ -854,8 +849,7 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
 
     PVR->EpgEventStateChange(&tag, EPG_EVENT_CREATED);
   }
-  
-  return;
+
 }
 
 void ZatData::GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart,
@@ -890,19 +884,19 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     EPG_TAG tag;
     memset(&tag, 0, sizeof(EPG_TAG));
 
-    tag.iUniqueBroadcastId = epgEntry.iBroadcastId;
+    tag.iUniqueBroadcastId = static_cast<unsigned int>(epgEntry.iBroadcastId);
     tag.strTitle = epgEntry.strTitle.c_str();
-    tag.iUniqueChannelId = epgEntry.iChannelId;
+    tag.iUniqueChannelId = static_cast<unsigned int>(epgEntry.iChannelId);
     tag.startTime = epgEntry.startTime;
     tag.endTime = epgEntry.endTime;
     tag.strPlotOutline = epgEntry.strPlot.c_str(); //epgEntry.strPlotOutline.c_str();
     tag.strPlot = epgEntry.strPlot.c_str();
-    tag.strOriginalTitle = NULL; /* not supported */
-    tag.strCast = NULL; /* not supported */
-    tag.strDirector = NULL; /*SA not supported */
-    tag.strWriter = NULL; /* not supported */
+    tag.strOriginalTitle = nullptr; /* not supported */
+    tag.strCast = nullptr; /* not supported */
+    tag.strDirector = nullptr; /*SA not supported */
+    tag.strWriter = nullptr; /* not supported */
     tag.iYear = 0; /* not supported */
-    tag.strIMDBNumber = NULL; /* not supported */
+    tag.strIMDBNumber = nullptr; /* not supported */
     tag.strIconPath = epgEntry.strIconPath.c_str();
     tag.iParentalRating = 0; /* not supported */
     tag.iStarRating = 0; /* not supported */
@@ -910,10 +904,10 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     tag.iSeriesNumber = 0; /* not supported */
     tag.iEpisodeNumber = 0; /* not supported */
     tag.iEpisodePartNumber = 0; /* not supported */
-    tag.strEpisodeName = NULL; /* not supported */
+    tag.strEpisodeName = nullptr; /* not supported */
     tag.iFlags = EPG_TAG_FLAG_UNDEFINED;
 
-    int genre = categories.Category(epgEntry.strGenreString.c_str());
+    int genre = categories.Category(epgEntry.strGenreString);
     if (genre)
     {
       tag.iGenreSubType = genre & 0x0F;
@@ -937,7 +931,7 @@ map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd, int u
   time_t tempStart = iStart - (iStart % (3600 / 2)) - 86400;
   time_t tempEnd = tempStart + 3600 * 5; //Add 5 hours
 
-  map<time_t, PVRIptvEpgEntry> *epgCache = new map<time_t, PVRIptvEpgEntry>();
+  auto *epgCache = new map<time_t, PVRIptvEpgEntry>();
   
   while (tempEnd <= iEnd)
   {
@@ -977,6 +971,10 @@ map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd, int u
           itr1 != programs.End(); ++itr1)
       {
         const Value& program = (*itr1);
+        
+        const Type& checkType = program["t"].GetType();
+        if( checkType != kStringType )
+          continue;
 
         PVRIptvEpgEntry entry;
         entry.strTitle = GetStringOrEmpty(program, "t");
@@ -1075,7 +1073,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
   time_t current_time;
   time(&current_time);
   
-  string idList = "";
+  string idList;
   
   map<int, ZatRecordingDetails> detailsById;
   Value::ConstValueIterator recordingsItr = recordings.Begin();
@@ -1127,7 +1125,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
     int programId = recording["program_id"].GetInt();
 
     string cid = GetStringOrEmpty(recording, "cid");
-    map<string, ZatChannel>::iterator iterator = channelsByCid.find(cid);
+    auto iterator = channelsByCid.find(cid);
     if (iterator == channelsByCid.end()) {
       XBMC->Log(LOG_ERROR, "Channel %s not found for recording: %i", cid.c_str(), programId);
       continue;
@@ -1149,7 +1147,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       PVR_TIMER tag;
       memset(&tag, 0, sizeof(PVR_TIMER));
 
-      tag.iClientIndex = recording["id"].GetInt();
+      tag.iClientIndex = static_cast<unsigned int>(recording["id"].GetInt());
       PVR_STRCPY(tag.strTitle, GetStringOrEmpty(recording, "title").c_str());
       PVR_STRCPY(tag.strSummary, GetStringOrEmpty(recording, "episode_title").c_str());
       time_t endTime = Utils::StringToTime(GetStringOrEmpty(recording, "end").c_str());
@@ -1157,7 +1155,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       tag.endTime = endTime;
       tag.state = PVR_TIMER_STATE_SCHEDULED;
       tag.iTimerType = 1;
-      tag.iEpgUid = recording["program_id"].GetInt();
+      tag.iEpgUid = static_cast<unsigned int>(recording["program_id"].GetInt());
       tag.iClientChannelUid = channel.iUniqueId;
       PVR->TransferTimerEntry(handle, &tag);
       UpdateThread::SetNextRecordingUpdate(startTime);
@@ -1185,7 +1183,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       PVR_STRCPY(tag.strChannelName, channel.name.c_str());
       time_t endTime = Utils::StringToTime(GetStringOrEmpty(recording, "end").c_str());
       tag.recordingTime = startTime;
-      tag.iDuration = endTime - startTime;
+      tag.iDuration = static_cast<int>(endTime - startTime);
 
       if (genre)
       {
@@ -1237,7 +1235,7 @@ int ZatData::GetRecordingsAmount(bool future)
   return count;
 }
 
-string ZatData::GetRecordingStreamUrl(string recordingId)
+string ZatData::GetRecordingStreamUrl(const string& recordingId)
 {
   XBMC->Log(LOG_DEBUG, "Get url for recording %s", recordingId.c_str());
   
@@ -1271,7 +1269,7 @@ bool ZatData::Record(int programId)
   return !doc.GetParseError() && doc["success"].GetBool();
 }
 
-bool ZatData::DeleteRecording(string recordingId)
+bool ZatData::DeleteRecording(const string& recordingId)
 {
   ostringstream dataStream;
   dataStream << "recording_id=" << recordingId << "";
@@ -1306,7 +1304,7 @@ bool ZatData::IsPlayable(const EPG_TAG *tag)
 int ZatData::GetRecallSeconds(const EPG_TAG *tag) {
   if (recallEnabled)
   {
-    return maxRecallSeconds;
+    return static_cast<int>(maxRecallSeconds);
   }
   if (selectiveRecallEnabled)
   {
@@ -1341,7 +1339,7 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   ostringstream dataStream;
   ZatChannel channel = channelsByUid[tag->iUniqueChannelId];
   char timeStart[sizeof "2011-10-08T07:07:09Z"];
-  struct tm tm;
+  struct tm tm{};
   gmtime_r(&tag->startTime, &tm);
   strftime(timeStart, sizeof timeStart, "%FT%TZ", &tm);
   char timeEnd[sizeof "2011-10-08T07:07:09Z"];
