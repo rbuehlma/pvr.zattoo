@@ -98,14 +98,14 @@ string ZatData::HttpRequest(string action, string url, string postData,
   string sessionId = curl.GetCookie("beaker.session.id");
   if (!sessionId.empty() && beakerSessionId != sessionId)
   {
-    XBMC->Log(LOG_NOTICE, "Got new beaker.session.id: %s..", sessionId.substr(0, 5).c_str());
+    XBMC->Log(LOG_DEBUG, "Got new beaker.session.id: %s..", sessionId.substr(0, 5).c_str());
     beakerSessionId = sessionId;
   }
   
   string pzuid = curl.GetCookie("pzuid");
   if (!pzuid.empty() && this->pzuid != pzuid)
   {
-    XBMC->Log(LOG_NOTICE, "Got new pzuid: %s..", pzuid.substr(0,5).c_str());
+    XBMC->Log(LOG_DEBUG, "Got new pzuid: %s..", pzuid.substr(0,5).c_str());
     this->pzuid = pzuid;
     WriteDataJson();
   }
