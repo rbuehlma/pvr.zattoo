@@ -442,7 +442,7 @@ bool ZatData::LoadChannels()
   doc.Parse(jsonString.c_str());
   if (doc.GetParseError() || !doc["success"].GetBool())
   {
-    cout << "Failed to parse configuration\n";
+    XBMC->Log(LOG_ERROR,"Failed to load channels");
     return false;
   }
 
@@ -471,7 +471,7 @@ bool ZatData::LoadChannels()
         {
           ZatChannel channel;
           channel.name = GetStringOrEmpty(qualityItem, "title");
-          string cid = GetStringOrEmpty(qualityItem, "cid");
+          string cid = GetStringOrEmpty(channelItem, "cid");
           channel.iUniqueId = GetChannelId(cid.c_str());
           channel.cid = cid;
           channel.iChannelNumber = ++channelNumber;
@@ -1377,12 +1377,12 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   return url;
 }
 
-string ZatData::GetStringOrEmpty(const Value& jsonValue, string fieldName)
+string ZatData::GetStringOrEmpty(const Value& jsonValue, const char* fieldName)
 {
-  const char* fn = fieldName.c_str();
-  if (!jsonValue.HasMember(fn) || !jsonValue[fn].IsString())
+  if (!jsonValue.HasMember(fieldName) || !jsonValue[fieldName].IsString())
   {
+    XBMC->Log(LOG_ERROR, "Not found!!!: %s", fieldName);
     return "";
   }
-  return jsonValue[fn].GetString();
+  return jsonValue[fieldName].GetString();
 }
