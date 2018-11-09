@@ -1381,7 +1381,6 @@ string ZatData::GetStringOrEmpty(const Value& jsonValue, const char* fieldName)
 {
   if (!jsonValue.HasMember(fieldName) || !jsonValue[fieldName].IsString())
   {
-    XBMC->Log(LOG_ERROR, "Not found!!!: %s", fieldName);
     return "";
   }
   return jsonValue[fieldName].GetString();
