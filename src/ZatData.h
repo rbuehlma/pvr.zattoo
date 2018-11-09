@@ -167,4 +167,5 @@ private:
   virtual int GetChannelId(const char * strChannelName);
   virtual void GetEPGForChannelExternalService(int uniqueChannelId,
       time_t iStart, time_t iEnd);
+  virtual string GetStringOrEmpty(const Value& jsonValue, string fieldName);
 };
