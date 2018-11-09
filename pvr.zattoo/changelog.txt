@@ -1,3 +1,6 @@
+v18.0.56
+ - Fix segmentation fault
+ - Reduce log on level notice
 v18.0.55
  - Fix wrong null ptr check in GetRecordingLastPlayedPosition
 v18.0.54

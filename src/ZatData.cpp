@@ -97,14 +97,14 @@ string ZatData::HttpRequest(const string& action, const string& url, const strin
   string sessionId = curl.GetCookie("beaker.session.id");
   if (!sessionId.empty() && beakerSessionId != sessionId)
   {
-    XBMC->Log(LOG_NOTICE, "Got new beaker.session.id: %s..", sessionId.substr(0, 5).c_str());
+    XBMC->Log(LOG_DEBUG, "Got new beaker.session.id: %s..", sessionId.substr(0, 5).c_str());
     beakerSessionId = sessionId;
   }
   
   string pzuid = curl.GetCookie("pzuid");
   if (!pzuid.empty() && this->pzuid != pzuid)
   {
-    XBMC->Log(LOG_NOTICE, "Got new pzuid: %s..", pzuid.substr(0,5).c_str());
+    XBMC->Log(LOG_DEBUG, "Got new pzuid: %s..", pzuid.substr(0,5).c_str());
     this->pzuid = pzuid;
     WriteDataJson();
   }
@@ -160,7 +160,7 @@ bool ZatData::ReadDataJson()
   {
     const Value& recording = (*itr);
     auto *recData = new ZatRecordingData();
-    recData->recordingId = recording["recordingId"].GetString();
+    recData->recordingId = GetStringOrEmpty(recording, "recordingId");
     recData->playCount = recording["playCount"].GetInt();
     recData->lastPlayedPosition = recording["lastPlayedPosition"].GetInt();
     recData->stillValid = false;
@@ -171,13 +171,13 @@ bool ZatData::ReadDataJson()
 
   if (doc.HasMember("pzuid"))
   {
-    pzuid = doc["pzuid"].GetString();
+    pzuid = GetStringOrEmpty(doc, "pzuid");
     XBMC->Log(LOG_DEBUG, "Loaded pzuid: %s..", pzuid.substr(0,5).c_str());
   }
   
   if (doc.HasMember("uuid"))
   {
-    uuid = doc["uuid"].GetString();
+    uuid = GetStringOrEmpty(doc, "uuid");
     XBMC->Log(LOG_DEBUG, "Loaded uuid: %s", uuid.c_str());
   }
   
@@ -397,8 +397,8 @@ bool ZatData::InitSession()
 
   const Value& session = doc["session"];
 
-  countryCode = session["aliased_country_code"].GetString();
-  serviceRegionCountry = session["service_region_country"].GetString();
+  countryCode = uuid = GetStringOrEmpty(session, "aliased_country_code");
+  serviceRegionCountry = GetStringOrEmpty(session, "service_region_country");
   recallEnabled = session["recall_eligible"].GetBool();
   selectiveRecallEnabled = session.HasMember("selective_recall_eligible") ? session["selective_recall_eligible"].GetBool() : false;
   recordingEnabled = session["recording_eligible"].GetBool();
@@ -416,7 +416,7 @@ bool ZatData::InitSession()
   }
   XBMC->Log(LOG_NOTICE, "Selective recall is %s", selectiveRecallEnabled ? "enabled" : "disabled");
   XBMC->Log(LOG_NOTICE, "Recordings are %s", recordingEnabled ? "enabled" : "disabled");
-  powerHash = session["power_guide_hash"].GetString();
+  powerHash = GetStringOrEmpty(session, "power_guide_hash");
   return true;
 }
 
@@ -455,7 +455,7 @@ bool ZatData::LoadChannels()
   {
     PVRZattooChannelGroup group;
     const Value& groupItem = (*itr);
-    group.name = groupItem["name"].GetString();
+    group.name = GetStringOrEmpty(groupItem, "name");
     const Value& channels = groupItem["channels"];
     for (Value::ConstValueIterator itr1 = channels.Begin();
         itr1 != channels.End(); ++itr1)
@@ -466,17 +466,17 @@ bool ZatData::LoadChannels()
           itr2 != qualities.End(); ++itr2)
       {
         const Value& qualityItem = (*itr2);
-        string avail = qualityItem["availability"].GetString();
+        string avail = GetStringOrEmpty(qualityItem, "availability");
         if (avail == "available")
         {
           ZatChannel channel;
-          channel.name = qualityItem["title"].GetString();
-          string cid = channelItem["cid"].GetString();
+          channel.name = GetStringOrEmpty(qualityItem, "title");
+          string cid = GetStringOrEmpty(qualityItem, "cid");
           channel.iUniqueId = GetChannelId(cid.c_str());
           channel.cid = cid;
           channel.iChannelNumber = ++channelNumber;
           channel.strLogoPath = "http://logos.zattic.com";
-          channel.strLogoPath.append(qualityItem["logo_white_84"].GetString());
+          channel.strLogoPath.append(GetStringOrEmpty(qualityItem, "logo_white_84"));
           channel.selectiveRecallSeconds = channelItem.HasMember("selective_recall_seconds") ? channelItem["selective_recall_seconds"].GetInt() : 0;
           channel.recordingEnabled = channelItem.HasMember("recording") ? channelItem["recording"].GetBool() : false;
           group.channels.insert(group.channels.end(), channel);
@@ -764,8 +764,8 @@ string ZatData::GetChannelStreamUrl(int uniqueId)
   {
     return "";
   }
-  string url = doc["stream"]["url"].GetString();
-  XBMC->Log(LOG_DEBUG, "Got url: %s", doc["stream"]["url"].GetString());
+  string url = GetStringOrEmpty(doc["stream"], "url");
+  XBMC->Log(LOG_DEBUG, "Got url: %s", url.c_str());
   return url;
 
 }
@@ -810,12 +810,12 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     memset(&tag, 0, sizeof(EPG_TAG));
 
     tag.iUniqueBroadcastId = static_cast<unsigned int>(program["Id"].GetInt());
-    string title = program["Title"].GetString();
+    string title = GetStringOrEmpty(program, "Title");
     tag.strTitle = title.c_str();
     tag.iUniqueChannelId = static_cast<unsigned int>(zatChannel->iUniqueId);
-    tag.startTime = Utils::StringToTime(program["StartTime"].GetString());
-    tag.endTime = Utils::StringToTime(program["EndTime"].GetString());
-    string description = program["Description"].IsString() ? program["Description"].GetString() : "";
+    tag.startTime = Utils::StringToTime(GetStringOrEmpty(program, "StartTime"));
+    tag.endTime = Utils::StringToTime(GetStringOrEmpty(program, "EndTime"));
+    string description = GetStringOrEmpty(program, "Description");
     tag.strPlotOutline = description.c_str();
     tag.strPlot = description.c_str();
     tag.strOriginalTitle = nullptr; /* not supported */
@@ -824,21 +824,16 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     tag.strWriter = nullptr; /* not supported */
     tag.iYear = 0; /* not supported */
     tag.strIMDBNumber = nullptr; /* not supported */
-    string imageUrl =
-        program["ImageUrl"].IsString() ? program["ImageUrl"].GetString() : "";
-    tag.strIconPath = imageUrl.c_str();
+    tag.strIconPath = GetStringOrEmpty(program, "ImageUrl").c_str();
     tag.iParentalRating = 0; /* not supported */
     tag.iStarRating = 0; /* not supported */
     tag.bNotify = false; /* not supported */
     tag.iSeriesNumber = 0; /* not supported */
     tag.iEpisodeNumber = 0; /* not supported */
     tag.iEpisodePartNumber = 0; /* not supported */
-    string subTitle =
-        program["Subtitle"].IsString() ? program["Subtitle"].GetString() : "";
-    tag.strEpisodeName = subTitle.c_str(); /* not supported */
+    tag.strEpisodeName = GetStringOrEmpty(program, "Subtitle").c_str();
     tag.iFlags = EPG_TAG_FLAG_UNDEFINED;
-    string genreStr =
-        program["Genre"].IsString() ? program["Genre"].GetString() : "";
+    string genreStr = GetStringOrEmpty(program, "Genre");
     int genre = categories.Category(genreStr);
     if (genre)
     {
@@ -961,7 +956,7 @@ map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd, int u
         itr != channels.End(); ++itr)
     {
       const Value& channelItem = (*itr);
-      string cid = channelItem["cid"].GetString();
+      string cid = GetStringOrEmpty(channelItem, "cid");
 
       int channelId = GetChannelId(cid.c_str());
       ZatChannel *channel = FindChannel(channelId);
@@ -982,15 +977,13 @@ map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd, int u
           continue;
 
         PVRIptvEpgEntry entry;
-        entry.strTitle = program["t"].GetString();
+        entry.strTitle = GetStringOrEmpty(program, "t");
         entry.startTime = program["s"].GetInt();
         entry.endTime = program["e"].GetInt();
         entry.iBroadcastId = program["id"].GetInt();
-        entry.strIconPath =
-            program["i_url"].IsString() ? program["i_url"].GetString() : "";
+        entry.strIconPath = GetStringOrEmpty(program, "i_url");
         entry.iChannelId = channel->iUniqueId;
-        entry.strPlot =
-            program["et"].IsString() ? program["et"].GetString() : "";
+        entry.strPlot = GetStringOrEmpty(program, "et");
 
         const Value& genres = program["g"];
         for (Value::ConstValueIterator itr2 = genres.Begin();
@@ -1118,7 +1111,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
         } else {
           details.genre = "";
         }
-        details.description = program.HasMember("d") && program["d"].IsString() ? program["d"].GetString() : "";
+        details.description = GetStringOrEmpty(program, "d");
         detailsById.insert(pair<int, ZatRecordingDetails>(program["id"].GetInt(), details));
       }
     }
@@ -1131,7 +1124,7 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
     const Value& recording = (*itr);
     int programId = recording["program_id"].GetInt();
 
-    string cid = recording["cid"].GetString();
+    string cid = GetStringOrEmpty(recording, "cid");
     auto iterator = channelsByCid.find(cid);
     if (iterator == channelsByCid.end()) {
       XBMC->Log(LOG_ERROR, "Channel %s not found for recording: %i", cid.c_str(), programId);
@@ -1148,18 +1141,16 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       genre = categories.Category(detailIterator->second.genre);
     }
 
-    time_t startTime = Utils::StringToTime(recording["start"].GetString());
+    time_t startTime = Utils::StringToTime(GetStringOrEmpty(recording, "start"));
     if (future && (startTime > current_time))
     {
       PVR_TIMER tag;
       memset(&tag, 0, sizeof(PVR_TIMER));
 
       tag.iClientIndex = static_cast<unsigned int>(recording["id"].GetInt());
-      PVR_STRCPY(tag.strTitle, recording["title"].GetString());
-      PVR_STRCPY(tag.strSummary,
-          recording["episode_title"].IsString() ?
-              recording["episode_title"].GetString() : "");
-      time_t endTime = Utils::StringToTime(recording["end"].GetString());
+      PVR_STRCPY(tag.strTitle, GetStringOrEmpty(recording, "title").c_str());
+      PVR_STRCPY(tag.strSummary, GetStringOrEmpty(recording, "episode_title").c_str());
+      time_t endTime = Utils::StringToTime(GetStringOrEmpty(recording, "end").c_str());
       tag.startTime = startTime;
       tag.endTime = endTime;
       tag.state = PVR_TIMER_STATE_SCHEDULED;
@@ -1183,16 +1174,14 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
 
       PVR_STRCPY(tag.strRecordingId,
           to_string(recording["id"].GetInt()).c_str());
-      PVR_STRCPY(tag.strTitle, recording["title"].GetString());
-      PVR_STRCPY(tag.strEpisodeName,
-          recording["episode_title"].IsString() ?
-              recording["episode_title"].GetString() : "");
+      PVR_STRCPY(tag.strTitle, GetStringOrEmpty(recording, "title").c_str());
+      PVR_STRCPY(tag.strEpisodeName, GetStringOrEmpty(recording, "episode_title").c_str());
       PVR_STRCPY(tag.strPlot,
           hasDetails ? detailIterator->second.description.c_str() : "");
-      PVR_STRCPY(tag.strIconPath, recording["image_url"].GetString());
+      PVR_STRCPY(tag.strIconPath, GetStringOrEmpty(recording, "image_url").c_str());
       tag.iChannelUid = channel.iUniqueId;
       PVR_STRCPY(tag.strChannelName, channel.name.c_str());
-      time_t endTime = Utils::StringToTime(recording["end"].GetString());
+      time_t endTime = Utils::StringToTime(GetStringOrEmpty(recording, "end").c_str());
       tag.recordingTime = startTime;
       tag.iDuration = static_cast<int>(endTime - startTime);
 
@@ -1237,7 +1226,7 @@ int ZatData::GetRecordingsAmount(bool future)
       itr != recordings.End(); ++itr)
   {
     const Value& recording = (*itr);
-    time_t startTime = Utils::StringToTime(recording["start"].GetString());
+    time_t startTime = Utils::StringToTime(GetStringOrEmpty(recording, "start"));
     if (future == (startTime > current_time))
     {
       count++;
@@ -1262,8 +1251,8 @@ string ZatData::GetRecordingStreamUrl(const string& recordingId)
     return "";
   }
 
-  string url = doc["stream"]["url"].GetString();
-  XBMC->Log(LOG_DEBUG, "Got url: %s", doc["stream"]["url"].GetString());
+  string url = GetStringOrEmpty(doc["stream"], "url");
+  XBMC->Log(LOG_DEBUG, "Got url: %s", url.c_str());
   return url;
 
 }
@@ -1383,6 +1372,17 @@ string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   {
     return "";
   }
-  XBMC->Log(LOG_DEBUG, "Got url: %s", doc["stream"]["url"].GetString());
-  return doc["stream"]["url"].GetString();
+  string url = GetStringOrEmpty(doc["stream"], "url");
+  XBMC->Log(LOG_DEBUG, "Got url: %s", url.c_str());
+  return url;
+}
+
+string ZatData::GetStringOrEmpty(const Value& jsonValue, string fieldName)
+{
+  const char* fn = fieldName.c_str();
+  if (!jsonValue.HasMember(fn) || !jsonValue[fn].IsString())
+  {
+    return "";
+  }
+  return jsonValue[fn].GetString();
 }

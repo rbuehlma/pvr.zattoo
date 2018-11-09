@@ -104,7 +104,7 @@ string Curl::Request(const string& action, const string& url, const string& post
       std::string::size_type paramPos = cookie.find(';');
       if (paramPos != std::string::npos)
         cookie.resize(paramPos);
-      vector < string > parts = Utils::SplitString(cookie, '=', 2);
+      vector<string> parts = Utils::SplitString(cookie, '=', 2);
       if (parts.size() != 2)
       {
         continue;
@@ -114,6 +114,13 @@ string Curl::Request(const string& action, const string& url, const string& post
     }
   }
   XBMC->FreeStringArray(cookiesPtr, numValues);
+  
+  char *tmp = XBMC->GetFilePropertyValue(file,
+      XFILE::FILE_PROPERTY_RESPONSE_HEADER, "Location");
+  location = tmp != nullptr ? tmp : "";
+  
+  XBMC->FreeString(tmp);
+
 
   // read the file
   static const unsigned int CHUNKSIZE = 16384;
