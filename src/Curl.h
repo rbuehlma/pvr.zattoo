@@ -14,6 +14,9 @@ public:
   virtual void AddOption(std::string name, std::string value);
   virtual void ResetHeaders();
   virtual std::string GetCookie(std::string name);
+  virtual std::string GetLocation() {
+    return location;
+  }
 
 private:
   virtual std::string Request(std::string action, std::string url,
@@ -23,4 +26,5 @@ private:
   std::map<std::string, std::string> headers;
   std::map<std::string, std::string> options;
   std::map<std::string, std::string> cookies;
+  std::string location;
 };
