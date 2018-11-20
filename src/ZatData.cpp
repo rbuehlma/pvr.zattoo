@@ -397,7 +397,7 @@ bool ZatData::InitSession()
 
   const Value& session = doc["session"];
 
-  countryCode = uuid = GetStringOrEmpty(session, "aliased_country_code");
+  countryCode = GetStringOrEmpty(session, "aliased_country_code");
   serviceRegionCountry = GetStringOrEmpty(session, "service_region_country");
   recallEnabled = session["recall_eligible"].GetBool();
   selectiveRecallEnabled = session.HasMember("selective_recall_eligible") ? session["selective_recall_eligible"].GetBool() : false;
@@ -610,17 +610,12 @@ bool ZatData::Initialize()
       return false;
   }
   
+  string uuid = GetUUID();
+  
   SendHello(uuid);
   //Ignore if hello fails
 
-  if (!InitSession())
-  {
-    return false;
-  }
-  
-  string uuid = GetUUID();
-  return !uuid.empty();
-
+  return InitSession();
 }
 
 void ZatData::GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)

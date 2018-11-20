@@ -1,3 +1,5 @@
+v18.0.58
+ - Fix uuid handling
 v18.0.57
  - Cleanup & improvements (thanks to Currywurst)
 v18.0.56
