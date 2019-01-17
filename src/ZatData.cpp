@@ -583,6 +583,9 @@ ZatData::ZatData(const string& u, const string& p, bool favoritesOnly,
     case 13:
       providerUrl = "https://www.quantum-tv.com";
       break;
+    case 14:
+      providerUrl = "https://tv.salt.ch";
+      break;
     default:
       providerUrl = "https://zattoo.com";
   }
