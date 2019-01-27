@@ -36,6 +36,10 @@ msgctxt "#37106"
 msgid "Provider"
 msgstr "The provider of the Zattoo service"
 
+msgctxt "#37107"
+msgid "XMLTV-File"
+msgstr "The XMLTV-File to provide custom EPG."
+
 msgctxt "#37111"
 msgid "Zattoo login failed!"
 msgstr ""
