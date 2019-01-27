@@ -529,8 +529,9 @@ int ZatData::GetChannelGroupsAmount()
 }
 
 ZatData::ZatData(const string& u, const string& p, bool favoritesOnly,
-    bool alternativeEpgService, const string& streamType, int provider) :
-    recordingEnabled(false), uuid("")
+    bool alternativeEpgService, const string& streamType, int provider,
+    const string& xmlTVFile) :
+    recordingEnabled(false), uuid(""), xmlTV(nullptr)
 {
   XBMC->Log(LOG_NOTICE, "Using useragent: %s", user_agent.c_str());
   username = u;
@@ -538,6 +539,7 @@ ZatData::ZatData(const string& u, const string& p, bool favoritesOnly,
   this->alternativeEpgService = alternativeEpgService;
   this->favoritesOnly = favoritesOnly;
   this->streamType = streamType;
+  this->xmlTVFile = xmlTVFile;
   for (int i = 0; i < 5; ++i)
   {
     updateThreads.emplace_back(new UpdateThread(i, this));
@@ -591,6 +593,9 @@ ZatData::ZatData(const string& u, const string& p, bool favoritesOnly,
   }
   
   ReadDataJson();
+  if (!xmlTVFile.empty()) {
+    xmlTV = new XmlTV(xmlTVFile);
+  }
 }
 
 ZatData::~ZatData()
@@ -605,6 +610,9 @@ ZatData::~ZatData()
     delete item.second;
   }
   channelGroups.clear();
+  if (xmlTV) {
+    delete xmlTV;
+  }
 }
 
 bool ZatData::Initialize()
@@ -859,13 +867,17 @@ void ZatData::GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart,
 void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     time_t iEnd)
 {
+  ZatChannel *zatChannel = FindChannel(uniqueChannelId);
+  
+  if (xmlTV && xmlTV->GetEPGForChannel(zatChannel->cid, uniqueChannelId)) {
+    return;
+  }
+  
   if (this->alternativeEpgService)
   {
     GetEPGForChannelExternalService(uniqueChannelId, iStart, iEnd);
     return;
   }
-
-  ZatChannel *zatChannel = FindChannel(uniqueChannelId);
 
   map<time_t, PVRIptvEpgEntry>* channelEpgCache = LoadEPG(iStart, iEnd, uniqueChannelId);
   if (channelEpgCache == nullptr)

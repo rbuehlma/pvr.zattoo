@@ -34,6 +34,7 @@ std::string zatPassword;
 bool zatFavoritesOnly = false;
 bool zatAlternativeEpgService = false;
 bool streamType = false;
+std::string xmlTVFile;
 int provider = 0;
 int runningRequests = 0;
 
@@ -65,6 +66,10 @@ void ADDON_ReadSettings(void)
   if (XBMC->GetSetting("streamtype", &intBuffer))
   {
     streamType = static_cast<bool>(intBuffer);
+  }
+  if (XBMC->GetSetting("xmlTVFile", &buffer))
+  {
+    xmlTVFile = buffer;
   }
   if (XBMC->GetSetting("provider", &intBuffer))
   {
@@ -113,7 +118,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
   {
     XBMC->Log(LOG_DEBUG, "Create Zat");
     zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly,
-        zatAlternativeEpgService, streamType ? "hls" : "dash", provider);
+        zatAlternativeEpgService, streamType ? "hls" : "dash", provider, xmlTVFile);
     XBMC->Log(LOG_DEBUG, "Zat created");
     if (zat->Initialize() && zat->LoadChannels())
     {
@@ -201,6 +206,17 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
       return ADDON_STATUS_NEED_RESTART;
     }
   }
+  
+  if (name == "xmlTVFile")
+  {
+    string xmlTVFileProp = (const char*) settingValue;
+    if (xmlTVFile != xmlTVFileProp)
+    {
+      xmlTVFile = xmlTVFileProp;
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+  
   return ADDON_STATUS_OK;
 }
 

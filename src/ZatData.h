@@ -10,6 +10,7 @@
 #include <thread>
 #include <p8-platform/threads/mutex.h>
 #include "rapidjson/document.h"
+#include "XmlTV.h"
 
 using namespace rapidjson;
 using namespace std;
@@ -66,7 +67,8 @@ class ZatData
 {
 public:
   ZatData(const string& username, const string& password, bool favoritesOnly,
-      bool alternativeEpgService, const string& streamType, int provider);
+      bool alternativeEpgService, const string& streamType, int provider,
+      const string& xmlTVFile);
   virtual ~ZatData();
   virtual bool Initialize();
   virtual bool LoadChannels();
@@ -125,6 +127,8 @@ private:
   Categories categories;
   string providerUrl;
   bool recordingsLoaded = false;
+  string xmlTVFile;
+  XmlTV *xmlTV;
 
   bool LoadAppId();
   bool ReadDataJson();

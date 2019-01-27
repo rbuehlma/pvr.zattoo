@@ -23,24 +23,29 @@ set(DEPLIBS ${kodiplatform_LIBRARIES}
 )
 
 set(ZATTOO_SOURCES
+		lib/tinyxml2/tinyxml2.cpp
 		src/Utils.cpp
 		src/client.cpp
 		src/Curl.cpp
 		src/Cache.cpp
 		src/ZatData.cpp
 		src/UpdateThread.cpp
+		src/XmlTV.cpp
 		src/categories.cpp
 		src/md5.cpp
 )
 
 set(ZATTOO_HEADERS
+		lib/tinyxml2/tinyxml2.h
 		src/Cache.h
 		src/Curl.h
 		src/UpdateThread.h
+		src/XmlTV.h
 		src/Utils.h
 		src/ZatData.h
 		src/categories.h
 		src/client.h
+		src/windows.h
 		src/md5.h
 		src/to_string.h
 )
