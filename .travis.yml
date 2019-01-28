@@ -29,9 +29,6 @@ matrix:
 # we'll put the Kodi source on the same level
 #
 before_script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; apt-get update; apt-get install libtinyxml2-dev; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install tinyxml2; fi
   - cd $TRAVIS_BUILD_DIR/..
   - git clone --depth=1 https://github.com/xbmc/xbmc.git
   - cd ${app_id} && mkdir build && cd build
