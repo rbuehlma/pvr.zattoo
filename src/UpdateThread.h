@@ -22,8 +22,8 @@ public:
   void* Process() override;
 
 private:
-  void *zat;
-  int threadIdx;
+  void *m_zat;
+  int m_threadIdx;
   static std::queue<EpgQueueEntry> loadEpgQueue;
   static time_t nextRecordingsUpdate;
   static P8PLATFORM::CMutex mutex;

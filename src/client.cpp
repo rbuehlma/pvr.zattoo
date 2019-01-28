@@ -85,7 +85,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
     return ADDON_STATUS_UNKNOWN;
   }
 
-    auto *pvrprops = (PVR_PROPERTIES *) props;
+    auto *pvrprops = static_cast<PVR_PROPERTIES*>(props);
 
   XBMC = new CHelper_libXBMC_addon;
   XBMC->RegisterMe(hdl);
@@ -157,11 +157,11 @@ void ADDON_Destroy()
 
 ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
 {
-  string name = settingName;
+  std::string name = settingName;
 
   if (name == "username")
   {
-    string username = (const char*) settingValue;
+    std::string username = static_cast<const char*>(settingValue);
     if (username != zatUsername)
     {
       zatUsername = username;
@@ -171,7 +171,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
 
   if (name == "password")
   {
-    string password = (const char*) settingValue;
+    std::string password = static_cast<const char*>(settingValue);
     if (password != zatPassword)
     {
       zatPassword = password;
@@ -181,7 +181,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
 
   if (name == "favoritesonly")
   {
-    bool favOnly = *(bool *) settingValue;
+    bool favOnly = *static_cast<const bool*>(settingValue);
     if (favOnly != zatFavoritesOnly)
     {
       zatFavoritesOnly = favOnly;
@@ -190,7 +190,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   }
   if (name == "streamtype")
   {
-    int type = *(int *) settingValue;
+    int type = *static_cast<const int*>(settingValue);
     if (type != streamType)
     {
       streamType = static_cast<bool>(type);
@@ -199,7 +199,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   }
   if (name == "provider")
   {
-    int prov = *(int *) settingValue;
+    int prov = *static_cast<const int*>(settingValue);
     if (provider != prov)
     {
       provider = prov;
@@ -209,7 +209,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   
   if (name == "xmlTVFile")
   {
-    string xmlTVFileProp = (const char*) settingValue;
+    std::string xmlTVFileProp = static_cast<const char*>(settingValue);
     if (xmlTVFile != xmlTVFileProp)
     {
       xmlTVFile = xmlTVFileProp;
@@ -546,7 +546,7 @@ PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete)
   {
     ret = PVR_ERROR_SERVER_ERROR;
   }
-  else if (!zat->DeleteRecording(to_string(timer.iClientIndex)))
+  else if (!zat->DeleteRecording(std::to_string(timer.iClientIndex)))
   {
     ret = PVR_ERROR_REJECTED;
   }

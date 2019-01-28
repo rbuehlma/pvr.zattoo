@@ -13,7 +13,7 @@
 
 using namespace ADDON;
 
-std::string Utils::GetFilePath(std::string strPath, bool bUserPath)
+std::string Utils::GetFilePath(const std::string &strPath, bool bUserPath)
 {
   return (bUserPath ? g_strUserPath : g_strClientPath) + PATH_SEPARATOR_CHAR
       + strPath;
@@ -106,7 +106,7 @@ std::string Utils::ReadFile(const std::string& path)
 
 }
 
-time_t Utils::StringToTime(std::string timeString)
+time_t Utils::StringToTime(const std::string &timeString)
 {
   struct tm tm{};
 

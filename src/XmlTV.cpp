@@ -1,32 +1,39 @@
 #include "XmlTV.h"
-#include "../lib/tinyxml2/tinyxml2.h"
+#include <tinyxml2.h>
 #include <time.h>
 
 #include "client.h"
 
 using namespace tinyxml2;
-using namespace std;
+using namespace ADDON;
 
-XmlTV::XmlTV(string xmlFile)
+XmlTV::XmlTV(std::string xmlFile) :
+  m_xmlFile(xmlFile)
 {
-  this->xmlFile = xmlFile;
-
-  if (!XBMC->FileExists(xmlFile.c_str(), true)) {
-    XBMC->Log(LOG_DEBUG, "XMLTV: Xml file for additional guide data not found: %s", xmlFile.c_str());
-  } else {
-    XBMC->Log(LOG_DEBUG, "XMLTV: Using xml file for additional guide data: %s", xmlFile.c_str());
+  if (!XBMC->FileExists(m_xmlFile.c_str(), true))
+  {
+    XBMC->Log(LOG_DEBUG,
+        "XMLTV: Xml file for additional guide data not found: %s",
+        m_xmlFile.c_str());
+  }
+  else
+  {
+    XBMC->Log(LOG_DEBUG, "XMLTV: Using xml file for additional guide data: %s",
+        m_xmlFile.c_str());
   }
 
 }
 
-bool XmlTV::GetEPGForChannel(string cid, unsigned int uniqueChannelId)
+bool XmlTV::GetEPGForChannel(const std::string &cid, unsigned int uniqueChannelId)
 {
-  if (!XBMC->FileExists(xmlFile.c_str(), true)) {
+  if (!XBMC->FileExists(m_xmlFile.c_str(), true))
+  {
     return false;
   }
-  
+
   XMLDocument doc;
-  if (doc.LoadFile(xmlFile.c_str()) != XML_SUCCESS) {
+  if (doc.LoadFile(m_xmlFile.c_str()) != XML_SUCCESS)
+  {
     XBMC->Log(LOG_ERROR, "XMLTV: failed to parse xml-file.");
     return false;
   }
@@ -38,33 +45,37 @@ bool XmlTV::GetEPGForChannel(string cid, unsigned int uniqueChannelId)
   }
   bool result = false;
   XMLElement* programme = tv->FirstChildElement("programme");
-  while (programme) {
+  while (programme)
+  {
     EPG_TAG tag;
     memset(&tag, 0, sizeof(EPG_TAG));
-    
+
     XMLElement* title = programme->FirstChildElement("title");
     const char *start = programme->Attribute("start");
     const char *stop = programme->Attribute("stop");
     const char *channel = programme->Attribute("channel");
-        
-    if (!title || !start || !stop || !channel || strcmp(channel, cid.c_str())) {
+
+    if (!title || !start || !stop || !channel || strcmp(channel, cid.c_str()))
+    {
       programme = programme->NextSiblingElement("programme");
       continue;
     }
-    
+
     XMLElement* subTitle = programme->FirstChildElement("sub-title");
     XMLElement* category = programme->FirstChildElement("category");
     tag.startTime = StringToTime(start);
-    tag.endTime = StringToTime(stop);    
+    tag.endTime = StringToTime(stop);
     tag.iUniqueBroadcastId = tag.startTime;
     tag.strTitle = title->GetText();
     tag.iUniqueChannelId = uniqueChannelId;
-    if (subTitle) { 
+    if (subTitle)
+    {
       const char *description = subTitle->GetText();
       tag.strPlotOutline = description;
       tag.strPlot = description;
     }
-    if (category) {
+    if (category)
+    {
       const char *genre = category->GetText();
       tag.iGenreType = EPG_GENRE_USE_STRING;
       tag.strGenreDescription = genre;
@@ -72,7 +83,7 @@ bool XmlTV::GetEPGForChannel(string cid, unsigned int uniqueChannelId)
 
     result = true;
     PVR->EpgEventStateChange(&tag, EPG_EVENT_CREATED);
-    
+
     programme = programme->NextSiblingElement("programme");
 
   }
@@ -80,9 +91,10 @@ bool XmlTV::GetEPGForChannel(string cid, unsigned int uniqueChannelId)
 
 }
 
-time_t XmlTV::StringToTime(std::string timeString)
+time_t XmlTV::StringToTime(const std::string &timeString)
 {
-  struct tm tm{};
+  struct tm tm
+  { };
   strptime(timeString.c_str(), "%Y%m%d%H%M%S", &tm);
   time_t ret = timegm(&tm);
   return ret;

@@ -13,10 +13,10 @@ time_t UpdateThread::nextRecordingsUpdate;
 P8PLATFORM::CMutex UpdateThread::mutex;
 
 UpdateThread::UpdateThread(int threadIdx, void *zat) :
-    CThread()
+    CThread(),
+    m_zat(zat),
+    m_threadIdx(threadIdx)
 {
-  this->threadIdx = threadIdx;
-  this->zat = zat;
   time(&UpdateThread::nextRecordingsUpdate);
   UpdateThread::nextRecordingsUpdate += maximumUpdateInterval;
   CreateThread(false);
@@ -70,7 +70,7 @@ void* UpdateThread::Process()
       continue;
     }
     
-    if (this->threadIdx == 0) {
+    if (m_threadIdx == 0) {
       Cache::Cleanup();
     }
 
@@ -87,7 +87,7 @@ void* UpdateThread::Process()
         EpgQueueEntry entry = loadEpgQueue.front();
         loadEpgQueue.pop();
         mutex.Unlock();
-        ((ZatData*) zat)->GetEPGForChannelAsync(entry.uniqueChannelId,
+        (static_cast<ZatData*>(m_zat))->GetEPGForChannelAsync(entry.uniqueChannelId,
             entry.startTime, entry.endTime);
       }
       else
@@ -99,7 +99,7 @@ void* UpdateThread::Process()
     time_t currentTime;
     time(&currentTime);
 
-    if (((ZatData *)zat)->RecordingEnabled() && currentTime >= UpdateThread::nextRecordingsUpdate)
+    if (static_cast<ZatData*>(m_zat)->RecordingEnabled() && currentTime >= UpdateThread::nextRecordingsUpdate)
     {
       if (!mutex.Lock())
       {
