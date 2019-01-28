@@ -70,7 +70,7 @@ void* UpdateThread::Process()
       continue;
     }
     
-    if (this->m_threadIdx == 0) {
+    if (m_threadIdx == 0) {
       Cache::Cleanup();
     }
 
@@ -87,7 +87,7 @@ void* UpdateThread::Process()
         EpgQueueEntry entry = loadEpgQueue.front();
         loadEpgQueue.pop();
         mutex.Unlock();
-        ((ZatData*) m_zat)->GetEPGForChannelAsync(entry.uniqueChannelId,
+        (static_cast<ZatData*>(m_zat))->GetEPGForChannelAsync(entry.uniqueChannelId,
             entry.startTime, entry.endTime);
       }
       else
@@ -99,7 +99,7 @@ void* UpdateThread::Process()
     time_t currentTime;
     time(&currentTime);
 
-    if ((static_cast<ZatData*>(m_zat))->RecordingEnabled() && currentTime >= UpdateThread::nextRecordingsUpdate)
+    if (static_cast<ZatData*>(m_zat)->RecordingEnabled() && currentTime >= UpdateThread::nextRecordingsUpdate)
     {
       if (!mutex.Lock())
       {

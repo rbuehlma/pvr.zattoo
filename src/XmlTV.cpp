@@ -5,6 +5,7 @@
 #include "client.h"
 
 using namespace tinyxml2;
+using namespace ADDON;
 
 XmlTV::XmlTV(std::string xmlFile) :
   m_xmlFile(xmlFile)
@@ -23,7 +24,7 @@ XmlTV::XmlTV(std::string xmlFile) :
 
 }
 
-bool XmlTV::GetEPGForChannel(std::string cid, unsigned int uniqueChannelId)
+bool XmlTV::GetEPGForChannel(const std::string &cid, unsigned int uniqueChannelId)
 {
   if (!XBMC->FileExists(m_xmlFile.c_str(), true))
   {
@@ -90,7 +91,7 @@ bool XmlTV::GetEPGForChannel(std::string cid, unsigned int uniqueChannelId)
 
 }
 
-time_t XmlTV::StringToTime(std::string timeString)
+time_t XmlTV::StringToTime(const std::string &timeString)
 {
   struct tm tm
   { };

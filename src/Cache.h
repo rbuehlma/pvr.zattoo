@@ -1,8 +1,6 @@
 #include <string>
 #include "rapidjson/document.h"
 
-using namespace rapidjson;
-
 class Cache
 {
 public:
@@ -11,6 +9,6 @@ public:
       time_t validUntil);
   static void Cleanup();
 private:
-  static bool IsStillValid(const Value& cache);
+  static bool IsStillValid(const rapidjson::Value& cache);
   static time_t m_lastCleanup;
 };

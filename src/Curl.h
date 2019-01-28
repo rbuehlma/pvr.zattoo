@@ -5,21 +5,21 @@ class Curl
 {
 public:
   Curl();
-  virtual ~Curl();
-  virtual std::string Delete(const std::string& url, int &statusCode);
-  virtual std::string Get(const std::string& url, int &statusCode);
-  virtual std::string Post(const std::string& url, const std::string& postData,
+  ~Curl();
+  std::string Delete(const std::string& url, int &statusCode);
+  std::string Get(const std::string& url, int &statusCode);
+  std::string Post(const std::string& url, const std::string& postData,
       int &statusCode);
-  virtual void AddHeader(const std::string& name, const std::string& value);
-  virtual void AddOption(const std::string& name, const std::string& value);
-  virtual void ResetHeaders();
-  virtual std::string GetCookie(const std::string& name);
-  virtual std::string GetLocation() {
+  void AddHeader(const std::string& name, const std::string& value);
+  void AddOption(const std::string& name, const std::string& value);
+  void ResetHeaders();
+  std::string GetCookie(const std::string& name);
+  std::string GetLocation() {
     return m_location;
   }
 
 private:
-  virtual std::string Request(const std::string& action, const std::string& url,
+  std::string Request(const std::string& action, const std::string& url,
                               const std::string& postData, int &statusCode);
   std::string Base64Encode(unsigned char const* in, unsigned int in_len,
       bool urlEncode);

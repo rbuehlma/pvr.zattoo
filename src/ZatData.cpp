@@ -897,7 +897,7 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     return;
   }
 
-  if (this->m_alternativeEpgService)
+  if (m_alternativeEpgService)
   {
     GetEPGForChannelExternalService(uniqueChannelId, iStart, iEnd);
     return;
