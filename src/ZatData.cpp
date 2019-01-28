@@ -15,7 +15,7 @@
 #include "md5.h"
 
 #ifdef TARGET_ANDROID
-#include "std::to_string.h"
+#include "to_string.h"
 #endif
 
 using namespace ADDON;
