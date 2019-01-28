@@ -3,7 +3,6 @@
 #include "client.h"
 #include "Utils.h"
 
-using namespace std;
 using namespace ADDON;
 
 Curl::Curl()
@@ -12,46 +11,46 @@ Curl::Curl()
 Curl::~Curl()
 = default;
 
-string Curl::GetCookie(const string& name)
+std::string Curl::GetCookie(const std::string& name)
 {
-  if (cookies.find(name) == cookies.end())
+  if (m_cookies.find(name) == m_cookies.end())
   {
     return "";
   }
-  return cookies[name];
+  return m_cookies[name];
 }
 
-void Curl::AddHeader(const string& name, const string& value)
+void Curl::AddHeader(const std::string& name, const std::string& value)
 {
-  headers[name] = value;
+  m_headers[name] = value;
 }
 
-void Curl::AddOption(const string& name, const string& value)
+void Curl::AddOption(const std::string& name, const std::string& value)
 {
-  options[name] = value;
+  m_options[name] = value;
 }
 
 void Curl::ResetHeaders()
 {
-  headers.clear();
+  m_headers.clear();
 }
 
-string Curl::Delete(const string& url, int &statusCode)
+std::string Curl::Delete(const std::string& url, int &statusCode)
 {
   return Request("DELETE", url, "", statusCode);
 }
 
-string Curl::Get(const string& url, int &statusCode)
+std::string Curl::Get(const std::string& url, int &statusCode)
 {
   return Request("GET", url, "", statusCode);
 }
 
-string Curl::Post(const string& url, const string& postData, int &statusCode)
+std::string Curl::Post(const std::string& url, const std::string& postData, int &statusCode)
 {
   return Request("POST", url, postData, statusCode);
 }
 
-string Curl::Request(const string& action, const string& url, const string& postData,
+std::string Curl::Request(const std::string& action, const std::string& url, const std::string& postData,
     int &statusCode)
 {
   void* file = XBMC->CURLCreate(url.c_str());
@@ -68,19 +67,19 @@ string Curl::Request(const string& action, const string& url, const string& post
       "gzip");
   if (!postData.empty())
   {
-    string base64 = Base64Encode((const unsigned char *) postData.c_str(),
+    std::string base64 = Base64Encode((const unsigned char *) postData.c_str(),
         postData.size(), false);
     XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "postdata",
         base64.c_str());
   }
 
-  for (auto const &entry : headers)
+  for (auto const &entry : m_headers)
   {
     XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, entry.first.c_str(),
         entry.second.c_str());
   }
 
-  for (auto const &entry : options)
+  for (auto const &entry : m_options)
   {
     XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, entry.first.c_str(),
         entry.second.c_str());
@@ -100,16 +99,16 @@ string Curl::Request(const string& action, const string& url, const string& post
     char *cookiePtr = cookiesPtr[i];
     if (cookiePtr && *cookiePtr)
     {
-      string cookie = cookiePtr;
+      std::string cookie = cookiePtr;
       std::string::size_type paramPos = cookie.find(';');
       if (paramPos != std::string::npos)
         cookie.resize(paramPos);
-      vector<string> parts = Utils::SplitString(cookie, '=', 2);
+      std::vector<std::string> parts = Utils::SplitString(cookie, '=', 2);
       if (parts.size() != 2)
       {
         continue;
       }
-      cookies[parts[0]] = parts[1];
+      m_cookies[parts[0]] = parts[1];
       XBMC->Log(LOG_DEBUG, "Got cookie: %s.", parts[0].c_str());
     }
   }
@@ -117,7 +116,7 @@ string Curl::Request(const string& action, const string& url, const string& post
   
   char *tmp = XBMC->GetFilePropertyValue(file,
       XFILE::FILE_PROPERTY_RESPONSE_HEADER, "Location");
-  location = tmp != nullptr ? tmp : "";
+  m_location = tmp != nullptr ? tmp : "";
   
   XBMC->FreeString(tmp);
 
@@ -126,7 +125,7 @@ string Curl::Request(const string& action, const string& url, const string& post
   static const unsigned int CHUNKSIZE = 16384;
   char buf[CHUNKSIZE + 1];
   ssize_t nbRead;
-  string body;
+  std::string body;
   while ((nbRead = XBMC->ReadFile(file, buf, CHUNKSIZE)) > 0 && ~nbRead)
   {
     buf[nbRead] = 0x0;

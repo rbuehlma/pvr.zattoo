@@ -16,21 +16,20 @@
 #endif
 
 using namespace rapidjson;
-using namespace std;
 using namespace ADDON;
 
 constexpr char CACHE_DIR[] = "special://profile/addon_data/pvr.zattoo/cache/";
 
-time_t Cache::lastCleanup = 0;
+time_t Cache::m_lastCleanup = 0;
 
-bool Cache::Read(const string& key, std::string& data)
+bool Cache::Read(const std::string& key, std::string& data)
 {
-  string cacheFile = CACHE_DIR + key;
+  std::string cacheFile = CACHE_DIR + key;
   if (!XBMC->FileExists(cacheFile.c_str(), true))
   {
     return false;
   }
-  string jsonString = Utils::ReadFile(cacheFile);
+  std::string jsonString = Utils::ReadFile(cacheFile);
   if (jsonString.empty())
   {
     return false;
@@ -55,7 +54,7 @@ bool Cache::Read(const string& key, std::string& data)
   return !data.empty();
 }
 
-void Cache::Write(const string& key, const std::string& data, time_t validUntil)
+void Cache::Write(const std::string& key, const std::string& data, time_t validUntil)
 {
   if (!XBMC->DirectoryExists(CACHE_DIR))
   {
@@ -65,7 +64,7 @@ void Cache::Write(const string& key, const std::string& data, time_t validUntil)
       return;
     }
   }
-  string cacheFile = CACHE_DIR + key;
+  std::string cacheFile = CACHE_DIR + key;
   void* file;
   if (!(file = XBMC->OpenFileForWrite(cacheFile.c_str(), true)))
   {
@@ -93,11 +92,11 @@ void Cache::Cleanup()
 {
   time_t currTime;
   time(&currTime);
-  if (lastCleanup + 60 * 60 > currTime)
+  if (m_lastCleanup + 60 * 60 > currTime)
   {
    return;
   }
-  lastCleanup = currTime;
+  m_lastCleanup = currTime;
   if (!XBMC->DirectoryExists(CACHE_DIR))
   {
     return;
@@ -116,7 +115,7 @@ void Cache::Cleanup()
       continue;
     }
     char *path = items[i].path;
-    string jsonString = Utils::ReadFile(path);
+    std::string jsonString = Utils::ReadFile(path);
     if (jsonString.empty())
     {
       continue;

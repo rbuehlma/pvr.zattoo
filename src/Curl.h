@@ -15,7 +15,7 @@ public:
   virtual void ResetHeaders();
   virtual std::string GetCookie(const std::string& name);
   virtual std::string GetLocation() {
-    return location;
+    return m_location;
   }
 
 private:
@@ -23,8 +23,8 @@ private:
                               const std::string& postData, int &statusCode);
   std::string Base64Encode(unsigned char const* in, unsigned int in_len,
       bool urlEncode);
-  std::map<std::string, std::string> headers;
-  std::map<std::string, std::string> options;
-  std::map<std::string, std::string> cookies;
-  std::string location;
+  std::map<std::string, std::string> m_headers;
+  std::map<std::string, std::string> m_options;
+  std::map<std::string, std::string> m_cookies;
+  std::string m_location;
 };

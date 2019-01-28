@@ -12,6 +12,6 @@ public:
   bool GetEPGForChannel(std::string cid, unsigned int uniqueChannelId);
 
 private:
-  std::string xmlFile;
+  std::string m_xmlFile;
   time_t StringToTime(std::string timeString);
 };
