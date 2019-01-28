@@ -11,17 +11,18 @@ find_package(Kodi REQUIRED)
 find_package(kodiplatform REQUIRED)
 find_package(p8-platform REQUIRED)
 find_package(RapidJSON 1.0.2 REQUIRED)
-find_package(tinyxml2 REQUIRED)
+find_package(TinyXML2 REQUIRED)
 
 include_directories(${kodiplatform_INCLUDE_DIRS}
                     ${p8-platform_INCLUDE_DIRS}
                     ${KODI_INCLUDE_DIR}
                     ${RAPIDJSON_INCLUDE_DIRS}
+                    ${TINYXML2_INCLUDE_DIRS}
 )
 
 set(DEPLIBS ${kodiplatform_LIBRARIES} 
             ${p8-platform_LIBRARIES}
-            ${tinyxml2_LIBRARIES}
+            ${TINYXML2_LIBRARIES}
 )
 
 set(ZATTOO_SOURCES
