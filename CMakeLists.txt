@@ -11,19 +11,21 @@ find_package(Kodi REQUIRED)
 find_package(kodiplatform REQUIRED)
 find_package(p8-platform REQUIRED)
 find_package(RapidJSON 1.0.2 REQUIRED)
+find_package(TinyXML2 REQUIRED)
 
 include_directories(${kodiplatform_INCLUDE_DIRS}
                     ${p8-platform_INCLUDE_DIRS}
                     ${KODI_INCLUDE_DIR}
                     ${RAPIDJSON_INCLUDE_DIRS}
+                    ${TINYXML2_INCLUDE_DIRS}
 )
 
 set(DEPLIBS ${kodiplatform_LIBRARIES} 
             ${p8-platform_LIBRARIES}
+            ${TINYXML2_LIBRARIES}
 )
 
 set(ZATTOO_SOURCES
-		lib/tinyxml2/tinyxml2.cpp
 		src/Utils.cpp
 		src/client.cpp
 		src/Curl.cpp
@@ -36,7 +38,6 @@ set(ZATTOO_SOURCES
 )
 
 set(ZATTOO_HEADERS
-		lib/tinyxml2/tinyxml2.h
 		src/Cache.h
 		src/Curl.h
 		src/UpdateThread.h
