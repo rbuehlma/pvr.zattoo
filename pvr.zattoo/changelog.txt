@@ -1,3 +1,5 @@
+v18.0.62
+ - Add swb TV as reseller
 v18.0.61
  - Add tinyxml2 as dependency (thanks to Rechi)
  - Cleanup c++ code (thanks to ksooo)
