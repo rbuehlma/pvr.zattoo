@@ -607,6 +607,9 @@ ZatData::ZatData(const std::string& u, const std::string& p, bool favoritesOnly,
   case 15:
     m_providerUrl = "https://tvonline.swb-gruppe.de";
     break;
+  case 15:
+    m_providerUrl = "https://www.1und1.tv";
+    break;
   default:
     m_providerUrl = "https://zattoo.com";
   }
