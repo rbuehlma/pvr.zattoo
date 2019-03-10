@@ -33,6 +33,7 @@ std::string zatUsername;
 std::string zatPassword;
 bool zatFavoritesOnly = false;
 bool zatAlternativeEpgService = false;
+bool zatAlternativeEpgServiceProvideSession = false;
 bool streamType = false;
 std::string xmlTVFile;
 int provider = 0;
@@ -59,9 +60,13 @@ void ADDON_ReadSettings(void)
   {
     zatFavoritesOnly = boolBuffer;
   }
-  if (XBMC->GetSetting("alternativeepgservice", &boolBuffer))
+  if (XBMC->GetSetting("alternativeepgservice_https", &boolBuffer))
   {
     zatAlternativeEpgService = boolBuffer;
+  }
+  if (XBMC->GetSetting("provide_zattoo_session", &boolBuffer))
+  {
+    zatAlternativeEpgServiceProvideSession = boolBuffer;
   }
   if (XBMC->GetSetting("streamtype", &intBuffer))
   {
@@ -88,8 +93,6 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
     auto *pvrprops = static_cast<PVR_PROPERTIES*>(props);
 
   XBMC = new CHelper_libXBMC_addon;
-  XBMC->RegisterMe(hdl);
-
   if (!XBMC->RegisterMe(hdl))
   {
     SAFE_DELETE(XBMC);
@@ -118,7 +121,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
   {
     XBMC->Log(LOG_DEBUG, "Create Zat");
     zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly,
-        zatAlternativeEpgService, streamType ? "hls" : "dash", provider, xmlTVFile);
+        zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType ? "hls" : "dash", provider, xmlTVFile);
     XBMC->Log(LOG_DEBUG, "Zat created");
     if (zat->Initialize() && zat->LoadChannels())
     {

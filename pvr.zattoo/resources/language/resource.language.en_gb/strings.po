@@ -25,7 +25,7 @@ msgid "Favourite channels only"
 msgstr "Load only channels which are in the favourite list"
 
 msgctxt "#37104"
-msgid "Use alternative EPG service"
+msgid "Use enhanced EPG service"
 msgstr "This is an external service to gather additional EPG information and speed up EPG loading."
 
 msgctxt "#37105"
@@ -42,5 +42,93 @@ msgstr "The XMLTV-File to provide custom EPG."
 
 msgctxt "#37111"
 msgid "Zattoo login failed!"
+msgstr ""
+
+msgctxt "#37108"
+msgid "dash"
+msgstr ""
+
+msgctxt "#37109"
+msgid "hls"
+msgstr ""
+
+msgctxt "#37110"
+msgid "Zattoo"
+msgstr ""
+
+msgctxt "#37114"
+msgid "General"
+msgstr ""
+
+msgctxt "#37112"
+msgid "External EPG service"
+msgstr ""
+
+msgctxt "#37113"
+msgid "Allow providing Zattoo session to service"
+msgstr ""
+
+msgctxt "#37130"
+msgid "Zattoo"
+msgstr ""
+
+msgctxt "#37131"
+msgid "Netplus"
+msgstr ""
+
+msgctxt "#37132"
+msgid "Quickline"
+msgstr ""
+
+msgctxt "#37133"
+msgid "m-net"
+msgstr ""
+
+msgctxt "#37134"
+msgid "WALY.TV"
+msgstr ""
+
+msgctxt "#37135"
+msgid "meinewelt.cc"
+msgstr ""
+
+msgctxt "#37136"
+msgid "BBV-tv.net"
+msgstr ""
+
+msgctxt "#37137"
+msgid "VTXtv.ch"
+msgstr ""
+
+msgctxt "#37138"
+msgid "myvisiontv.ch"
+msgstr ""
+
+msgctxt "#37139"
+msgid "SAKtv.ch"
+msgstr ""
+
+msgctxt "#37140"
+msgid "NetCologne"
+msgstr ""
+
+msgctxt "#37141"
+msgid "EWE.de"
+msgstr ""
+
+msgctxt "#37142"
+msgid "quantum TV"
+msgstr ""
+
+msgctxt "#37143"
+msgid "Salt.ch"
+msgstr ""
+
+msgctxt "#37144"
+msgid "swb TV"
+msgstr ""
+
+msgctxt "#37145"
+msgid "1&1 TV"
 msgstr ""
 
