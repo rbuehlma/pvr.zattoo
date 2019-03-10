@@ -1,3 +1,6 @@
+v18.0.65
+ - Use TLS for external epg service
+ - Inform that the zattoo session is provided to the epg service
 v18.0.64
  - Set genre before transferring timer
 v18.0.63
