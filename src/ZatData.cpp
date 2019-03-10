@@ -1213,14 +1213,13 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
       tag.iTimerType = 1;
       tag.iEpgUid = static_cast<unsigned int>(recording["program_id"].GetInt());
       tag.iClientChannelUid = channel.iUniqueId;
-      PVR->TransferTimerEntry(handle, &tag);
-      UpdateThread::SetNextRecordingUpdate(startTime);
       if (genre)
       {
         tag.iGenreSubType = genre & 0x0F;
         tag.iGenreType = genre & 0xF0;
       }
-
+      PVR->TransferTimerEntry(handle, &tag);
+      UpdateThread::SetNextRecordingUpdate(startTime);
     }
     else if (!future && (startTime <= current_time))
     {
