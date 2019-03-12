@@ -52,13 +52,14 @@
               <option label="37136">6</option> <!-- BBV-tv.net -->
               <option label="37137">7</option> <!-- VTXtv.ch -->
               <option label="37138">8</option> <!-- myvisiontv.ch -->
-              <option label="37139">9</option> <!-- SAKtv.ch -->
-              <option label="37140">10</option> <!-- NetCologne -->
-              <option label="37141">11</option> <!-- EWE.de -->
-              <option label="37142">12</option> <!-- quantum TV -->
-              <option label="37143">13</option> <!-- Salt.ch -->
-              <option label="37144">14</option> <!-- swb TV -->
-              <option label="37145">15</option> <!-- 1&1 TV -->
+              <option label="37139">9</option> <!-- GLATTvision.ch -->
+              <option label="37140">10</option> <!-- SAKtv.ch -->
+              <option label="37141">11</option> <!-- NetCologne -->
+              <option label="37142">12</option> <!-- EWE.de -->
+              <option label="37143">13</option> <!-- quantum TV -->
+              <option label="37144">14</option> <!-- Salt.ch -->
+              <option label="37145">15</option> <!-- swb TV -->
+              <option label="37146">16</option> <!-- 1&1 TV -->
             </options>
           </constraints>
           <control type="list" format="integer" />

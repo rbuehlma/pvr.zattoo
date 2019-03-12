@@ -105,30 +105,34 @@ msgid "myvisiontv.ch"
 msgstr ""
 
 msgctxt "#37139"
-msgid "SAKtv.ch"
+msgid "GLATTvision.ch"
 msgstr ""
 
 msgctxt "#37140"
-msgid "NetCologne"
+msgid "SAKtv.ch"
 msgstr ""
 
 msgctxt "#37141"
-msgid "EWE.de"
+msgid "NetCologne"
 msgstr ""
 
 msgctxt "#37142"
-msgid "quantum TV"
+msgid "EWE.de"
 msgstr ""
 
 msgctxt "#37143"
-msgid "Salt.ch"
+msgid "quantum TV"
 msgstr ""
 
 msgctxt "#37144"
-msgid "swb TV"
+msgid "Salt.ch"
 msgstr ""
 
 msgctxt "#37145"
+msgid "swb TV"
+msgstr ""
+
+msgctxt "#37146"
 msgid "1&1 TV"
 msgstr ""
 
