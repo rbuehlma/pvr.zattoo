@@ -1,3 +1,5 @@
+v18.0.67
+ - Fix image url for epg and recordings
 v18.0.66
  - Fix reseller configuration
 v18.0.65

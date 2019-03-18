@@ -149,4 +149,5 @@ private:
   void GetEPGForChannelExternalService(int uniqueChannelId,
       time_t iStart, time_t iEnd);
   std::string GetStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName);
+  std::string GetImageUrl(const std::string& imageToken);
 };
