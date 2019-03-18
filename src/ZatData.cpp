@@ -859,14 +859,15 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     tag.strWriter = nullptr; /* not supported */
     tag.iYear = 0; /* not supported */
     tag.strIMDBNumber = nullptr; /* not supported */
-    tag.strIconPath = GetStringOrEmpty(program, "ImageUrl").c_str();
+    tag.strIconPath = GetImageUrl(GetStringOrEmpty(program, "ImageToken")).c_str();
     tag.iParentalRating = 0; /* not supported */
     tag.iStarRating = 0; /* not supported */
     tag.bNotify = false; /* not supported */
     tag.iSeriesNumber = 0; /* not supported */
     tag.iEpisodeNumber = 0; /* not supported */
     tag.iEpisodePartNumber = 0; /* not supported */
-    tag.strEpisodeName = GetStringOrEmpty(program, "Subtitle").c_str();
+    std::string subtitle = GetStringOrEmpty(program, "Subtitle");
+    tag.strEpisodeName = subtitle.c_str();
     tag.iFlags = EPG_TAG_FLAG_UNDEFINED;
     std::string genreStr = GetStringOrEmpty(program, "Genre");
     int genre = m_categories.Category(genreStr);
@@ -929,7 +930,7 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     tag.iUniqueChannelId = static_cast<unsigned int>(epgEntry.iChannelId);
     tag.startTime = epgEntry.startTime;
     tag.endTime = epgEntry.endTime;
-    tag.strPlotOutline = epgEntry.strPlot.c_str(); //epgEntry.strPlotOutline.c_str();
+    tag.strPlotOutline = epgEntry.strPlot.c_str();
     tag.strPlot = epgEntry.strPlot.c_str();
     tag.strOriginalTitle = nullptr; /* not supported */
     tag.strCast = nullptr; /* not supported */
@@ -1022,7 +1023,7 @@ std::map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd,
         entry.startTime = program["s"].GetInt();
         entry.endTime = program["e"].GetInt();
         entry.iBroadcastId = program["id"].GetInt();
-        entry.strIconPath = GetStringOrEmpty(program, "i_url");
+        entry.strIconPath = GetImageUrl(GetStringOrEmpty(program, "i_t"));
         entry.iChannelId = channel->iUniqueId;
         entry.strPlot = GetStringOrEmpty(program, "et");
 
@@ -1234,8 +1235,10 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
           GetStringOrEmpty(recording, "episode_title").c_str());
       PVR_STRCPY(tag.strPlot,
           hasDetails ? detailIterator->second.description.c_str() : "");
-      PVR_STRCPY(tag.strIconPath,
-          GetStringOrEmpty(recording, "image_url").c_str());
+      
+      std::string imageToken = GetStringOrEmpty(recording, "image_token");
+      std::string imageUrl = GetImageUrl(imageToken);;
+      PVR_STRCPY(tag.strIconPath, imageUrl.c_str());
       tag.iChannelUid = channel.iUniqueId;
       PVR_STRCPY(tag.strChannelName, channel.name.c_str());
       time_t endTime = Utils::StringToTime(
@@ -1450,4 +1453,8 @@ std::string ZatData::GetStringOrEmpty(const Value& jsonValue, const char* fieldN
     return "";
   }
   return jsonValue[fieldName].GetString();
+}
+
+std::string ZatData::GetImageUrl(const std::string& imageToken) {
+  return "https://images.zattic.com/cms/" + imageToken + "/format_640x360.jpg";
 }
