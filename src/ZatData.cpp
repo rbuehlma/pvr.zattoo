@@ -859,7 +859,12 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     tag.strWriter = nullptr; /* not supported */
     tag.iYear = 0; /* not supported */
     tag.strIMDBNumber = nullptr; /* not supported */
-    tag.strIconPath = GetImageUrl(GetStringOrEmpty(program, "ImageToken")).c_str();
+    std::string imageToken = GetStringOrEmpty(program, "ImageToken");
+    std::string imageUrl;
+    if (!imageToken.empty()) {
+      imageUrl = GetImageUrl(imageToken);
+      tag.strIconPath = imageUrl.c_str();
+    }
     tag.iParentalRating = 0; /* not supported */
     tag.iStarRating = 0; /* not supported */
     tag.bNotify = false; /* not supported */
