@@ -32,8 +32,9 @@
           <default>0</default>
           <constraints>
             <options>
-              <option label="37108">0</option> <!-- dash -->
-              <option label="37109">1</option> <!-- hls -->
+              <option label="37180">0</option> <!-- dash -->
+              <option label="37181">1</option> <!-- hls -->
+              <option label="37182">2</option> <!-- dash_widevine -->
             </options>
           </constraints>
           <control type="spinner" format="integer" />

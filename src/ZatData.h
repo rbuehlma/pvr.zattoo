@@ -12,6 +12,13 @@
 #include "rapidjson/document.h"
 #include "XmlTV.h"
 
+enum STREAM_TYPE: int
+{
+    DASH,
+    HLS,
+    DASH_WIDEVINE
+};
+
 /*!
  * @brief PVR macros for std::string exchange
  */
@@ -64,7 +71,7 @@ class ZatData
 {
 public:
   ZatData(const std::string& username, const std::string& password, bool favoritesOnly,
-      bool m_alternativeEpgService, const std::string& streamType, int provider,
+      bool m_alternativeEpgService, const STREAM_TYPE& streamType, int provider,
       const std::string& xmlTVFile);
   ~ZatData();
   bool Initialize();
@@ -80,10 +87,10 @@ public:
       time_t iEnd);
   void GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
       time_t iEnd);
-  std::string GetChannelStreamUrl(int uniqueId);
+  std::string GetChannelStreamUrl(int uniqueId, std::map<std::string, std::string> &additionalPropertiesOut);
   void GetRecordings(ADDON_HANDLE handle, bool future);
   int GetRecordingsAmount(bool future);
-  std::string GetRecordingStreamUrl(const std::string& recordingId);
+  std::string GetRecordingStreamUrl(const std::string& recordingId, std::map<std::string, std::string> &additionalPropertiesOut);
   bool Record(int programId);
   bool DeleteRecording(const std::string& recordingId);
   void SetRecordingPlayCount(const PVR_RECORDING &recording, int count);
@@ -93,7 +100,7 @@ public:
   bool IsPlayable(const EPG_TAG *tag);
   int GetRecallSeconds(const EPG_TAG *tag);
   bool IsRecordable(const EPG_TAG *tag);
-  std::string GetEpgTagUrl(const EPG_TAG *tag);
+  std::string GetEpgTagUrl(const EPG_TAG *tag, std::map<std::string, std::string> &additionalPropertiesOut);
   bool RecordingEnabled()
   {
     return m_recordingEnabled;
@@ -102,7 +109,7 @@ public:
 private:
   bool m_alternativeEpgService;
   bool m_favoritesOnly;
-  std::string m_streamType;
+  STREAM_TYPE m_streamType;
   std::string m_username;
   std::string m_password;
   std::string m_appToken;
@@ -146,8 +153,9 @@ private:
   ZatChannel* FindChannel(int uniqueId);
   PVRZattooChannelGroup* FindGroup(const std::string& strName);
   int GetChannelId(const char * strChannelName);
-  void GetEPGForChannelExternalService(int uniqueChannelId,
-      time_t iStart, time_t iEnd);
+  void GetEPGForChannelExternalService(int uniqueChannelId, time_t iStart, time_t iEnd);
   std::string GetStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName);
   std::string GetImageUrl(const std::string& imageToken);
+  std::string GetStreamTypeString();
+  std::string GetStreamUrl(std::string& jsonString, std::map<std::string, std::string>& additionalPropertiesOut);
 };
