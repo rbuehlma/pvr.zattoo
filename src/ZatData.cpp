@@ -413,7 +413,7 @@ bool ZatData::InitSession()
   XBMC->Log(LOG_NOTICE, "Country code: %s", m_countryCode.c_str());
   XBMC->Log(LOG_NOTICE, "Service region country: %s",
       m_serviceRegionCountry.c_str());
-  XBMC->Log(LOG_NOTICE, "Stream type: %s", m_streamType.c_str());
+  XBMC->Log(LOG_NOTICE, "Stream type: %s", GetStreamTypeString().c_str());
   if (m_recallEnabled)
   {
     m_maxRecallSeconds = session["recall_seconds"].GetInt();
@@ -546,7 +546,7 @@ int ZatData::GetChannelGroupsAmount()
 }
 
 ZatData::ZatData(const std::string& u, const std::string& p, bool favoritesOnly,
-    bool alternativeEpgService, const std::string& streamType, int provider,
+    bool alternativeEpgService, const STREAM_TYPE& streamType, int provider,
     const std::string& xmlTVFile) :
     m_alternativeEpgService(alternativeEpgService),
     m_favoritesOnly(favoritesOnly),
@@ -775,14 +775,39 @@ PVR_ERROR ZatData::GetChannels(ADDON_HANDLE handle, bool bRadio)
   return PVR_ERROR_NO_ERROR;
 }
 
-std::string ZatData::GetChannelStreamUrl(int uniqueId)
+std::string ZatData::GetStreamUrl(std::string& jsonString, std::map<std::string, std::string>& additionalPropertiesOut) {
+  Document doc;
+  doc.Parse(jsonString.c_str());
+  if (doc.GetParseError() || !doc["success"].GetBool())
+  {
+    return "";
+  }
+  const Value& watchUrls = doc["stream"]["watch_urls"];
+  std::string url = GetStringOrEmpty(doc["stream"], "url");
+  for (Value::ConstValueIterator itr = watchUrls.Begin(); itr != watchUrls.End(); ++itr)
+  {
+    const Value& watchUrl = (*itr);
+    XBMC->Log(LOG_DEBUG, "Selected url for maxrate: %d", watchUrl["maxrate"].GetInt());
+    url = GetStringOrEmpty(watchUrl, "url");
+    if (m_streamType == DASH_WIDEVINE) {
+      std::string licenseUrl = GetStringOrEmpty(watchUrl, "license_url");
+      additionalPropertiesOut["inputstream.adaptive.license_key"] = licenseUrl + "||A{SSM}|";
+      additionalPropertiesOut["inputstream.adaptive.license_type"] = "com.widevine.alpha";
+    }
+    break;
+  }
+  XBMC->Log(LOG_DEBUG, "Got url: %s", url.c_str());
+  return url;
+}
+
+std::string ZatData::GetChannelStreamUrl(int uniqueId, std::map<std::string, std::string> &additionalPropertiesOut)
 {
 
   ZatChannel *channel = FindChannel(uniqueId);
   XBMC->Log(LOG_DEBUG, "Get live url for channel %s", channel->cid.c_str());
 
   std::ostringstream dataStream;
-  dataStream << "cid=" << channel->cid << "&stream_type=" << m_streamType
+  dataStream << "cid=" << channel->cid << "&stream_type=" << GetStreamTypeString()
       << "&format=json";
 
   if (m_recallEnabled)
@@ -791,17 +816,8 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId)
   }
 
   std::string jsonString = HttpPost(m_providerUrl + "/zapi/watch", dataStream.str());
-
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["success"].GetBool())
-  {
-    return "";
-  }
-  std::string url = GetStringOrEmpty(doc["stream"], "url");
-  XBMC->Log(LOG_DEBUG, "Got url: %s", url.c_str());
-  return url;
-
+  
+  return GetStreamUrl(jsonString, additionalPropertiesOut);
 }
 
 ZatChannel *ZatData::FindChannel(int uniqueId)
@@ -1302,26 +1318,27 @@ int ZatData::GetRecordingsAmount(bool future)
   return count;
 }
 
-std::string ZatData::GetRecordingStreamUrl(const std::string& recordingId)
+std::string ZatData::GetStreamTypeString() {
+  switch (m_streamType) {
+    case HLS:
+      return "hls";
+    case DASH_WIDEVINE:
+      return "dash_widevine";
+    default:
+      return "dash";
+  }
+}
+
+std::string ZatData::GetRecordingStreamUrl(const std::string& recordingId, std::map<std::string, std::string> &additionalPropertiesOut)
 {
   XBMC->Log(LOG_DEBUG, "Get url for recording %s", recordingId.c_str());
 
   std::ostringstream dataStream;
-  dataStream << "recording_id=" << recordingId << "&stream_type=" << m_streamType;
+  dataStream << "recording_id=" << recordingId << "&stream_type=" << GetStreamTypeString();
 
   std::string jsonString = HttpPost(m_providerUrl + "/zapi/watch", dataStream.str());
 
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["success"].GetBool())
-  {
-    return "";
-  }
-
-  std::string url = GetStringOrEmpty(doc["stream"], "url");
-  XBMC->Log(LOG_DEBUG, "Got url: %s", url.c_str());
-  return url;
-
+  return GetStreamUrl(jsonString, additionalPropertiesOut);
 }
 
 bool ZatData::Record(int programId)
@@ -1404,7 +1421,7 @@ bool ZatData::IsRecordable(const EPG_TAG *tag)
   return ((current_time - tag->endTime) < recallSeconds);
 }
 
-std::string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
+std::string ZatData::GetEpgTagUrl(const EPG_TAG *tag, std::map<std::string, std::string> &additionalPropertiesOut)
 {
   std::ostringstream dataStream;
   ZatChannel channel = m_channelsByUid[tag->iUniqueChannelId];
@@ -1425,12 +1442,12 @@ std::string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
   if (m_recallEnabled)
   {
     dataStream << "cid=" << channel.cid << "&start=" << timeStart << "&end="
-        << timeEnd << "&stream_type=" << m_streamType;
+        << timeEnd << "&stream_type=" << GetStreamTypeString();
     jsonString = HttpPost(m_providerUrl + "/zapi/watch", dataStream.str());
   }
   else if (m_selectiveRecallEnabled)
   {
-    dataStream << "https_watch_urls=True" << "&stream_type=" << m_streamType;
+    dataStream << "https_watch_urls=True" << "&stream_type=" << GetStreamTypeString();
     jsonString = HttpPost(
         m_providerUrl + "/zapi/watch/selective_recall/" + channel.cid + "/"
             + std::to_string(tag->iUniqueBroadcastId), dataStream.str());
@@ -1440,15 +1457,7 @@ std::string ZatData::GetEpgTagUrl(const EPG_TAG *tag)
     return "";
   }
 
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["success"].GetBool())
-  {
-    return "";
-  }
-  std::string url = GetStringOrEmpty(doc["stream"], "url");
-  XBMC->Log(LOG_DEBUG, "Got url: %s", url.c_str());
-  return url;
+  return GetStreamUrl(jsonString, additionalPropertiesOut);
 }
 
 std::string ZatData::GetStringOrEmpty(const Value& jsonValue, const char* fieldName)

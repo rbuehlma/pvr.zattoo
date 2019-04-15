@@ -5,6 +5,7 @@
 #include <chrono>
 #include <thread>
 #include <utility>
+#include <map>
 
 using namespace ADDON;
 
@@ -34,7 +35,7 @@ std::string zatPassword;
 bool zatFavoritesOnly = false;
 bool zatAlternativeEpgService = false;
 bool zatAlternativeEpgServiceProvideSession = false;
-bool streamType = false;
+STREAM_TYPE streamType = DASH;
 std::string xmlTVFile;
 int provider = 0;
 int runningRequests = 0;
@@ -70,7 +71,7 @@ void ADDON_ReadSettings(void)
   }
   if (XBMC->GetSetting("streamtype", &intBuffer))
   {
-    streamType = static_cast<bool>(intBuffer);
+    streamType = static_cast<STREAM_TYPE>(intBuffer);
   }
   if (XBMC->GetSetting("xmlTVFile", &buffer))
   {
@@ -121,7 +122,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
   {
     XBMC->Log(LOG_DEBUG, "Create Zat");
     zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly,
-        zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType ? "hls" : "dash", provider, xmlTVFile);
+        zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType, provider, xmlTVFile);
     XBMC->Log(LOG_DEBUG, "Zat created");
     if (zat->Initialize() && zat->LoadChannels())
     {
@@ -193,10 +194,10 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   }
   if (name == "streamtype")
   {
-    int type = *static_cast<const int*>(settingValue);
+    const STREAM_TYPE type = *static_cast<const STREAM_TYPE*>(settingValue);
     if (type != streamType)
     {
-      streamType = static_cast<bool>(type);
+      streamType = type;
       return ADDON_STATUS_NEED_RESTART;
     }
   }
@@ -395,16 +396,44 @@ void setStreamProperty(PVR_NAMED_VALUE* properties, unsigned int* propertiesCoun
   *propertiesCount = (*propertiesCount) + 1;
 }
 
-void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, const std::string& url)
+std::string getManifestType() {
+  switch (streamType) {
+    case HLS:
+      return "hls";
+    default:
+      return "mpd";
+  }
+}
+
+std::string getMimeType() {
+  switch (streamType) {
+    case HLS:
+      return "application/x-mpegURL";
+    default:
+      return "application/xml+dash";
+  }
+}
+
+void setStreamProperties(
+    PVR_NAMED_VALUE* properties,
+    unsigned int* propertiesCount,
+    const std::string& url,
+    std::map<std::string, std::string> additionalProperties)
 {
   setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_STREAMURL, url);
   setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAMADDON, "inputstream.adaptive");
-  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_type", streamType ? "hls" : "mpd");
-  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_MIMETYPE, streamType ? "application/x-mpegURL" : "application/xml+dash");
+  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_type", getManifestType());
+  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_MIMETYPE, getMimeType());
 
-  if (!streamType)
+  if (streamType == DASH || streamType == DASH_WIDEVINE)
   {
     setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_update_parameter", "full");
+  }
+  
+  std::map<std::string, std::string>::iterator it;
+  for ( it = additionalProperties.begin(); it != additionalProperties.end(); it++ )
+  {
+    setStreamProperty(properties, propertiesCount, it->first, it->second);
   }
 }
 
@@ -412,12 +441,13 @@ PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel,
     PVR_NAMED_VALUE* properties, unsigned int* propertiesCount)
 {
   runningRequests++;
-	  std::string strUrl = zat->GetChannelStreamUrl(channel->iUniqueId);
+  std::map<std::string, std::string> additionalProperties;
+	std::string strUrl = zat->GetChannelStreamUrl(channel->iUniqueId, additionalProperties);
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
   {
     *propertiesCount = 0;
-    setStreamProperties(properties, propertiesCount, strUrl);
+    setStreamProperties(properties, propertiesCount, strUrl, additionalProperties);
     setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true");
     ret = PVR_ERROR_NO_ERROR;
   }
@@ -429,12 +459,13 @@ PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING* recording,
     PVR_NAMED_VALUE* properties, unsigned int* propertiesCount)
 {
   runningRequests++;
-  std::string strUrl = zat->GetRecordingStreamUrl(recording->strRecordingId);
+  std::map<std::string, std::string> additionalProperties;
+  std::string strUrl = zat->GetRecordingStreamUrl(recording->strRecordingId, additionalProperties);
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
   {
     *propertiesCount = 0;
-    setStreamProperties(properties, propertiesCount, strUrl);
+    setStreamProperties(properties, propertiesCount, strUrl, additionalProperties);
     ret = PVR_ERROR_NO_ERROR;
   }
   runningRequests--;
@@ -613,11 +644,12 @@ PVR_ERROR GetEPGTagStreamProperties(const EPG_TAG* tag,
 {
   runningRequests++;
   PVR_ERROR ret = PVR_ERROR_FAILED;
-  std::string strUrl = zat->GetEpgTagUrl(tag);
+  std::map<std::string, std::string> additionalProperties;
+  std::string strUrl = zat->GetEpgTagUrl(tag, additionalProperties);
   if (!strUrl.empty())
   {
     *iPropertiesCount = 0;
-    setStreamProperties(properties, iPropertiesCount, strUrl);
+    setStreamProperties(properties, iPropertiesCount, strUrl, additionalProperties);
     ret = PVR_ERROR_NO_ERROR;
   }
   runningRequests--;

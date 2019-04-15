@@ -44,14 +44,6 @@ msgctxt "#37111"
 msgid "Zattoo login failed!"
 msgstr ""
 
-msgctxt "#37108"
-msgid "dash"
-msgstr ""
-
-msgctxt "#37109"
-msgid "hls"
-msgstr ""
-
 msgctxt "#37110"
 msgid "Zattoo"
 msgstr ""
@@ -136,3 +128,14 @@ msgctxt "#37146"
 msgid "1&1 TV"
 msgstr ""
 
+msgctxt "#37180"
+msgid "dash"
+msgstr ""
+
+msgctxt "#37181"
+msgid "hls"
+msgstr ""
+
+msgctxt "#37182"
+msgid "dash_widevine"
+msgstr ""
