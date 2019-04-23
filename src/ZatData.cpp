@@ -883,7 +883,6 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     }
     tag.iParentalRating = 0; /* not supported */
     tag.iStarRating = 0; /* not supported */
-    tag.bNotify = false; /* not supported */
     tag.iSeriesNumber = 0; /* not supported */
     tag.iEpisodeNumber = 0; /* not supported */
     tag.iEpisodePartNumber = 0; /* not supported */
@@ -909,10 +908,10 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
 
 }
 
-void ZatData::GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart,
+void ZatData::GetEPGForChannel(int iChannelUid, time_t iStart,
     time_t iEnd)
 {
-  UpdateThread::LoadEpg(channel.iUniqueId, iStart, iEnd);
+  UpdateThread::LoadEpg(iChannelUid, iStart, iEnd);
 }
 
 void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
@@ -962,7 +961,6 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     tag.strIconPath = epgEntry.strIconPath.c_str();
     tag.iParentalRating = 0; /* not supported */
     tag.iStarRating = 0; /* not supported */
-    tag.bNotify = false; /* not supported */
     tag.iSeriesNumber = 0; /* not supported */
     tag.iEpisodeNumber = 0; /* not supported */
     tag.iEpisodePartNumber = 0; /* not supported */
