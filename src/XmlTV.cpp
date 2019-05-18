@@ -62,6 +62,7 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, unsigned int uniqueChannelI
     }
 
     XMLElement* subTitle = programme->FirstChildElement("sub-title");
+    XMLElement* description = programme->FirstChildElement("desc");
     XMLElement* category = programme->FirstChildElement("category");
     tag.startTime = StringToTime(start);
     tag.endTime = StringToTime(stop);
@@ -70,9 +71,14 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, unsigned int uniqueChannelI
     tag.iUniqueChannelId = uniqueChannelId;
     if (subTitle)
     {
-      const char *description = subTitle->GetText();
-      tag.strPlotOutline = description;
-      tag.strPlot = description;
+      const char *sub = subTitle->GetText();
+      tag.strEpisodeName = sub;
+    }
+    if (description)
+    {
+      const char *desc = description->GetText();
+      tag.strPlot = desc;
+      tag.strPlotOutline = desc;
     }
     if (category)
     {
