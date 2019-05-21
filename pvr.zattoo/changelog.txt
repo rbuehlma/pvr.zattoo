@@ -1,7 +1,13 @@
+v19.0.2
+ - Improve loading xmltv file
 v19.0.1
  - Load description from xmltv file
 v19.0.0
  - Update to PVR addon API v6.0.0
+v18.1.2
+ - Improve loading xmltv file
+v18.1.1
+ - Load description from xmltv file
 v18.1.0
  - Support DASH widevine streams
 v18.0.68
