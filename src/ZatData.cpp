@@ -919,7 +919,7 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
 {
   ZatChannel *zatChannel = FindChannel(uniqueChannelId);
 
-  if (m_xmlTV && m_xmlTV->GetEPGForChannel(zatChannel->cid, uniqueChannelId))
+  if (m_xmlTV && m_xmlTV->GetEPGForChannel(zatChannel->cid, m_channelsByCid))
   {
     return;
   }

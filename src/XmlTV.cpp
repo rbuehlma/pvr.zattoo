@@ -32,30 +32,41 @@ XmlTV::~XmlTV()
   m_xmlFile = "";
 }
 
-bool XmlTV::GetEPGForChannel(const std::string &cid, unsigned int uniqueChannelId)
+bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatChannel> &channelsByCid)
 {
   if (!m_xmlFile.empty() && !XBMC->FileExists(m_xmlFile.c_str(), true))
   {
     return false;
   }
   
-  if (!isUpdateDue()) {
+  if (!m_mutex.Lock())
+  {
+    XBMC->Log(LOG_ERROR,
+        "XmlTV::GetEPGForChannel : Could not lock mutex");
     return false;
   }
+  
+  if (!isUpdateDue()) {
+    m_mutex.Unlock();
+    return m_loadedChannels.find(cid) != m_loadedChannels.end();
+  }
+  
+  m_loadedChannels.clear();
 
   XMLDocument doc;
   if (doc.LoadFile(m_xmlFile.c_str()) != XML_SUCCESS)
   {
     XBMC->Log(LOG_ERROR, "XMLTV: failed to parse xml-file.");
+    m_mutex.Unlock();
     return false;
   }
   XMLElement* tv = doc.FirstChildElement("tv");
   if (!tv)
   {
     XBMC->Log(LOG_ERROR, "XMLTV: no 'tv' section in xml-file.");
+    m_mutex.Unlock();
     return false;
   }
-  bool result = false;
   XMLElement* programme = tv->FirstChildElement("programme");
   while (programme)
   {
@@ -67,12 +78,21 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, unsigned int uniqueChannelI
     const char *stop = programme->Attribute("stop");
     const char *channel = programme->Attribute("channel");
 
-    if (!title || !start || !stop || !channel || strcmp(channel, cid.c_str()))
+    if (!title || !start || !stop || !channel)
     {
       programme = programme->NextSiblingElement("programme");
       continue;
     }
-
+    
+    m_loadedChannels.insert(channel);
+    
+    auto channelIterator = channelsByCid.find(channel);
+    if (channelIterator == channelsByCid.end()) {
+      programme = programme->NextSiblingElement("programme");
+      continue;      
+    }
+    ZatChannel zatChannel = channelIterator->second;
+    
     XMLElement* subTitle = programme->FirstChildElement("sub-title");
     XMLElement* description = programme->FirstChildElement("desc");
     XMLElement* category = programme->FirstChildElement("category");
@@ -80,7 +100,7 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, unsigned int uniqueChannelI
     tag.endTime = StringToTime(stop);
     tag.iUniqueBroadcastId = tag.startTime;
     tag.strTitle = title->GetText();
-    tag.iUniqueChannelId = uniqueChannelId;
+    tag.iUniqueChannelId = zatChannel.iUniqueId;
     if (subTitle)
     {
       const char *sub = subTitle->GetText();
@@ -120,7 +140,12 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, unsigned int uniqueChannelI
       XMLElement* valuteItem = ratingItem->FirstChildElement("value");
       if (valuteItem != nullptr) {
         std::string ratingString = valuteItem->GetText();
-        tag.iParentalRating  = std::stoi(ratingString);
+        XBMC->Log(LOG_ERROR, "Rating: %s", ratingString.c_str());
+        try {
+          tag.iParentalRating  = std::stoi(ratingString.c_str());
+        } catch (std::invalid_argument& e) {
+          // ignore
+        }
       }
     }
     
@@ -138,13 +163,13 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, unsigned int uniqueChannelI
       }
     }
 
-    result = true;
     PVR->EpgEventStateChange(&tag, EPG_EVENT_CREATED);
 
     programme = programme->NextSiblingElement("programme");
 
   }
-  return result;
+  m_mutex.Unlock();
+  return true;
 
 }
 

@@ -11,6 +11,7 @@
 #include <p8-platform/threads/mutex.h>
 #include "rapidjson/document.h"
 #include "XmlTV.h"
+#include "ZatChannel.h"
 
 enum STREAM_TYPE: int
 {
@@ -34,17 +35,6 @@ struct PVRIptvEpgEntry
   std::string strPlot;
   std::string strIconPath;
   std::string strGenreString;
-};
-
-struct ZatChannel
-{
-  int iUniqueId;
-  int iChannelNumber;
-  int selectiveRecallSeconds;
-  bool recordingEnabled;
-  std::string name;
-  std::string strLogoPath;
-  std::string cid;
 };
 
 struct ZatRecordingData
