@@ -43,6 +43,7 @@ set(ZATTOO_HEADERS
 		src/UpdateThread.h
 		src/XmlTV.h
 		src/Utils.h
+		src/ZatChannel.h
 		src/ZatData.h
 		src/categories.h
 		src/client.h
