@@ -1,3 +1,5 @@
+v19.0.4
+ - Fallback to country code if service region country is missing
 v19.0.3
  - Fix loading xmltv data
 v19.0.2
@@ -6,6 +8,8 @@ v19.0.1
  - Load description from xmltv file
 v19.0.0
  - Update to PVR addon API v6.0.0
+v18.1.4
+ - Fallback to country code if service region country is missing
 v18.1.3
  - Fix loading xmltv data
 v18.1.2

@@ -844,8 +844,9 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
   ZatChannel *zatChannel = FindChannel(uniqueChannelId);
   std::string cid = zatChannel->cid;
   std::ostringstream urlStream;
+  std::string country = m_serviceRegionCountry.empty() ? m_countryCode : m_serviceRegionCountry;
   urlStream << "https://zattoo.buehlmann.net/epg/api/Epg/"
-      << m_serviceRegionCountry << "/" << m_powerHash << "/" << cid << "/" << iStart
+      << country << "/" << m_powerHash << "/" << cid << "/" << iStart
       << "/" << iEnd;
   std::string jsonString = HttpGetCached(urlStream.str(), 3600, user_agent);
   Document doc;
