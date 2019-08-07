@@ -1,3 +1,5 @@
+v19.1.0
+ - Update to GUI addon API v5.14.0
 v19.0.4
  - Fallback to country code if service region country is missing
 v19.0.3
