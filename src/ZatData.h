@@ -148,4 +148,5 @@ private:
   std::string GetImageUrl(const std::string& imageToken);
   std::string GetStreamTypeString();
   std::string GetStreamUrl(std::string& jsonString, std::map<std::string, std::string>& additionalPropertiesOut);
+  static P8PLATFORM::CMutex sendEpgToKodiMutex;
 };
