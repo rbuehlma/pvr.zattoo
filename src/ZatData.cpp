@@ -26,6 +26,7 @@ const char data_file[] = "special://profile/addon_data/pvr.zattoo/data.json";
 static const std::string user_agent = std::string("Kodi/")
     + std::string(STR(KODI_VERSION)) + std::string(" pvr.zattoo/")
     + std::string(STR(ZATTOO_VERSION)) + std::string(" (Kodi PVR addon)");
+P8PLATFORM::CMutex ZatData::sendEpgToKodiMutex;
 
 std::string ZatData::HttpGetCached(const std::string& url, time_t cacheDuration,
     const std::string& userAgent)
@@ -855,6 +856,10 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
   {
     return;
   }
+  if (!sendEpgToKodiMutex.Lock()) {
+    XBMC->Log(LOG_NOTICE, "Failed to lock sendEpgToKodiMutex.");
+    return;
+  }
   for (Value::ConstValueIterator itr = doc.Begin(); itr != doc.End(); ++itr)
   {
     const Value& program = (*itr);
@@ -904,9 +909,9 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
       tag.iGenreSubType = 0; /* not supported */
       tag.strGenreDescription = genreStr.c_str();
     }
-
     PVR->EpgEventStateChange(&tag, EPG_EVENT_CREATED);
   }
+  sendEpgToKodiMutex.Unlock();
 
 }
 
@@ -938,6 +943,10 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
   {
     XBMC->Log(LOG_NOTICE, "Loading epg faild for channel '%s' from %lu to %lu",
         zatChannel->name.c_str(), iStart, iEnd);
+    return;
+  }
+  if (!sendEpgToKodiMutex.Lock()) {
+    XBMC->Log(LOG_NOTICE, "Failed to lock sendEpgToKodiMutex.");
     return;
   }
   for (auto const &entry : *channelEpgCache)
@@ -982,9 +991,9 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
       tag.iGenreSubType = 0; /* not supported */
       tag.strGenreDescription = epgEntry.strGenreString.c_str();
     }
-
     PVR->EpgEventStateChange(&tag, EPG_EVENT_CREATED);
   }
+  sendEpgToKodiMutex.Unlock();
   delete channelEpgCache;
 }
 
