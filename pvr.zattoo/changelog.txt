@@ -1,3 +1,5 @@
+v18.1.5
+ - Serialize sending EPG to Kodi.
 v18.1.4
  - Fallback to country code if service region country is missing
 v18.1.3
