@@ -808,15 +808,14 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId, std::map<std::string, std
   XBMC->Log(LOG_DEBUG, "Get live url for channel %s", channel->cid.c_str());
 
   std::ostringstream dataStream;
-  dataStream << "cid=" << channel->cid << "&stream_type=" << GetStreamTypeString()
-      << "&format=json";
+  dataStream << "enable_eac3=true&stream_type=" << GetStreamTypeString() << "&format=json";
 
   if (m_recallEnabled)
   {
     dataStream << "&timeshift=" << m_maxRecallSeconds;
   }
 
-  std::string jsonString = HttpPost(m_providerUrl + "/zapi/watch", dataStream.str());
+  std::string jsonString = HttpPost(m_providerUrl + "/zapi/watch/live/" + channel->cid, dataStream.str());
   
   return GetStreamUrl(jsonString, additionalPropertiesOut);
 }
@@ -1342,7 +1341,7 @@ std::string ZatData::GetRecordingStreamUrl(const std::string& recordingId, std::
   XBMC->Log(LOG_DEBUG, "Get url for recording %s", recordingId.c_str());
 
   std::ostringstream dataStream;
-  dataStream << "recording_id=" << recordingId << "&stream_type=" << GetStreamTypeString();
+  dataStream << "recording_id=" << recordingId << "&enable_eac3=true&stream_type=" << GetStreamTypeString();
 
   std::string jsonString = HttpPost(m_providerUrl + "/zapi/watch", dataStream.str());
 
@@ -1433,29 +1432,19 @@ std::string ZatData::GetEpgTagUrl(const EPG_TAG *tag, std::map<std::string, std:
 {
   std::ostringstream dataStream;
   ZatChannel channel = m_channelsByUid[tag->iUniqueChannelId];
-  char timeStart[sizeof "2011-10-08T07:07:09Z"];
-  struct tm tm
-  { };
-  gmtime_r(&tag->startTime, &tm);
-  strftime(timeStart, sizeof timeStart, "%FT%TZ", &tm);
-  char timeEnd[sizeof "2011-10-08T07:07:09Z"];
-  gmtime_r(&tag->endTime, &tm);
-  strftime(timeEnd, sizeof timeEnd, "%FT%TZ", &tm);
 
   std::string jsonString;
 
-  XBMC->Log(LOG_DEBUG, "Get timeshift url for channel %s at %s",
-      channel.cid.c_str(), timeStart);
-
+  XBMC->Log(LOG_DEBUG, "Get timeshift url for channel %s and program %i", channel.cid.c_str(), tag->iUniqueBroadcastId);
+  
   if (m_recallEnabled)
   {
-    dataStream << "cid=" << channel.cid << "&start=" << timeStart << "&end="
-        << timeEnd << "&stream_type=" << GetStreamTypeString();
-    jsonString = HttpPost(m_providerUrl + "/zapi/watch", dataStream.str());
+    dataStream << "enable_eac3=true&stream_type=" << GetStreamTypeString();
+    jsonString = HttpPost(m_providerUrl + "/zapi/watch/recall/" + channel.cid + "/" + std::to_string(tag->iUniqueBroadcastId), dataStream.str());
   }
   else if (m_selectiveRecallEnabled)
   {
-    dataStream << "https_watch_urls=True" << "&stream_type=" << GetStreamTypeString();
+    dataStream << "https_watch_urls=True" << "&enable_eac3=true&stream_type=" << GetStreamTypeString();
     jsonString = HttpPost(
         m_providerUrl + "/zapi/watch/selective_recall/" + channel.cid + "/"
             + std::to_string(tag->iUniqueBroadcastId), dataStream.str());

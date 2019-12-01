@@ -1,3 +1,5 @@
+v19.2.3
+ - Support Dolby
 v19.2.2
  - Serialize sending EPG to Kodi.
 v19.2.1
@@ -16,6 +18,8 @@ v19.0.1
  - Load description from xmltv file
 v19.0.0
  - Update to PVR addon API v6.0.0
+v18.1.6
+ - Support Dolby
 v18.1.5
  - Serialize sending EPG to Kodi.
 v18.1.4
