@@ -33,6 +33,7 @@ CHelper_libXBMC_pvr *PVR = nullptr;
 std::string zatUsername;
 std::string zatPassword;
 bool zatFavoritesOnly = false;
+bool zatEnableDolby = true;
 bool zatAlternativeEpgService = false;
 bool zatAlternativeEpgServiceProvideSession = false;
 STREAM_TYPE streamType = DASH;
@@ -60,6 +61,10 @@ void ADDON_ReadSettings(void)
   if (XBMC->GetSetting("favoritesonly", &boolBuffer))
   {
     zatFavoritesOnly = boolBuffer;
+  }
+  if (XBMC->GetSetting("enableDolby", &boolBuffer))
+  {
+    zatEnableDolby = boolBuffer;
   }
   if (XBMC->GetSetting("alternativeepgservice_https", &boolBuffer))
   {
@@ -122,7 +127,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
   {
     XBMC->Log(LOG_DEBUG, "Create Zat");
     zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly,
-        zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType, provider, xmlTVFile);
+        zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType, zatEnableDolby, provider, xmlTVFile);
     XBMC->Log(LOG_DEBUG, "Zat created");
     if (zat->Initialize() && zat->LoadChannels())
     {
