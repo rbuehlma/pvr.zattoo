@@ -39,6 +39,11 @@
           </constraints>
           <control type="spinner" format="integer" />
 		</setting>
+		<setting id="enableDolby" type="boolean" label="37108">
+          <level>0</level>
+          <default>true</default>
+          <control type="toggle" />
+        </setting>
         <setting id="provider" type="integer" label="37106">
           <level>0</level>
           <default>0</default>

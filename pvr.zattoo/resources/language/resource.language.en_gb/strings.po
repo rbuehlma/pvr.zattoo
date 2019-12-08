@@ -40,6 +40,10 @@ msgctxt "#37107"
 msgid "XMLTV-File"
 msgstr "The XMLTV-File to provide custom EPG."
 
+msgctxt "#37108"
+msgid "Enable Dolby"
+msgstr "Enable support for dolby"
+
 msgctxt "#37111"
 msgid "Zattoo login failed!"
 msgstr ""

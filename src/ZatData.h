@@ -61,7 +61,7 @@ class ZatData
 {
 public:
   ZatData(const std::string& username, const std::string& password, bool favoritesOnly,
-      bool m_alternativeEpgService, const STREAM_TYPE& streamType, int provider,
+      bool m_alternativeEpgService, const STREAM_TYPE& streamType, bool enableDolby, int provider,
       const std::string& xmlTVFile);
   ~ZatData();
   bool Initialize();
@@ -99,6 +99,7 @@ public:
 private:
   bool m_alternativeEpgService;
   bool m_favoritesOnly;
+  bool m_enableDolby;
   STREAM_TYPE m_streamType;
   std::string m_username;
   std::string m_password;
@@ -149,4 +150,5 @@ private:
   std::string GetStreamTypeString();
   std::string GetStreamUrl(std::string& jsonString, std::map<std::string, std::string>& additionalPropertiesOut);
   static P8PLATFORM::CMutex sendEpgToKodiMutex;
+  std::string GetStreamParameters();
 };
