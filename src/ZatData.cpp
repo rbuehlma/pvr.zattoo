@@ -1131,7 +1131,7 @@ int ZatData::GetRecordingLastPlayedPosition(const PVR_RECORDING &recording)
 
 void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
 {
-  std::string jsonString = HttpGetCached(m_providerUrl + "/zapi/playlist", 60);
+  std::string jsonString = HttpGet(m_providerUrl + "/zapi/playlist");
 
   Document doc;
   doc.Parse(jsonString.c_str());
