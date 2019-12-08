@@ -1,3 +1,6 @@
+v18.1.7
+ - Add option to disable Dolby
+ - Improve update of recordings and timer
 v18.1.6
  - Support Dolby
 v18.1.5
