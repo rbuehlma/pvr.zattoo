@@ -58,7 +58,7 @@ v18.0.65
 v18.0.64
  - Set genre before transferring timer
 v18.0.63
- - Add 1&1 TV as reseller
+ - Add 1&amp;1 TV as reseller
 v18.0.62
  - Add swb TV as reseller
 v18.0.61
@@ -71,7 +71,7 @@ v18.0.59
 v18.0.58
  - Fix uuid handling
 v18.0.57
- - Cleanup & improvements (thanks to Currywurst)
+ - Cleanup &amp; improvements (thanks to Currywurst)
 v18.0.56
  - Fix segmentation fault
  - Reduce log on level notice
@@ -284,7 +284,7 @@ v0.1.18
  - Improve login handling
  - Re-init session if we get errors on loading pages
 v0.1.17
- - Update timers & recordings every 10 minutes or if a timer has reacht its start time
+ - Update timers &amp; recordings every 10 minutes or if a timer has reacht its start time
 v0.1.16
  - Fix another memory leak
  - Add option to only load favorites
