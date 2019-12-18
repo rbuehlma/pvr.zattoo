@@ -96,7 +96,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
     return ADDON_STATUS_UNKNOWN;
   }
 
-    auto *pvrprops = static_cast<PVR_PROPERTIES*>(props);
+  auto *pvrprops = static_cast<PVR_PROPERTIES*>(props);
 
   XBMC = new CHelper_libXBMC_addon;
   if (!XBMC->RegisterMe(hdl))
@@ -123,20 +123,24 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
   zatUsername = "";
   zatPassword = "";
   ADDON_ReadSettings();
-  if (!zatUsername.empty() && !zatPassword.empty())
+  
+  if (zatUsername.empty() || zatPassword.empty()) {
+    XBMC->Log(LOG_NOTICE, "Username or password not set.");
+    XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30200));
+    return m_CurStatus;
+  }
+  
+  XBMC->Log(LOG_DEBUG, "Create Zat");
+  zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly,
+      zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType, zatEnableDolby, provider, xmlTVFile);
+  XBMC->Log(LOG_DEBUG, "Zat created");
+  if (zat->Initialize() && zat->LoadChannels())
   {
-    XBMC->Log(LOG_DEBUG, "Create Zat");
-    zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly,
-        zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType, zatEnableDolby, provider, xmlTVFile);
-    XBMC->Log(LOG_DEBUG, "Zat created");
-    if (zat->Initialize() && zat->LoadChannels())
-    {
-      m_CurStatus = ADDON_STATUS_OK;
-    }
-    else
-    {
-      XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(37111));
-    }
+    m_CurStatus = ADDON_STATUS_OK;
+  }
+  else
+  {
+    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(37111));
   }
 
   return m_CurStatus;
