@@ -557,10 +557,6 @@ ZatData::ZatData(const std::string& u, const std::string& p, bool favoritesOnly,
     m_password(p)
 {
   XBMC->Log(LOG_NOTICE, "Using useragent: %s", user_agent.c_str());
-  for (int i = 0; i < 5; ++i)
-  {
-    m_updateThreads.emplace_back(new UpdateThread(i, this));
-  }
 
   switch (provider)
   {
@@ -653,7 +649,16 @@ bool ZatData::Initialize()
   SendHello(uuid);
   //Ignore if hello fails
 
-  return InitSession();
+  if (!InitSession()) {
+    return false;
+  }
+  
+  for (int i = 0; i < 3; ++i)
+  {
+    m_updateThreads.emplace_back(new UpdateThread(i, this));
+  }
+
+  return true;
 }
 
 void ZatData::GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)

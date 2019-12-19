@@ -12,134 +12,139 @@ msgstr ""
 "Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgctxt "#37101"
+msgctxt "#30000"
 msgid "Username"
 msgstr ""
 
-msgctxt "#37102"
+msgctxt "#30001"
 msgid "Password"
 msgstr ""
 
-msgctxt "#37103"
+msgctxt "#30002"
 msgid "Favourite channels only"
 msgstr "Load only channels which are in the favourite list"
 
-msgctxt "#37104"
-msgid "Use enhanced EPG service"
-msgstr "This is an external service to gather additional EPG information and speed up EPG loading."
-
-msgctxt "#37105"
+msgctxt "#30003"
 msgid "Stream type"
 msgstr "The stream type"
 
-msgctxt "#37106"
-msgid "Provider"
-msgstr "The provider of the Zattoo service"
-
-msgctxt "#37107"
-msgid "XMLTV-File"
-msgstr "The XMLTV-File to provide custom EPG."
-
-msgctxt "#37108"
-msgid "Enable Dolby"
-msgstr "Enable support for dolby"
-
-msgctxt "#37111"
-msgid "Zattoo login failed!"
-msgstr ""
-
-msgctxt "#37110"
-msgid "Zattoo"
-msgstr ""
-
-msgctxt "#37114"
-msgid "General"
-msgstr ""
-
-msgctxt "#37112"
-msgid "External EPG service"
-msgstr ""
-
-msgctxt "#37113"
-msgid "Allow providing Zattoo session to service"
-msgstr ""
-
-msgctxt "#37130"
-msgid "Zattoo"
-msgstr ""
-
-msgctxt "#37131"
-msgid "Netplus"
-msgstr ""
-
-msgctxt "#37132"
-msgid "Quickline"
-msgstr ""
-
-msgctxt "#37133"
-msgid "m-net"
-msgstr ""
-
-msgctxt "#37134"
-msgid "WALY.TV"
-msgstr ""
-
-msgctxt "#37135"
-msgid "meinewelt.cc"
-msgstr ""
-
-msgctxt "#37136"
-msgid "BBV-tv.net"
-msgstr ""
-
-msgctxt "#37137"
-msgid "VTXtv.ch"
-msgstr ""
-
-msgctxt "#37138"
-msgid "myvisiontv.ch"
-msgstr ""
-
-msgctxt "#37139"
-msgid "GLATTvision.ch"
-msgstr ""
-
-msgctxt "#37140"
-msgid "SAKtv.ch"
-msgstr ""
-
-msgctxt "#37141"
-msgid "NetCologne"
-msgstr ""
-
-msgctxt "#37142"
-msgid "EWE.de"
-msgstr ""
-
-msgctxt "#37143"
-msgid "quantum TV"
-msgstr ""
-
-msgctxt "#37144"
-msgid "Salt.ch"
-msgstr ""
-
-msgctxt "#37145"
-msgid "swb TV"
-msgstr ""
-
-msgctxt "#37146"
-msgid "1&1 TV"
-msgstr ""
-
-msgctxt "#37180"
+msgctxt "#30004"
 msgid "dash"
 msgstr ""
 
-msgctxt "#37181"
+msgctxt "#30005"
 msgid "hls"
 msgstr ""
 
-msgctxt "#37182"
+msgctxt "#30006"
 msgid "dash_widevine"
 msgstr ""
+
+msgctxt "#30010"
+msgid "Enable Dolby"
+msgstr "Enable support for dolby"
+
+msgctxt "#30011"
+msgid "XMLTV-File"
+msgstr "The XMLTV-File to provide custom EPG."
+
+msgctxt "#30012"
+msgid "Allow providing Zattoo session to service"
+msgstr "Allow providing Zattoo session to service"
+
+msgctxt "#30013"
+msgid "Use enhanced EPG service"
+msgstr "This is an external service to gather additional EPG information and speed up EPG loading."
+
+msgctxt "#30014"
+msgid "Zattoo"
+msgstr ""
+
+msgctxt "#30015"
+msgid "General"
+msgstr ""
+
+msgctxt "#30016"
+msgid "External EPG service"
+msgstr ""
+
+msgctxt "#30099"
+msgid "Provider"
+msgstr "The provider of the Zattoo service"
+
+msgctxt "#30100"
+msgid "Zattoo"
+msgstr ""
+
+msgctxt "#30101"
+msgid "Netplus"
+msgstr ""
+
+msgctxt "#30102"
+msgid "Quickline"
+msgstr ""
+
+msgctxt "#30103"
+msgid "m-net"
+msgstr ""
+
+msgctxt "#30104"
+msgid "WALY.TV"
+msgstr ""
+
+msgctxt "#30105"
+msgid "meinewelt.cc"
+msgstr ""
+
+msgctxt "#30106"
+msgid "BBV-tv.net"
+msgstr ""
+
+msgctxt "#30107"
+msgid "VTXtv.ch"
+msgstr ""
+
+msgctxt "#30108"
+msgid "myvisiontv.ch"
+msgstr ""
+
+msgctxt "#30109"
+msgid "GLATTvision.ch"
+msgstr ""
+
+msgctxt "#30110"
+msgid "SAKtv.ch"
+msgstr ""
+
+msgctxt "#30111"
+msgid "NetCologne"
+msgstr ""
+
+msgctxt "#30112"
+msgid "EWE.de"
+msgstr ""
+
+msgctxt "#30113"
+msgid "quantum TV"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Salt.ch"
+msgstr ""
+
+msgctxt "#30115"
+msgid "swb TV"
+msgstr ""
+
+msgctxt "#30116"
+msgid "1&1 TV"
+msgstr ""
+
+msgctxt "#30200"
+msgid "Missing username or password"
+msgstr "Missing username or password"
+
+msgctxt "#30201"
+msgid "Login failed!"
+msgstr "Login failed!"
+

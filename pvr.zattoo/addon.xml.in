@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.2.6"
+       version="19.2.7"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -26,6 +26,10 @@
     <disclaimer lang="en_US">The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects..</disclaimer>
     <platform>@PLATFORM@</platform>
     <news>
+v19.2.7
+ - Fix translations
+ - Reduce number of update threads
+ - Init update threads after login
 v19.2.6
  - Fix changelog in xml
 v19.2.5
@@ -54,6 +58,10 @@ v19.0.1
  - Load description from xmltv file
 v19.0.0
  - Update to PVR addon API v6.0.0
+v18.1.10
+ - Fix translations
+ - Reduce number of update threads
+ - Init update threads after login
 v18.1.9
  - Fix changelog in xml
 v18.1.8

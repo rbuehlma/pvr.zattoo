@@ -2,9 +2,9 @@
 <settings version="1">
   <section id="pvr.zattoo">
     <!-- general -->
-    <category id="general" label="37110">
-      <group id="1" label="37114">
-        <setting id="username" type="string" label="37101">
+    <category id="general" label="30014">
+      <group id="1" label="30015">
+        <setting id="username" type="string" label="30000">
           <level>0</level>
           <default></default>
           <constraints>
@@ -12,7 +12,7 @@
           </constraints>
           <control type="edit" format="string" />
         </setting>
-        <setting id="password" type="string" label="37102">
+        <setting id="password" type="string" label="30001">
           <level>0</level>
           <default></default>
           <constraints>
@@ -22,55 +22,55 @@
             <hidden>true</hidden>
           </control>
         </setting>
-        <setting id="favoritesonly" type="boolean" label="37103">
+        <setting id="favoritesonly" type="boolean" label="30002">
           <level>0</level>
           <default>false</default>
           <control type="toggle" />
         </setting>
-        <setting id="streamtype" type="integer" label="37105">
+        <setting id="streamtype" type="integer" label="30003">
           <level>0</level>
           <default>0</default>
           <constraints>
             <options>
-              <option label="37180">0</option> <!-- dash -->
-              <option label="37181">1</option> <!-- hls -->
-              <option label="37182">2</option> <!-- dash_widevine -->
+              <option label="30004">0</option> <!-- dash -->
+              <option label="30005">1</option> <!-- hls -->
+              <option label="30006">2</option> <!-- dash_widevine -->
             </options>
           </constraints>
           <control type="spinner" format="integer" />
 		</setting>
-		<setting id="enableDolby" type="boolean" label="37108">
+		<setting id="enableDolby" type="boolean" label="30010">
           <level>0</level>
           <default>true</default>
           <control type="toggle" />
         </setting>
-        <setting id="provider" type="integer" label="37106">
+        <setting id="provider" type="integer" label="30099">
           <level>0</level>
           <default>0</default>
           <constraints>
             <options>
-              <option label="37130">0</option> <!-- Zattoo -->
-              <option label="37131">1</option> <!-- Netplus -->
-              <option label="37132">2</option> <!-- Quickline -->
-              <option label="37133">3</option> <!-- m-net -->
-              <option label="37134">4</option> <!-- WALY.TV -->
-              <option label="37135">5</option> <!-- meinewelt.cc -->
-              <option label="37136">6</option> <!-- BBV-tv.net -->
-              <option label="37137">7</option> <!-- VTXtv.ch -->
-              <option label="37138">8</option> <!-- myvisiontv.ch -->
-              <option label="37139">9</option> <!-- GLATTvision.ch -->
-              <option label="37140">10</option> <!-- SAKtv.ch -->
-              <option label="37141">11</option> <!-- NetCologne -->
-              <option label="37142">12</option> <!-- EWE.de -->
-              <option label="37143">13</option> <!-- quantum TV -->
-              <option label="37144">14</option> <!-- Salt.ch -->
-              <option label="37145">15</option> <!-- swb TV -->
-              <option label="37146">16</option> <!-- 1&1 TV -->
+              <option label="30100">0</option> <!-- Zattoo -->
+              <option label="30101">1</option> <!-- Netplus -->
+              <option label="30102">2</option> <!-- Quickline -->
+              <option label="30103">3</option> <!-- m-net -->
+              <option label="30104">4</option> <!-- WALY.TV -->
+              <option label="30105">5</option> <!-- meinewelt.cc -->
+              <option label="30106">6</option> <!-- BBV-tv.net -->
+              <option label="30107">7</option> <!-- VTXtv.ch -->
+              <option label="30108">8</option> <!-- myvisiontv.ch -->
+              <option label="30109">9</option> <!-- GLATTvision.ch -->
+              <option label="30110">10</option> <!-- SAKtv.ch -->
+              <option label="30111">11</option> <!-- NetCologne -->
+              <option label="30112">12</option> <!-- EWE.de -->
+              <option label="30113">13</option> <!-- quantum TV -->
+              <option label="30114">14</option> <!-- Salt.ch -->
+              <option label="30115">15</option> <!-- swb TV -->
+              <option label="30116">16</option> <!-- 1&1 TV -->
             </options>
           </constraints>
           <control type="list" format="integer" />
 		</setting>
-		<setting id="xmlTVFile" type="string" label="37107">
+		<setting id="xmlTVFile" type="string" label="30011">
           <level>0</level>
           <default></default>
           <constraints>
@@ -79,13 +79,13 @@
           <control type="edit" format="string" />
         </setting>
       </group>
-      <group id="2" label="37112">
-        <setting id="provide_zattoo_session" type="boolean" label="37113">
+      <group id="2" label="30016">
+        <setting id="provide_zattoo_session" type="boolean" label="30012">
           <level>0</level>
           <default>false</default>
           <control type="toggle" />
         </setting>
-        <setting id="alternativeepgservice_https" type="boolean" label="37104">
+        <setting id="alternativeepgservice_https" type="boolean" label="30013">
           <level>0</level>
           <default>false</default>
           <control type="toggle" />
