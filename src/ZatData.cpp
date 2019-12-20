@@ -854,7 +854,7 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
   urlStream << "https://zattoo.buehlmann.net/epg/api/Epg/"
       << country << "/" << m_powerHash << "/" << cid << "/" << iStart
       << "/" << iEnd;
-  std::string jsonString = HttpGetCached(urlStream.str(), 3600, user_agent);
+  std::string jsonString = HttpGetCached(urlStream.str(), 86400, user_agent);
   Document doc;
   doc.Parse(jsonString.c_str());
   if (doc.GetParseError())
@@ -923,6 +923,10 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
 void ZatData::GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart,
     time_t iEnd)
 {
+  // Aligning the start- and end times improves caching
+  time_t aligendStart = iStart - (iStart % 86400);
+  time_t alignedEnd = iEnd - (iEnd % 86400) + 86400;
+
   UpdateThread::LoadEpg(channel.iUniqueId, iStart, iEnd);
 }
 
@@ -1018,7 +1022,7 @@ std::map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd,
         << m_powerHash << "?end=" << tempEnd << "&start=" << tempStart
         << "&format=json";
 
-    std::string jsonString = HttpGetCached(urlStream.str(), 3600);
+    std::string jsonString = HttpGetCached(urlStream.str(), 86400);
 
     Document doc;
     doc.Parse(jsonString.c_str());
