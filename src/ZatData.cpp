@@ -927,7 +927,7 @@ void ZatData::GetEPGForChannel(const PVR_CHANNEL &channel, time_t iStart,
   time_t aligendStart = iStart - (iStart % 86400);
   time_t alignedEnd = iEnd - (iEnd % 86400) + 86400;
 
-  UpdateThread::LoadEpg(channel.iUniqueId, iStart, iEnd);
+  UpdateThread::LoadEpg(channel.iUniqueId, aligendStart, alignedEnd);
 }
 
 void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
