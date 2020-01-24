@@ -548,13 +548,14 @@ int ZatData::GetChannelGroupsAmount()
 
 ZatData::ZatData(const std::string& u, const std::string& p, bool favoritesOnly,
     bool alternativeEpgService, const STREAM_TYPE& streamType,  bool enableDolby, int provider,
-    const std::string& xmlTVFile) :
+    const std::string& xmlTVFile, const std::string& parentalPin) :
     m_alternativeEpgService(alternativeEpgService),
     m_favoritesOnly(favoritesOnly),
     m_enableDolby(enableDolby),
     m_streamType(streamType),
     m_username(u),
-    m_password(p)
+    m_password(p),
+    m_parentalPin(parentalPin)
 {
   XBMC->Log(LOG_NOTICE, "Using useragent: %s", user_agent.c_str());
 
@@ -1340,6 +1341,11 @@ int ZatData::GetRecordingsAmount(bool future)
 std::string ZatData::GetStreamParameters() {
   std::string params = m_enableDolby ? "&enable_eac3=true" : "";
   params += "&stream_type=" + GetStreamTypeString();
+  
+  if (!m_parentalPin.empty()) {
+    params += "&youth_protection_pin=" + m_parentalPin;
+  }
+  
   return params;
 }
 

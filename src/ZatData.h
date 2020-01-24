@@ -62,7 +62,7 @@ class ZatData
 public:
   ZatData(const std::string& username, const std::string& password, bool favoritesOnly,
       bool m_alternativeEpgService, const STREAM_TYPE& streamType, bool enableDolby, int provider,
-      const std::string& xmlTVFile);
+      const std::string& xmlTVFile, const std::string& parentalPin);
   ~ZatData();
   bool Initialize();
   bool LoadChannels();
@@ -122,6 +122,7 @@ private:
   Categories m_categories;
   std::string m_providerUrl;
   bool m_recordingsLoaded = false;
+  std::string m_parentalPin;
   XmlTV *m_xmlTV = nullptr;
 
   bool LoadAppId();
