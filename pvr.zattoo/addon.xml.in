@@ -28,6 +28,7 @@
     <news>
 v18.1.12
  - Add support for parental pin
+ - Use selective recall flag by programme
 v18.1.11
  - Improve caching of epg data
 v18.1.10

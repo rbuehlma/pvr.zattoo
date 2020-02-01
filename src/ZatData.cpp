@@ -23,6 +23,7 @@ using namespace rapidjson;
 
 constexpr char app_token_file[] = "special://temp/zattoo_app_token";
 const char data_file[] = "special://profile/addon_data/pvr.zattoo/data.json";
+const unsigned int EPG_TAG_FLAG_SELECTIVE_REPLAY = 0x00400000;
 static const std::string user_agent = std::string("Kodi/")
     + std::string(STR(KODI_VERSION)) + std::string(" pvr.zattoo/")
     + std::string(STR(ZATTOO_VERSION)) + std::string(" (Kodi PVR addon)");
@@ -901,7 +902,7 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     tag.iEpisodePartNumber = 0; /* not supported */
     std::string subtitle = GetStringOrEmpty(program, "Subtitle");
     tag.strEpisodeName = subtitle.c_str();
-    tag.iFlags = EPG_TAG_FLAG_UNDEFINED;
+    tag.iFlags = program["SelectiveReplayAllowed"].GetBool() ? EPG_TAG_FLAG_SELECTIVE_REPLAY : EPG_TAG_FLAG_UNDEFINED;
     std::string genreStr = GetStringOrEmpty(program, "Genre");
     int genre = m_categories.Category(genreStr);
     if (genre)
@@ -987,7 +988,7 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     tag.iEpisodeNumber = 0; /* not supported */
     tag.iEpisodePartNumber = 0; /* not supported */
     tag.strEpisodeName = nullptr; /* not supported */
-    tag.iFlags = EPG_TAG_FLAG_UNDEFINED;
+    tag.iFlags = epgEntry.selectiveReplay ? EPG_TAG_FLAG_SELECTIVE_REPLAY : EPG_TAG_FLAG_UNDEFINED;
 
     int genre = m_categories.Category(epgEntry.strGenreString);
     if (genre)
@@ -1067,6 +1068,7 @@ std::map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd,
         entry.strIconPath = GetImageUrl(GetStringOrEmpty(program, "i_t"));
         entry.iChannelId = channel->iUniqueId;
         entry.strPlot = GetStringOrEmpty(program, "et");
+        entry.selectiveReplay = program["r_e"].GetBool();
 
         const Value& genres = program["g"];
         for (Value::ConstValueIterator itr2 = genres.Begin();
@@ -1425,6 +1427,9 @@ int ZatData::GetRecallSeconds(const EPG_TAG *tag)
   }
   if (m_selectiveRecallEnabled)
   {
+    if ((tag->iFlags & EPG_TAG_FLAG_SELECTIVE_REPLAY) == 0) {
+      return 0;
+    }
     ZatChannel channel = m_channelsByUid[tag->iUniqueChannelId];
     return channel.selectiveRecallSeconds;
   }
