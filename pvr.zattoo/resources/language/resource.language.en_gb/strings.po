@@ -40,6 +40,10 @@ msgctxt "#30006"
 msgid "dash_widevine"
 msgstr ""
 
+msgctxt "#30007"
+msgid "Parental pin"
+msgstr "Parental pin"
+
 msgctxt "#30010"
 msgid "Enable Dolby"
 msgstr "Enable support for dolby"

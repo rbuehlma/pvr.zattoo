@@ -70,7 +70,15 @@
           </constraints>
           <control type="list" format="integer" />
 		</setting>
-		<setting id="xmlTVFile" type="string" label="30011">
+        <setting id="parentalPin" type="string" label="30007">
+          <level>0</level>
+          <default></default>
+          <constraints>
+            <allowempty>true</allowempty>
+          </constraints>
+          <control type="edit" format="string" />
+        </setting>
+        <setting id="xmlTVFile" type="string" label="30011">
           <level>0</level>
           <default></default>
           <constraints>

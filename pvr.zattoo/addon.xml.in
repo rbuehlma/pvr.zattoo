@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.2.8"
+       version="19.2.9"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -26,6 +26,9 @@
     <disclaimer lang="en_US">The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects..</disclaimer>
     <platform>@PLATFORM@</platform>
     <news>
+v19.2.9
+ - Add support for parental pin
+ - Use selective recall flag by programme
 v19.2.8
  - Improve caching of epg data
 v19.2.7
@@ -60,6 +63,9 @@ v19.0.1
  - Load description from xmltv file
 v19.0.0
  - Update to PVR addon API v6.0.0
+v18.1.12
+ - Add support for parental pin
+ - Use selective recall flag by programme
 v18.1.11
  - Improve caching of epg data
 v18.1.10

@@ -37,6 +37,7 @@ bool zatEnableDolby = true;
 bool zatAlternativeEpgService = false;
 bool zatAlternativeEpgServiceProvideSession = false;
 STREAM_TYPE streamType = DASH;
+std::string parentalPin;
 std::string xmlTVFile;
 int provider = 0;
 int runningRequests = 0;
@@ -77,6 +78,10 @@ void ADDON_ReadSettings(void)
   if (XBMC->GetSetting("streamtype", &intBuffer))
   {
     streamType = static_cast<STREAM_TYPE>(intBuffer);
+  }
+  if (XBMC->GetSetting("parentalPin", &buffer))
+  {
+    parentalPin = buffer;
   }
   if (XBMC->GetSetting("xmlTVFile", &buffer))
   {
@@ -132,7 +137,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
   
   XBMC->Log(LOG_DEBUG, "Create Zat");
   zat = new ZatData(zatUsername, zatPassword, zatFavoritesOnly,
-      zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType, zatEnableDolby, provider, xmlTVFile);
+      zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType, zatEnableDolby, provider, xmlTVFile, parentalPin);
   XBMC->Log(LOG_DEBUG, "Zat created");
   if (zat->Initialize() && zat->LoadChannels())
   {
@@ -229,6 +234,17 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
       return ADDON_STATUS_NEED_RESTART;
     }
   }
+  
+  if (name == "parentalPin")
+  {
+    std::string parentalPinProp = static_cast<const char*>(settingValue);
+    if (parentalPin != parentalPinProp)
+    {
+      parentalPin = parentalPinProp;
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+
   
   return ADDON_STATUS_OK;
 }
