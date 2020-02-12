@@ -28,7 +28,7 @@ std::string Utils::UrlEncode(const std::string &value)
 
   for (char c : value) {
       // Keep alphanumeric and other accepted characters intact
-    if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~')
+    if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' || c == '!') // Exclamation mark should not be here but Zattoo does not correctly encode it
     {
       escaped << c;
       continue;
