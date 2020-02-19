@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="18.1.13"
+       version="18.1.14"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -26,6 +26,8 @@
     <disclaimer lang="en_US">The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects..</disclaimer>
     <platform>@PLATFORM@</platform>
     <news>
+v18.1.14
+ - Do not show cache parse error if file has been removed
 v18.1.13
  - Fix login with credentials containing exclamation mark (!) in password
 v18.1.12
