@@ -38,7 +38,10 @@ bool Cache::Read(const std::string& key, std::string& data)
   doc.Parse(jsonString.c_str());
   if (doc.GetParseError())
   {
-    XBMC->Log(LOG_ERROR, "Parsing cache file [%s] failed.", cacheFile.c_str());
+    if (XBMC->FileExists(cacheFile.c_str(), true))
+    {
+      XBMC->Log(LOG_ERROR, "Parsing cache file [%s] failed.", cacheFile.c_str());
+    }
     return false;
   }
 
