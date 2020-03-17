@@ -72,6 +72,9 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatCh
   {
     EPG_TAG tag;
     memset(&tag, 0, sizeof(EPG_TAG));
+    tag.iSeriesNumber = EPG_TAG_INVALID_SERIES_EPISODE;
+    tag.iEpisodeNumber = EPG_TAG_INVALID_SERIES_EPISODE;
+    tag.iEpisodePartNumber = EPG_TAG_INVALID_SERIES_EPISODE;
 
     XMLElement* title = programme->FirstChildElement("title");
     const char *start = programme->Attribute("start");

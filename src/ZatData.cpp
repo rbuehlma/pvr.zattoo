@@ -896,9 +896,9 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     }
     tag.iParentalRating = 0; /* not supported */
     tag.iStarRating = 0; /* not supported */
-    tag.iSeriesNumber = 0; /* not supported */
-    tag.iEpisodeNumber = 0; /* not supported */
-    tag.iEpisodePartNumber = 0; /* not supported */
+    tag.iSeriesNumber = EPG_TAG_INVALID_SERIES_EPISODE; /* not supported */
+    tag.iEpisodeNumber = EPG_TAG_INVALID_SERIES_EPISODE; /* not supported */
+    tag.iEpisodePartNumber = EPG_TAG_INVALID_SERIES_EPISODE; /* not supported */
     std::string subtitle = GetStringOrEmpty(program, "Subtitle");
     tag.strEpisodeName = subtitle.c_str();
     tag.iFlags = program["SelectiveReplayAllowed"].GetBool() ? EPG_TAG_FLAG_SELECTIVE_REPLAY : EPG_TAG_FLAG_UNDEFINED;
@@ -982,9 +982,9 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     tag.strIconPath = epgEntry.strIconPath.c_str();
     tag.iParentalRating = 0; /* not supported */
     tag.iStarRating = 0; /* not supported */
-    tag.iSeriesNumber = 0; /* not supported */
-    tag.iEpisodeNumber = 0; /* not supported */
-    tag.iEpisodePartNumber = 0; /* not supported */
+    tag.iSeriesNumber = EPG_TAG_INVALID_SERIES_EPISODE; /* not supported */
+    tag.iEpisodeNumber = EPG_TAG_INVALID_SERIES_EPISODE; /* not supported */
+    tag.iEpisodePartNumber = EPG_TAG_INVALID_SERIES_EPISODE; /* not supported */
     tag.strEpisodeName = nullptr; /* not supported */
     tag.iFlags = epgEntry.selectiveReplay ? EPG_TAG_FLAG_SELECTIVE_REPLAY : EPG_TAG_FLAG_UNDEFINED;
 
@@ -1267,6 +1267,9 @@ void ZatData::GetRecordings(ADDON_HANDLE handle, bool future)
     {
       PVR_RECORDING tag;
       memset(&tag, 0, sizeof(PVR_RECORDING));
+      tag.iSeriesNumber = PVR_RECORDING_INVALID_SERIES_EPISODE;
+      tag.iEpisodeNumber = PVR_RECORDING_INVALID_SERIES_EPISODE;
+
       tag.bIsDeleted = false;
 
       PVR_STRCPY(tag.strRecordingId,
