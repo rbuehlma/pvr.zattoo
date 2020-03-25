@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.2.12"
+       version="19.2.13"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,11 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.2.13
+ - Update Debian build code
+ - Minor cleanups
+ - Add license name and source url to addon.xml
+ - Add GPL2 license file and show GPL2 on README.md
 v19.2.12
  - Update PVR API 6.2.0
 v19.2.11
