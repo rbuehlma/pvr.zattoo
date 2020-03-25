@@ -1,15 +1,48 @@
 # build artifacts
 build/
-pvr.zattoo/addon.xml
-depends/target/rapidjson/
+pvr.*/addon.xml
+
+# Debian build files
+debian/changelog
+debian/files
+debian/*.log
+debian/*.substvars
+debian/.debhelper/
+debian/tmp/
+debian/kodi-pvr-*/
+obj-x86_64-linux-gnu/
+
+# commonly used editors
+# vim
+*.swp
+
+# Eclipse
+*.project
+*.cproject
+.classpath
+*.sublime-*
+.settings/
+
+# KDevelop 4
+*.kdev4
+
+# gedit
+*~
+
+# CLion
+/.idea
 
 # clion
 .idea/
 
-# Eclipse/CDT
-.cproject
-.project
-.settings/
+# to prevent add after a "git format-patch VALUE" and "git add ." call
+/*.patch
+
+# Visual Studio Code
+.vscode
+
+# to prevent add if project code opened by Visual Studio over CMake file
+.vs/
 
 # General MacOS
 .DS_Store
