@@ -1,4 +1,5 @@
-[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](LICENSE.md)
+[![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](LICENSE.md)
+[![Build Status](https://jenkins.kodi.tv/view/Addons/job/kodi-pvr/job/pvr.zattoo/job/Matrix/badge/icon)](https://jenkins.kodi.tv/blue/organizations/jenkins/rbuehlma%2Fpvr.zattoo/branches/)
 
 # Zattoo PVR addon for Kodi
 
