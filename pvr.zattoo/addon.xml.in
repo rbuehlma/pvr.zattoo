@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.2.14"
+       version="19.2.15"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,8 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.2.15
+ - Rebuild of 19.2.14
 v19.2.14
  - Update PVR API 6.3.0
 v19.2.13
