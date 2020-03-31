@@ -1,7 +1,7 @@
 #include "Cache.h"
 #include "client.h"
 #include "Utils.h"
-#include "kodi_vfs_types.h"
+#include "kodi/libXBMC_addon.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
