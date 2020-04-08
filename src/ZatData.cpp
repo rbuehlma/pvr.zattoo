@@ -294,7 +294,7 @@ std::string ZatData::GenerateUUID()
 
 bool ZatData::LoadAppId()
 {
-  std::string html = HttpGet(m_providerUrl, true);
+  std::string html = HttpGet(m_providerUrl + "/int", true);
 
   m_appToken = "";
   //There seems to be a problem with old gcc and osx with regex. Do it the dirty way:
