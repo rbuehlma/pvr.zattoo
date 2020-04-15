@@ -67,7 +67,7 @@ std::string Categories::Category(int category) const
   return "";
 }
 
-int Categories::Category(const std::string& category) const
+int Categories::Category(const std::string& category)
 {
   if (category.empty()) {
     return 0;

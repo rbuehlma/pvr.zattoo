@@ -33,7 +33,7 @@ public:
   Categories();
 
   std::string Category(int category) const;
-  int Category(const std::string& category) const;
+  int Category(const std::string& category);
 
 private:
   void LoadEITCategories();
