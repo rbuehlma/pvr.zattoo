@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.2.16"
+       version="19.2.17"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,8 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.2.17
+ - Warn missing categories only once
 v19.2.16
  - Fix Zattoo login
 v19.2.15
@@ -86,6 +88,8 @@ v19.0.1
  - Load description from xmltv file
 v19.0.0
  - Update to PVR addon API v6.0.0
+v18.1.16
+ - Warn missing categories only once
 v18.1.15
  - Fix Zattoo login
 v18.1.14
