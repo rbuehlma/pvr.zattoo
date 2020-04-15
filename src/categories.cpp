@@ -76,6 +76,7 @@ int Categories::Category(const std::string& category) const
   if (it != m_categoriesByName.end())
     return it->second;
   XBMC->Log(LOG_NOTICE, "Missing category: %s", category.c_str());
+  m_categoriesByName[category]=0;
   return 0;
 }
 
