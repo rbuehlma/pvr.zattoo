@@ -446,7 +446,7 @@ void setStreamProperties(
     std::map<std::string, std::string> additionalProperties)
 {
   setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_STREAMURL, url);
-  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAMADDON, "inputstream.adaptive");
+  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
   setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_type", getManifestType());
   setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_MIMETYPE, getMimeType());
 
