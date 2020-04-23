@@ -318,7 +318,7 @@ bool ZatData::LoadAppId()
 
   if (m_appToken.empty() && XBMC->FileExists(app_token_file, true))
   {
-    XBMC->Log(LOG_NOTICE,
+    XBMC->Log(LOG_INFO,
         "Could not get app token from page. Try to load from file.");
     m_appToken = Utils::ReadFile(app_token_file);
   }
@@ -353,7 +353,7 @@ bool ZatData::SendHello(std::string uuid)
   }
   else
   {
-    XBMC->Log(LOG_NOTICE, "Hello failed.");
+    XBMC->Log(LOG_INFO, "Hello failed.");
     return false;
   }
 }
@@ -412,23 +412,23 @@ bool ZatData::InitSession()
       session.HasMember("selective_recall_eligible") ?
           session["selective_recall_eligible"].GetBool() : false;
   m_recordingEnabled = session["recording_eligible"].GetBool();
-  XBMC->Log(LOG_NOTICE, "Country code: %s", m_countryCode.c_str());
-  XBMC->Log(LOG_NOTICE, "Service region country: %s",
+  XBMC->Log(LOG_INFO, "Country code: %s", m_countryCode.c_str());
+  XBMC->Log(LOG_INFO, "Service region country: %s",
       m_serviceRegionCountry.c_str());
-  XBMC->Log(LOG_NOTICE, "Stream type: %s", GetStreamTypeString().c_str());
+  XBMC->Log(LOG_INFO, "Stream type: %s", GetStreamTypeString().c_str());
   if (m_recallEnabled)
   {
     m_maxRecallSeconds = session["recall_seconds"].GetInt();
-    XBMC->Log(LOG_NOTICE, "Recall is enabled for %d seconds.",
+    XBMC->Log(LOG_INFO, "Recall is enabled for %d seconds.",
         m_maxRecallSeconds);
   }
   else
   {
-    XBMC->Log(LOG_NOTICE, "Recall is disabled");
+    XBMC->Log(LOG_INFO, "Recall is disabled");
   }
-  XBMC->Log(LOG_NOTICE, "Selective recall is %s",
+  XBMC->Log(LOG_INFO, "Selective recall is %s",
       m_selectiveRecallEnabled ? "enabled" : "disabled");
-  XBMC->Log(LOG_NOTICE, "Recordings are %s",
+  XBMC->Log(LOG_INFO, "Recordings are %s",
       m_recordingEnabled ? "enabled" : "disabled");
   m_powerHash = GetStringOrEmpty(session, "power_guide_hash");
   return true;
@@ -558,7 +558,7 @@ ZatData::ZatData(const std::string& u, const std::string& p, bool favoritesOnly,
     m_password(p),
     m_parentalPin(parentalPin)
 {
-  XBMC->Log(LOG_NOTICE, "Using useragent: %s", user_agent.c_str());
+  XBMC->Log(LOG_INFO, "Using useragent: %s", user_agent.c_str());
 
   switch (provider)
   {
@@ -864,7 +864,7 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     return;
   }
   if (!sendEpgToKodiMutex.Lock()) {
-    XBMC->Log(LOG_NOTICE, "Failed to lock sendEpgToKodiMutex.");
+    XBMC->Log(LOG_INFO, "Failed to lock sendEpgToKodiMutex.");
     return;
   }
   for (Value::ConstValueIterator itr = doc.Begin(); itr != doc.End(); ++itr)
@@ -951,12 +951,12 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
       uniqueChannelId);
   if (channelEpgCache == nullptr)
   {
-    XBMC->Log(LOG_NOTICE, "Loading epg faild for channel '%s' from %lu to %lu",
+    XBMC->Log(LOG_INFO, "Loading epg faild for channel '%s' from %lu to %lu",
         zatChannel->name.c_str(), iStart, iEnd);
     return;
   }
   if (!sendEpgToKodiMutex.Lock()) {
-    XBMC->Log(LOG_NOTICE, "Failed to lock sendEpgToKodiMutex.");
+    XBMC->Log(LOG_INFO, "Failed to lock sendEpgToKodiMutex.");
     return;
   }
   for (auto const &entry : *channelEpgCache)

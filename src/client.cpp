@@ -130,7 +130,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
   ADDON_ReadSettings();
   
   if (zatUsername.empty() || zatPassword.empty()) {
-    XBMC->Log(LOG_NOTICE, "Username or password not set.");
+    XBMC->Log(LOG_INFO, "Username or password not set.");
     XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30200));
     return m_CurStatus;
   }
@@ -163,7 +163,7 @@ void ADDON_Destroy()
   int waitCount = 10;
   while (runningRequests > 0 && waitCount > 0)
   {
-    XBMC->Log(LOG_NOTICE, "Wait for %d requests to finish for %d seconds.", runningRequests, waitCount);
+    XBMC->Log(LOG_INFO, "Wait for %d requests to finish for %d seconds.", runningRequests, waitCount);
     std::this_thread::sleep_for(std::chrono::seconds(1));
     waitCount--;
   }
