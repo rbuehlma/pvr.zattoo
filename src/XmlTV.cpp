@@ -16,7 +16,7 @@ XmlTV::XmlTV(std::string xmlFile) :
 {
   if (!XBMC->FileExists(m_xmlFile.c_str(), true))
   {
-    XBMC->Log(LOG_DEBUG,
+    XBMC->Log(LOG_ERROR,
         "XMLTV: Xml file for additional guide data not found: %s",
         m_xmlFile.c_str());
   }
@@ -52,9 +52,20 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatCh
   }
   
   m_loadedChannels.clear();
+  
+  std::string xml;
+  int bufferLen = 1024 * 1024;
+  char *buffer = new char[bufferLen];
+  void *xmlFile = XBMC->OpenFile(m_xmlFile.c_str(), 0);
+  while (int dataRead = XBMC->ReadFile(xmlFile, buffer, bufferLen - 1) > 0) {
+    buffer[dataRead] = 0;
+    xml += buffer;
+  }
+  XBMC->CloseFile(xmlFile);
+  delete buffer;
 
   XMLDocument doc;
-  if (doc.LoadFile(m_xmlFile.c_str()) != XML_SUCCESS)
+  if (doc.Parse(xml.c_str(), xml.length()) != XML_SUCCESS)
   {
     XBMC->Log(LOG_ERROR, "XMLTV: failed to parse xml-file.");
     m_mutex.Unlock();
@@ -169,7 +180,7 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatCh
 
   }
   m_mutex.Unlock();
-  return true;
+  return m_loadedChannels.find(cid) != m_loadedChannels.end();
 
 }
 
