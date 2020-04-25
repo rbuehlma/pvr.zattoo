@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.2.18"
+       version="19.2.19"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,8 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.2.19
+ - Use Kodi filesystem to load xmltv file
 v19.2.18
  - Update PVR API 6.4.0
  - Correct license name on addon.xml
@@ -93,6 +95,8 @@ v19.0.1
  - Load description from xmltv file
 v19.0.0
  - Update to PVR addon API v6.0.0
+v18.1.17
+ - Use Kodi filesystem to load xmltv file
 v18.1.16
  - Warn missing categories only once
 v18.1.15
