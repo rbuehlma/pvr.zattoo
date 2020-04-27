@@ -1,7 +1,6 @@
 #include "client.h"
 #include "ZatData.h"
 #include "kodi/xbmc_pvr_dll.h"
-#include "kodi/libKODI_guilib.h"
 #include <chrono>
 #include <thread>
 #include <utility>
