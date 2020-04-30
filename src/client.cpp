@@ -272,7 +272,7 @@ void OnPowerSavingDeactivated()
 {
 }
 
-PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
+PVR_ERROR GetCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
   runningRequests++;
   pCapabilities->bSupportsEPG = true;
@@ -289,7 +289,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 
   if (zat)
   {
-    zat->GetAddonCapabilities(pCapabilities);
+    zat->GetCapabilities(pCapabilities);
   }
   runningRequests--;
   return PVR_ERROR_NO_ERROR;
