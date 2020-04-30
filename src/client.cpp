@@ -1,7 +1,6 @@
 #include "client.h"
 #include "ZatData.h"
 #include "kodi/xbmc_pvr_dll.h"
-#include "kodi/libKODI_guilib.h"
 #include <chrono>
 #include <thread>
 #include <utility>
@@ -101,7 +100,7 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
     return ADDON_STATUS_UNKNOWN;
   }
 
-  auto *pvrprops = static_cast<PVR_PROPERTIES*>(props);
+  auto *pvrprops = static_cast<AddonProperties_PVR*>(props);
 
   XBMC = new CHelper_libXBMC_addon;
   if (!XBMC->RegisterMe(hdl))
@@ -273,7 +272,7 @@ void OnPowerSavingDeactivated()
 {
 }
 
-PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
+PVR_ERROR GetCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
   runningRequests++;
   pCapabilities->bSupportsEPG = true;
@@ -290,7 +289,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 
   if (zat)
   {
-    zat->GetAddonCapabilities(pCapabilities);
+    zat->GetCapabilities(pCapabilities);
   }
   runningRequests--;
   return PVR_ERROR_NO_ERROR;
@@ -860,7 +859,7 @@ PVR_ERROR SetEPGTimeFrame(int)
 {
   return PVR_ERROR_NOT_IMPLEMENTED;
 }
-PVR_ERROR GetDescrambleInfo(PVR_DESCRAMBLE_INFO*)
+PVR_ERROR GetDescrambleInfo(int channelUid, PVR_DESCRAMBLE_INFO*)
 {
   return PVR_ERROR_NOT_IMPLEMENTED;
 }
@@ -877,7 +876,7 @@ PVR_ERROR GetDriveSpace(long long *iTotal, long long *iUsed)
 {
   return PVR_ERROR_NOT_IMPLEMENTED;
 }
-PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
+PVR_ERROR GetSignalStatus(int channelUid, PVR_SIGNAL_STATUS* signalStatus)
 {
   return PVR_ERROR_NOT_IMPLEMENTED;
 }

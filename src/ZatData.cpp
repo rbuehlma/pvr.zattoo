@@ -663,7 +663,7 @@ bool ZatData::Initialize()
   return true;
 }
 
-void ZatData::GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
+void ZatData::GetCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
   pCapabilities->bSupportsRecordings = m_recordingEnabled;
   pCapabilities->bSupportsTimers = m_recordingEnabled;

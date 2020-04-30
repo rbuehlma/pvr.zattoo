@@ -67,7 +67,7 @@ public:
   ~ZatData();
   bool Initialize();
   bool LoadChannels();
-  void GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
+  void GetCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
   int GetChannelsAmount();
   PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
   int GetChannelGroupsAmount();
