@@ -40,6 +40,7 @@ std::string parentalPin;
 std::string xmlTVFile;
 int provider = 0;
 int runningRequests = 0;
+bool isLivePlayback = false;
 
 extern "C"
 {
@@ -474,6 +475,7 @@ PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel,
     setStreamProperties(properties, propertiesCount, strUrl, additionalProperties);
     setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true");
     ret = PVR_ERROR_NO_ERROR;
+    isLivePlayback = true;
   }
   runningRequests--;
   return ret;
@@ -491,6 +493,7 @@ PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING* recording,
     *propertiesCount = 0;
     setStreamProperties(properties, propertiesCount, strUrl, additionalProperties);
     ret = PVR_ERROR_NO_ERROR;
+    isLivePlayback = false;
   }
   runningRequests--;
   return ret;
@@ -675,6 +678,7 @@ PVR_ERROR GetEPGTagStreamProperties(const EPG_TAG* tag,
     *iPropertiesCount = 0;
     setStreamProperties(properties, iPropertiesCount, strUrl, additionalProperties);
     ret = PVR_ERROR_NO_ERROR;
+    isLivePlayback = false;
   }
   runningRequests--;
   return ret;
@@ -831,7 +835,7 @@ unsigned int GetChannelSwitchDelay(void)
 }
 bool IsRealTimeStream(void)
 {
-  return true;
+  return isLivePlayback;
 }
 void PauseStream(bool bPaused)
 {
