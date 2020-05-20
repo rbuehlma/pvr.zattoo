@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="18.1.17"
+       version="18.1.18"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -26,6 +26,8 @@
     <disclaimer lang="en_US">The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects..</disclaimer>
     <platform>@PLATFORM@</platform>
     <news>
+v18.1.18
+ - Fix receiving app token required for login
 v18.1.17
  - Use Kodi filesystem to load xmltv file
 v18.1.16

@@ -21,7 +21,6 @@
 using namespace ADDON;
 using namespace rapidjson;
 
-constexpr char app_token_file[] = "special://temp/zattoo_app_token";
 const char data_file[] = "special://profile/addon_data/pvr.zattoo/data.json";
 const unsigned int EPG_TAG_FLAG_SELECTIVE_REPLAY = 0x00400000;
 static const std::string user_agent = std::string("Kodi/")
@@ -294,44 +293,38 @@ std::string ZatData::GenerateUUID()
 
 bool ZatData::LoadAppId()
 {
-  std::string html = HttpGet(m_providerUrl + "/int", true);
+  std::string content = HttpGet(m_providerUrl + "/login", true);
 
   m_appToken = "";
   //There seems to be a problem with old gcc and osx with regex. Do it the dirty way:
-  size_t basePos = html.find("window.appToken = '") + 19;
-  if (basePos > 19)
-  {
-    size_t endPos = html.find("'", basePos);
-    m_appToken = html.substr(basePos, endPos - basePos);
-
-    void* file;
-    if (!(file = XBMC->OpenFileForWrite(app_token_file, true)))
-    {
-      XBMC->Log(LOG_ERROR, "Could not save app taken to %s", app_token_file);
-    }
-    else
-    {
-      XBMC->WriteFile(file, m_appToken.c_str(), m_appToken.length());
-      XBMC->CloseFile(file);
-    }
-  }
-
-  if (m_appToken.empty() && XBMC->FileExists(app_token_file, true))
-  {
-    XBMC->Log(LOG_NOTICE,
-        "Could not get app token from page. Try to load from file.");
-    m_appToken = Utils::ReadFile(app_token_file);
-  }
-
-  if (m_appToken.empty())
-  {
-    XBMC->Log(LOG_ERROR, "Unable to get app token.");
+  size_t basePos = content.find("src=\"/app-") + 5;
+  if (basePos < 6) {
+    XBMC->Log(LOG_ERROR, "Unable to find app-*.js");
     return false;
   }
+  size_t endPos = content.find("\"", basePos);
+  std::string appJsPath = content.substr(basePos, endPos - basePos);
+  content = HttpGet(m_providerUrl + appJsPath, true);
+  
+  basePos = content.find("\"token-") + 1;
+  if (basePos < 6) {
+    XBMC->Log(LOG_ERROR, "Unable to find token-*.json in %s", appJsPath.c_str());
+    return false;
+  }
+  endPos = content.find("\"", basePos);
+  std::string tokenJsonPath = content.substr(basePos, endPos - basePos);
+  std::string jsonString = HttpGet(m_providerUrl + "/" + tokenJsonPath, true);
 
-  XBMC->Log(LOG_DEBUG, "Loaded app token %s", m_appToken.c_str());
+  Document doc;
+  doc.Parse(jsonString.c_str());
+  if (doc.GetParseError() || !doc["success"].GetBool())
+  {
+    XBMC->Log(LOG_DEBUG, "Failed to load json from %s", tokenJsonPath.c_str());
+    return false;
+  }
+  
+  m_appToken = doc["session_token"].GetString();
   return true;
-
 }
 
 bool ZatData::SendHello(std::string uuid)
