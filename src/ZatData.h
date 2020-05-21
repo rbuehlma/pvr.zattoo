@@ -127,6 +127,9 @@ private:
   XmlTV *m_xmlTV = nullptr;
 
   bool LoadAppId();
+  bool LoadAppTokenFromFile();
+  bool LoadAppTokenFromJson(std::string html);
+  bool LoadAppTokenFromHtml(std::string html);
   bool ReadDataJson();
   bool WriteDataJson();
   std::string GetUUID();
