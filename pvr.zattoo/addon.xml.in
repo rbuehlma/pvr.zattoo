@@ -7,7 +7,7 @@
     @ADDON_DEPENDS@
     <import addon="inputstream.adaptive" minversion="2.4.2"/>
   </requires>
-  <extension point="xbmc.pvrclient" library_@PLATFORM@="@LIBRARY_FILENAME@"/>
+  <extension point="kodi.pvrclient" library_@PLATFORM@="@LIBRARY_FILENAME@"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="de_DE">Kodi-PVR-Client für Zattoo</summary>
     <summary lang="en_AU">Kodi's frontend for Zattoo</summary>

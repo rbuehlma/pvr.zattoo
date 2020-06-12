@@ -24,6 +24,7 @@ set(ZATTOO_SOURCES
 		src/client.cpp
 		src/Curl.cpp
 		src/Cache.cpp
+		src/Settings.cpp
 		src/ZatData.cpp
 		src/UpdateThread.cpp
 		src/XmlTV.cpp
@@ -36,6 +37,7 @@ set(ZATTOO_HEADERS
 		src/Curl.h
 		src/UpdateThread.h
 		src/XmlTV.h
+		src/Settings.h
 		src/Utils.h
 		src/ZatChannel.h
 		src/ZatData.h

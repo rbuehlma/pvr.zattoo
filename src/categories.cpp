@@ -23,7 +23,10 @@
 #include "categories.h"
 #include "client.h"
 #include <cstring>
+#include <iostream>
+#include <kodi/Filesystem.h>
 #include <p8-platform/os.h>
+#include <regex>
 
 #define CATEGORIES_MAXLINESIZE    255
 
@@ -31,8 +34,6 @@
 /* We are on Windows */
 # define strtok_r strtok_s
 #endif
-
-using namespace ADDON;
 
 Categories::Categories() :
     m_categoriesById()
@@ -75,7 +76,7 @@ int Categories::Category(const std::string& category)
   auto it = m_categoriesByName.find(category);
   if (it != m_categoriesByName.end())
     return it->second;
-  XBMC->Log(LOG_INFO, "Missing category: %s", category.c_str());
+  kodi::Log(ADDON_LOG_INFO, "Missing category: %s", category.c_str());
   m_categoriesByName[category]=0;
   return 0;
 }
@@ -83,56 +84,39 @@ int Categories::Category(const std::string& category)
 void Categories::LoadEITCategories()
 {
   const char *filePath = "special://home/addons/pvr.zattoo/resources/eit_categories.txt";
-  if (!XBMC->FileExists(filePath, false)) {
+  if (!kodi::vfs::FileExists(filePath, false)) {
     filePath = "special://xbmc/addons/pvr.zattoo/resources/eit_categories.txt";
   }
 
-  if (XBMC->FileExists(filePath, false))
+  if (kodi::vfs::FileExists(filePath, false))
   {
-    XBMC->Log(LOG_DEBUG, "%s: Loading EIT categories from file '%s'",
+    kodi::Log(ADDON_LOG_DEBUG, "%s: Loading EIT categories from file '%s'",
         __FUNCTION__, filePath);
-    void *file = XBMC->OpenFile(filePath, 0);
-    auto *line = new char[CATEGORIES_MAXLINESIZE + 1];
-    auto *name = new char[CATEGORIES_MAXLINESIZE + 1];
-    while (XBMC->ReadFileString(file, line, CATEGORIES_MAXLINESIZE))
+    kodi::vfs::CFile file;
+    if (!file.OpenFile(filePath, 0))
     {
-      char* end = line + strlen(line);
-      char* pos = strchr(line, ';');
-      if (pos != nullptr)
+      kodi::Log(ADDON_LOG_ERROR, "%s: File '%s' failed to open", __FUNCTION__, filePath);
+      return;
+    }
+
+    std::string line;
+    std::regex rgx("^ *(0x.*)*; *\"(.*)\"");
+    while (file.ReadLine(line))
+    {
+      std::smatch matches;
+      if (std::regex_search(line, matches, rgx) && matches.size() == 3)
       {
-        bool encaps = false;
-        int catId;
-        *pos = '\0';
-        if (sscanf(line, "%x", &catId) == 1)
-        {
-          unsigned p = 0;
-          memset(name, 0, CATEGORIES_MAXLINESIZE + 1);
-          do
-          {
-            ++pos;
-          }
-          while (isspace(*pos));
-          if (*pos == '"')
-            encaps = true;
-          while (++pos < end)
-          {
-            if (encaps && *pos == '"' && *(++pos) != '"')
-              break;
-            if (!iscntrl(*pos))
-              name[p++] = *pos;
-          }
-          m_categoriesById.insert(std::pair<int, std::string>(catId, name));
-          XBMC->Log(LOG_DEBUG, "%s: Add name [%s] for category %.2X",
-              __FUNCTION__, name, catId);
-        }
+        int catId = std::stoi(matches[1].str(), nullptr, 16);
+        std::string name = matches[2].str();
+
+        m_categoriesById.insert(std::pair<int, std::string>(catId, name));
+        kodi::Log(ADDON_LOG_DEBUG, "%s: Add name [%s] for category %.2X",
+            __FUNCTION__, name.c_str(), catId);
       }
     }
-    delete[] name;
-    delete[] line;
-    XBMC->CloseFile(file);
   }
   else
   {
-    XBMC->Log(LOG_INFO, "%s: File '%s' not found", __FUNCTION__, filePath);
+    kodi::Log(ADDON_LOG_INFO, "%s: File '%s' not found", __FUNCTION__, filePath);
   }
 }

@@ -1,15 +1,26 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#pragma once
 
-#include "kodi/libXBMC_addon.h"
-#include "kodi/libXBMC_pvr.h"
-#include "p8-platform/threads/threads.h"
-#include "p8-platform/util/util.h"
-#include "windows.h"
+#include "Settings.h"
 
-extern std::string g_strUserPath;
-extern std::string g_strClientPath;
-extern ADDON::CHelper_libXBMC_addon *XBMC;
-extern CHelper_libXBMC_pvr *PVR;
-#endif
+#include <kodi/AddonBase.h>
+#include <unordered_map>
 
+class ZatData;
+
+class ATTRIBUTE_HIDDEN CZattooTVAddon : public kodi::addon::CAddonBase
+{
+public:
+  CZattooTVAddon() = default;
+
+  ADDON_STATUS CreateInstance(int instanceType,
+                              const std::string& instanceID,
+                              KODI_HANDLE instance,
+                              const std::string& version,
+                              KODI_HANDLE& addonInstance) override;
+
+  ADDON_STATUS SetSetting(const std::string& settingName,
+                          const kodi::CSettingValue& settingValue) override;
+
+private:
+  CSettings m_settings;
+};
