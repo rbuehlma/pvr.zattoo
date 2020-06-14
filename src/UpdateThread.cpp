@@ -4,18 +4,17 @@
 #include "ZatData.h"
 #include "Cache.h"
 
-using namespace ADDON;
-
 const time_t maximumUpdateInterval = 600;
 
 std::queue<EpgQueueEntry> UpdateThread::loadEpgQueue;
 time_t UpdateThread::nextRecordingsUpdate;
 P8PLATFORM::CMutex UpdateThread::mutex;
 
-UpdateThread::UpdateThread(int threadIdx, void *zat) :
+UpdateThread::UpdateThread(kodi::addon::CInstancePVRClient& instance, int threadIdx, void *zat) :
     CThread(),
     m_zat(zat),
-    m_threadIdx(threadIdx)
+    m_threadIdx(threadIdx),
+    m_instance(instance)
 {
   time(&UpdateThread::nextRecordingsUpdate);
   UpdateThread::nextRecordingsUpdate += maximumUpdateInterval;
@@ -31,7 +30,7 @@ void UpdateThread::SetNextRecordingUpdate(time_t nextRecordingsUpdate)
   {
     if (!mutex.Lock())
     {
-      XBMC->Log(LOG_ERROR,
+      kodi::Log(ADDON_LOG_ERROR,
           "UpdateThread::SetNextRecordingUpdate : Could not lock mutex.");
       return;
     }
@@ -52,7 +51,7 @@ void UpdateThread::LoadEpg(int uniqueChannelId, time_t startTime,
   entry.endTime = endTime;
   if (!mutex.Lock())
   {
-    XBMC->Log(LOG_ERROR, "UpdateThread::LoadEpg : Could not lock mutex.");
+    kodi::Log(ADDON_LOG_ERROR, "UpdateThread::LoadEpg : Could not lock mutex.");
     return;
   }
   loadEpgQueue.push(entry);
@@ -61,7 +60,7 @@ void UpdateThread::LoadEpg(int uniqueChannelId, time_t startTime,
 
 void* UpdateThread::Process()
 {
-  XBMC->Log(LOG_DEBUG, "Update thread started.");
+  kodi::Log(ADDON_LOG_DEBUG, "Update thread started.");
   while (!IsStopped())
   {
     Sleep(100);
@@ -69,7 +68,7 @@ void* UpdateThread::Process()
     {
       continue;
     }
-    
+
     if (m_threadIdx == 0) {
       Cache::Cleanup();
     }
@@ -78,7 +77,7 @@ void* UpdateThread::Process()
     {
       if (!mutex.Lock())
       {
-        XBMC->Log(LOG_ERROR,
+        kodi::Log(ADDON_LOG_ERROR,
             "UpdateThread::Process : Could not lock mutex for epg queue");
         break;
       }
@@ -95,7 +94,7 @@ void* UpdateThread::Process()
         mutex.Unlock();
       }
     }
-    
+
     time_t currentTime;
     time(&currentTime);
 
@@ -103,7 +102,7 @@ void* UpdateThread::Process()
     {
       if (!mutex.Lock())
       {
-        XBMC->Log(LOG_ERROR,
+        kodi::Log(ADDON_LOG_ERROR,
             "UpdateThread::Process : Could not lock mutex for recordings update");
         continue;
       }
@@ -112,9 +111,9 @@ void* UpdateThread::Process()
         UpdateThread::nextRecordingsUpdate = currentTime
             + maximumUpdateInterval;
         mutex.Unlock();
-        PVR->TriggerTimerUpdate();
-        PVR->TriggerRecordingUpdate();
-        XBMC->Log(LOG_DEBUG, "Update thread triggered update.");
+        m_instance.TriggerTimerUpdate();
+        m_instance.TriggerRecordingUpdate();
+        kodi::Log(ADDON_LOG_DEBUG, "Update thread triggered update.");
       }
       else
       {
@@ -123,7 +122,7 @@ void* UpdateThread::Process()
     }
   }
 
-  XBMC->Log(LOG_DEBUG, "Update thread stopped.");
+  kodi::Log(ADDON_LOG_DEBUG, "Update thread stopped.");
   return nullptr;
 }
 

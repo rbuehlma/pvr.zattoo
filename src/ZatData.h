@@ -2,7 +2,6 @@
 // Created by johannes on 04.02.16.
 //
 
-#include "client.h"
 #include "UpdateThread.h"
 #include "categories.h"
 #include "Curl.h"
@@ -13,17 +12,7 @@
 #include "XmlTV.h"
 #include "ZatChannel.h"
 
-enum STREAM_TYPE: int
-{
-    DASH,
-    HLS,
-    DASH_WIDEVINE
-};
-
-/*!
- * @brief PVR macros for std::string exchange
- */
-#define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); (dest)[sizeof(dest)-1] = '\0'; } while(0)
+class CZattooTVAddon;
 
 struct PVRIptvEpgEntry
 {
@@ -58,40 +47,53 @@ struct PVRZattooChannelGroup
   std::vector<ZatChannel> channels;
 };
 
-class ZatData
+class ATTRIBUTE_HIDDEN ZatData : public kodi::addon::CInstancePVRClient
 {
 public:
-  ZatData(const std::string& username, const std::string& password, bool favoritesOnly,
-      bool m_alternativeEpgService, const STREAM_TYPE& streamType, bool enableDolby, int provider,
+  ZatData(KODI_HANDLE instance, const std::string& version,
+      const std::string& username, const std::string& password, bool favoritesOnly,
+      bool alternativeEpgService, const STREAM_TYPE& streamType, bool enableDolby, int provider,
       const std::string& xmlTVFile, const std::string& parentalPin);
   ~ZatData();
   bool Initialize();
   bool LoadChannels();
-  void GetCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities);
-  int GetChannelsAmount();
-  PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
-  int GetChannelGroupsAmount();
-  PVR_ERROR GetChannelGroups(ADDON_HANDLE handle);
-  PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle,
-      const PVR_CHANNEL_GROUP &group);
-  void GetEPGForChannel(int iChannelUid, time_t iStart,
-      time_t iEnd);
-  void GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
-      time_t iEnd);
-  std::string GetChannelStreamUrl(int uniqueId, std::map<std::string, std::string> &additionalPropertiesOut);
-  void GetRecordings(ADDON_HANDLE handle, bool future);
-  int GetRecordingsAmount(bool future);
-  std::string GetRecordingStreamUrl(const std::string& recordingId, std::map<std::string, std::string> &additionalPropertiesOut);
-  bool Record(int programId);
-  bool DeleteRecording(const std::string& recordingId);
-  void SetRecordingPlayCount(const PVR_RECORDING &recording, int count);
-  void SetRecordingLastPlayedPosition(const PVR_RECORDING &recording,
-      int lastplayedposition);
-  int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording);
-  bool IsPlayable(const EPG_TAG *tag);
-  int GetRecallSeconds(const EPG_TAG *tag);
-  bool IsRecordable(const EPG_TAG *tag);
-  std::string GetEpgTagUrl(const EPG_TAG *tag, std::map<std::string, std::string> &additionalPropertiesOut);
+
+  PVR_ERROR GetCapabilities(kodi::addon::PVRCapabilities& capabilities) override;
+  PVR_ERROR GetBackendName(std::string& name) override;
+  PVR_ERROR GetBackendVersion(std::string& version) override;
+  PVR_ERROR GetBackendHostname(std::string& hostname) override;
+  PVR_ERROR GetConnectionString(std::string& connection) override;
+
+  PVR_ERROR GetChannelsAmount(int& amount) override;
+  PVR_ERROR GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& results) override;
+  PVR_ERROR GetChannelGroupsAmount(int& amount) override;
+  PVR_ERROR GetChannelGroups(bool radio, kodi::addon::PVRChannelGroupsResultSet& results) override;
+  PVR_ERROR GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& group,
+                                   kodi::addon::PVRChannelGroupMembersResultSet& results) override;
+  PVR_ERROR GetEPGForChannel(int channelUid, time_t start, time_t end, kodi::addon::PVREPGTagsResultSet& results) override;
+  PVR_ERROR GetChannelStreamProperties(const kodi::addon::PVRChannel& channel,
+                                       std::vector<kodi::addon::PVRStreamProperty>& properties) override;
+  PVR_ERROR GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types) override;
+  PVR_ERROR GetTimers(kodi::addon::PVRTimersResultSet& results) override;
+  PVR_ERROR GetTimersAmount(int& amount) override;
+  PVR_ERROR AddTimer(const kodi::addon::PVRTimer& timer) override;
+  PVR_ERROR DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDelete) override;
+  PVR_ERROR GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results) override;
+  PVR_ERROR GetRecordingsAmount(bool deleted,  int& amount) override;
+  PVR_ERROR GetRecordingStreamProperties(const kodi::addon::PVRRecording& recording,
+                                         std::vector<kodi::addon::PVRStreamProperty>& properties) override;
+  PVR_ERROR DeleteRecording(const kodi::addon::PVRRecording& recording) override;
+  PVR_ERROR SetRecordingPlayCount(const kodi::addon::PVRRecording& recording, int count) override;
+  PVR_ERROR SetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording,
+                                           int lastplayedposition) override;
+  PVR_ERROR GetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording, int& position) override;
+  PVR_ERROR IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable) override;
+  PVR_ERROR IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable) override;
+  PVR_ERROR GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, std::vector<kodi::addon::PVRStreamProperty>& properties) override;
+  PVR_ERROR GetEPGTagEdl(const kodi::addon::PVREPGTag& tag, std::vector<kodi::addon::PVREDLEntry>& edl) override;
+
+  int GetRecallSeconds(const kodi::addon::PVREPGTag& tag);
+  void GetEPGForChannelAsync(int uniqueChannelId, time_t iStart, time_t iEnd);
   bool RecordingEnabled()
   {
     return m_recordingEnabled;
@@ -153,7 +155,13 @@ private:
   std::string GetStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName);
   std::string GetImageUrl(const std::string& imageToken);
   std::string GetStreamTypeString();
-  std::string GetStreamUrl(std::string& jsonString, std::map<std::string, std::string>& additionalPropertiesOut);
+  std::string GetStreamUrl(std::string& jsonString, std::vector<kodi::addon::PVRStreamProperty>& properties);
   static P8PLATFORM::CMutex sendEpgToKodiMutex;
   std::string GetStreamParameters();
+  bool ParseRecordingsTimers(const rapidjson::Value& recordings, std::map<int, ZatRecordingDetails>& detailsById);
+  void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
+  bool Record(int programId);
+  std::string GetManifestType();
+  std::string GetMimeType();
+  void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties, const std::string& url);
 };

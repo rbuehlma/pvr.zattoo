@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.3.2"
+       version="19.4.0"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
     @ADDON_DEPENDS@
     <import addon="inputstream.adaptive" minversion="2.4.2"/>
   </requires>
-  <extension point="xbmc.pvrclient" library_@PLATFORM@="@LIBRARY_FILENAME@"/>
+  <extension point="kodi.pvrclient" library_@PLATFORM@="@LIBRARY_FILENAME@"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="de_DE">Kodi-PVR-Client für Zattoo</summary>
     <summary lang="en_AU">Kodi's frontend for Zattoo</summary>
@@ -32,6 +32,9 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.4.0
+ - Update PVR API 7.0.0
+ - Major changes to match new API
 v19.3.2
  - Support receiving app token from html and json
 v19.3.1

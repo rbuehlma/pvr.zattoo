@@ -4,6 +4,7 @@
 #pragma comment(lib, "ws2_32.lib")
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #define timegm _mkgmtime
 
 #define gmtime_r __gmtime_r
