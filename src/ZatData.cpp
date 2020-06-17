@@ -1755,13 +1755,13 @@ PVR_ERROR ZatData::GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, 
     jsonString = HttpPost(
         m_providerUrl + "/zapi/watch/selective_recall/" + channel.cid + "/"
             + std::to_string(tag.GetUniqueBroadcastId()), dataStream.str());
-
-    std::string strUrl = GetStreamUrl(jsonString, properties);
-    if (!strUrl.empty())
-    {
-      SetStreamProperties(properties, strUrl);
-      ret = PVR_ERROR_NO_ERROR;
-    }
+  }
+  
+  std::string strUrl = GetStreamUrl(jsonString, properties);
+  if (!strUrl.empty())
+  {
+    SetStreamProperties(properties, strUrl);
+    ret = PVR_ERROR_NO_ERROR;
   }
 
   return ret;
