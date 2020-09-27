@@ -111,15 +111,13 @@ private:
   std::string m_countryCode;
   std::string m_serviceRegionCountry;
   bool m_recallEnabled = false;
-  bool m_selectiveRecallEnabled = false;
   bool m_recordingEnabled = false;
   std::vector<PVRZattooChannelGroup> m_channelGroups;
   std::map<int, ZatChannel> m_channelsByUid;
   std::map<std::string, ZatChannel> m_channelsByCid;
   std::map<std::string, ZatRecordingData*> m_recordingsData;
-  int64_t m_maxRecallSeconds = 0;
   std::string m_beakerSessionId;
-  std::string m_pzuid;
+  std::string m_zattooSession;
   std::vector<UpdateThread*> m_updateThreads;
   std::string m_uuid = "";
   Categories m_categories;
@@ -165,4 +163,5 @@ private:
   std::string GetManifestType();
   std::string GetMimeType();
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties, const std::string& url);
+  time_t GetTimeForEpgTag(const kodi::addon::PVREPGTag& tag, const char * field);
 };

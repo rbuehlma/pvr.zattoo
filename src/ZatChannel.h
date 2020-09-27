@@ -5,7 +5,6 @@ struct ZatChannel
 {
   int iUniqueId;
   int iChannelNumber;
-  int selectiveRecallSeconds;
   bool recordingEnabled;
   std::string name;
   std::string strLogoPath;
