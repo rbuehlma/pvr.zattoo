@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.4.1"
+       version="19.4.2"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,12 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.4.2
+ - Remove p8-platform dependency
+ - Use std::thread
+ - Fix char buffer delete
+ - Use std:mutex
+ - Remove unused p8-platform headers
 v19.4.1
  - Fix replay
 v19.4.0
@@ -220,7 +226,7 @@ v18.0.38
  - Persist Zattoo session
 v18.0.37
  - Cleanup cache also when recordings are not avialable
- - Provide addon version to Zattoo upon login 
+ - Provide addon version to Zattoo upon login
 v18.0.36
  - Seek 5 minutes into recording stream
 v18.0.35
@@ -232,7 +238,7 @@ v18.0.33
 v18.0.32
  - Cleanup due to merge in Kodi
 v18.0.31
- - Add quantum TV as reseller  
+ - Add quantum TV as reseller
 v18.0.30
  - Set mime type to prevent HEAD request
  - Enable manifest refresh
@@ -420,7 +426,7 @@ v0.1.5
  - Offset the remaining channels by the number of favourites to prevent overlaps
 v0.1.4
  - Support deletion of timer (planned recording)
- - Refresh timers after change 
+ - Refresh timers after change
 v0.1.3
  - Support creating timers (for recordings)
  - Support deletion of recordings
