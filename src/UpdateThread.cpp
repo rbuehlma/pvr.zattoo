@@ -11,18 +11,22 @@ time_t UpdateThread::nextRecordingsUpdate;
 std::mutex UpdateThread::mutex;
 
 UpdateThread::UpdateThread(kodi::addon::CInstancePVRClient& instance, int threadIdx, void *zat) :
-    CThread(),
     m_zat(zat),
     m_threadIdx(threadIdx),
     m_instance(instance)
 {
   time(&UpdateThread::nextRecordingsUpdate);
   UpdateThread::nextRecordingsUpdate += maximumUpdateInterval;
-  CreateThread(false);
+  m_running = true;
+  m_thread = std::thread([&] { Process(); });
 }
 
 UpdateThread::~UpdateThread()
-= default;
+{
+  m_running = false;
+  if (m_thread.joinable())
+    m_thread.join();
+}
 
 void UpdateThread::SetNextRecordingUpdate(time_t nextRecordingsUpdate)
 {
@@ -47,13 +51,13 @@ void UpdateThread::LoadEpg(int uniqueChannelId, time_t startTime,
   loadEpgQueue.push(entry);
 }
 
-void* UpdateThread::Process()
+void UpdateThread::Process()
 {
   kodi::Log(ADDON_LOG_DEBUG, "Update thread started.");
-  while (!IsStopped())
+  while (m_running)
   {
-    Sleep(100);
-    if (IsStopped())
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if (!m_running)
     {
       continue;
     }
@@ -94,6 +98,5 @@ void* UpdateThread::Process()
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "Update thread stopped.");
-  return nullptr;
 }
 

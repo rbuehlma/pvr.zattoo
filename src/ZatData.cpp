@@ -701,7 +701,6 @@ ZatData::~ZatData()
 {
   for (auto const &updateThread : m_updateThreads)
   {
-    updateThread->StopThread(200);
     delete updateThread;
   }
   for (auto const& item : m_recordingsData)
