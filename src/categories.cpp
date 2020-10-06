@@ -25,7 +25,6 @@
 #include <cstring>
 #include <iostream>
 #include <kodi/Filesystem.h>
-#include <p8-platform/os.h>
 #include <regex>
 
 #define CATEGORIES_MAXLINESIZE    255

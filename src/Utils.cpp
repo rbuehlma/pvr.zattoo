@@ -12,8 +12,6 @@
 #include <kodi/Filesystem.h>
 #include <kodi/General.h>
 
-#include "p8-platform/os.h"
-
 std::string Utils::GetFilePath(const std::string &strPath, bool bUserPath)
 {
   return bUserPath ? kodi::GetBaseUserPath(strPath) : kodi::GetAddonPath(strPath);

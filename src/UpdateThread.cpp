@@ -8,37 +8,35 @@ const time_t maximumUpdateInterval = 600;
 
 std::queue<EpgQueueEntry> UpdateThread::loadEpgQueue;
 time_t UpdateThread::nextRecordingsUpdate;
-P8PLATFORM::CMutex UpdateThread::mutex;
+std::mutex UpdateThread::mutex;
 
 UpdateThread::UpdateThread(kodi::addon::CInstancePVRClient& instance, int threadIdx, void *zat) :
-    CThread(),
     m_zat(zat),
     m_threadIdx(threadIdx),
     m_instance(instance)
 {
   time(&UpdateThread::nextRecordingsUpdate);
   UpdateThread::nextRecordingsUpdate += maximumUpdateInterval;
-  CreateThread(false);
+  m_running = true;
+  m_thread = std::thread([&] { Process(); });
 }
 
 UpdateThread::~UpdateThread()
-= default;
+{
+  m_running = false;
+  if (m_thread.joinable())
+    m_thread.join();
+}
 
 void UpdateThread::SetNextRecordingUpdate(time_t nextRecordingsUpdate)
 {
   if (nextRecordingsUpdate < UpdateThread::nextRecordingsUpdate)
   {
-    if (!mutex.Lock())
-    {
-      kodi::Log(ADDON_LOG_ERROR,
-          "UpdateThread::SetNextRecordingUpdate : Could not lock mutex.");
-      return;
-    }
+    std::lock_guard<std::mutex> lock(mutex);
     if (nextRecordingsUpdate < UpdateThread::nextRecordingsUpdate)
     {
       UpdateThread::nextRecordingsUpdate = nextRecordingsUpdate;
     }
-    mutex.Unlock();
   }
 }
 
@@ -49,22 +47,17 @@ void UpdateThread::LoadEpg(int uniqueChannelId, time_t startTime,
   entry.uniqueChannelId = uniqueChannelId;
   entry.startTime = startTime;
   entry.endTime = endTime;
-  if (!mutex.Lock())
-  {
-    kodi::Log(ADDON_LOG_ERROR, "UpdateThread::LoadEpg : Could not lock mutex.");
-    return;
-  }
+  std::lock_guard<std::mutex> lock(mutex);
   loadEpgQueue.push(entry);
-  mutex.Unlock();
 }
 
-void* UpdateThread::Process()
+void UpdateThread::Process()
 {
   kodi::Log(ADDON_LOG_DEBUG, "Update thread started.");
-  while (!IsStopped())
+  while (m_running)
   {
-    Sleep(100);
-    if (IsStopped())
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if (!m_running)
     {
       continue;
     }
@@ -75,23 +68,14 @@ void* UpdateThread::Process()
 
     while (!loadEpgQueue.empty())
     {
-      if (!mutex.Lock())
-      {
-        kodi::Log(ADDON_LOG_ERROR,
-            "UpdateThread::Process : Could not lock mutex for epg queue");
-        break;
-      }
+      std::unique_lock<std::mutex> lock(mutex);
       if (!loadEpgQueue.empty())
       {
         EpgQueueEntry entry = loadEpgQueue.front();
         loadEpgQueue.pop();
-        mutex.Unlock();
+        lock.unlock();
         (static_cast<ZatData*>(m_zat))->GetEPGForChannelAsync(entry.uniqueChannelId,
             entry.startTime, entry.endTime);
-      }
-      else
-      {
-        mutex.Unlock();
       }
     }
 
@@ -100,29 +84,19 @@ void* UpdateThread::Process()
 
     if (static_cast<ZatData*>(m_zat)->RecordingEnabled() && currentTime >= UpdateThread::nextRecordingsUpdate)
     {
-      if (!mutex.Lock())
-      {
-        kodi::Log(ADDON_LOG_ERROR,
-            "UpdateThread::Process : Could not lock mutex for recordings update");
-        continue;
-      }
+      std::unique_lock<std::mutex> lock(mutex);
       if (currentTime >= UpdateThread::nextRecordingsUpdate)
       {
         UpdateThread::nextRecordingsUpdate = currentTime
             + maximumUpdateInterval;
-        mutex.Unlock();
+        lock.unlock();
         m_instance.TriggerTimerUpdate();
         m_instance.TriggerRecordingUpdate();
         kodi::Log(ADDON_LOG_DEBUG, "Update thread triggered update.");
-      }
-      else
-      {
-        mutex.Unlock();
       }
     }
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "Update thread stopped.");
-  return nullptr;
 }
 

@@ -4,7 +4,6 @@
 #include <string>
 #include "ZatData.h"
 #include <sstream>
-#include "p8-platform/sockets/tcp.h"
 #include <map>
 #include <ctime>
 #include <random>
@@ -29,7 +28,7 @@ const unsigned int EPG_TAG_FLAG_SELECTIVE_REPLAY = 0x00400000;
 static const std::string user_agent = std::string("Kodi/")
     + std::string(STR(KODI_VERSION)) + std::string(" pvr.zattoo/")
     + std::string(STR(ZATTOO_VERSION)) + std::string(" (Kodi PVR addon)");
-P8PLATFORM::CMutex ZatData::sendEpgToKodiMutex;
+std::mutex ZatData::sendEpgToKodiMutex;
 
 std::string ZatData::GetManifestType()
 {
@@ -702,7 +701,6 @@ ZatData::~ZatData()
 {
   for (auto const &updateThread : m_updateThreads)
   {
-    updateThread->StopThread(200);
     delete updateThread;
   }
   for (auto const& item : m_recordingsData)
@@ -981,10 +979,7 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
   {
     return;
   }
-  if (!sendEpgToKodiMutex.Lock()) {
-    kodi::Log(ADDON_LOG_INFO, "Failed to lock sendEpgToKodiMutex.");
-    return;
-  }
+  std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
   for (Value::ConstValueIterator itr = doc.Begin(); itr != doc.End(); ++itr)
   {
     const Value& program = (*itr);
@@ -1034,8 +1029,6 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     }
     kodi::addon::CInstancePVRClient::EpgEventStateChange(tag, EPG_EVENT_CREATED);
   }
-  sendEpgToKodiMutex.Unlock();
-
 }
 
 PVR_ERROR ZatData::GetEPGForChannel(int channelUid, time_t start, time_t end, kodi::addon::PVREPGTagsResultSet& results)
@@ -1072,10 +1065,7 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
         zatChannel->name.c_str(), iStart, iEnd);
     return;
   }
-  if (!sendEpgToKodiMutex.Lock()) {
-    kodi::Log(ADDON_LOG_INFO, "Failed to lock sendEpgToKodiMutex.");
-    return;
-  }
+  std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
   for (auto const &entry : *channelEpgCache)
   {
     PVRIptvEpgEntry epgEntry = entry.second;
@@ -1118,7 +1108,6 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     }
     kodi::addon::CInstancePVRClient::EpgEventStateChange(tag, EPG_EVENT_CREATED);
   }
-  sendEpgToKodiMutex.Unlock();
   delete channelEpgCache;
 }
 
@@ -1756,7 +1745,7 @@ PVR_ERROR ZatData::GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, 
         m_providerUrl + "/zapi/watch/selective_recall/" + channel.cid + "/"
             + std::to_string(tag.GetUniqueBroadcastId()), dataStream.str());
   }
-  
+
   std::string strUrl = GetStreamUrl(jsonString, properties);
   if (!strUrl.empty())
   {
