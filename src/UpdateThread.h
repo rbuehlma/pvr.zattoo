@@ -2,7 +2,8 @@
 
 #include <kodi/addon-instance/PVR.h>
 #include <p8-platform/threads/threads.h>
-#include <p8-platform/threads/mutex.h>
+#include <atomic>
+#include <mutex>
 #include <queue>
 
 struct EpgQueueEntry
@@ -27,5 +28,5 @@ private:
   kodi::addon::CInstancePVRClient& m_instance;
   static std::queue<EpgQueueEntry> loadEpgQueue;
   static time_t nextRecordingsUpdate;
-  static P8PLATFORM::CMutex mutex;
+  static std::mutex mutex;
 };

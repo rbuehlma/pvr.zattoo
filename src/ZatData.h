@@ -7,7 +7,7 @@
 #include "Curl.h"
 #include <map>
 #include <thread>
-#include <p8-platform/threads/mutex.h>
+#include <mutex>
 #include "rapidjson/document.h"
 #include "XmlTV.h"
 #include "ZatChannel.h"
@@ -156,7 +156,7 @@ private:
   std::string GetImageUrl(const std::string& imageToken);
   std::string GetStreamTypeString();
   std::string GetStreamUrl(std::string& jsonString, std::vector<kodi::addon::PVRStreamProperty>& properties);
-  static P8PLATFORM::CMutex sendEpgToKodiMutex;
+  static std::mutex sendEpgToKodiMutex;
   std::string GetStreamParameters();
   bool ParseRecordingsTimers(const rapidjson::Value& recordings, std::map<int, ZatRecordingDetails>& detailsById);
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);

@@ -43,15 +43,10 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatCh
     return false;
   }
 
-  if (!m_mutex.Lock())
-  {
-    kodi::Log(ADDON_LOG_ERROR,
-        "XmlTV::GetEPGForChannel : Could not lock mutex");
-    return false;
-  }
+  std::unique_lock<std::mutex> lock(m_mutex);
 
   if (!isUpdateDue()) {
-    m_mutex.Unlock();
+    lock.unlock();
     return m_loadedChannels.find(cid) != m_loadedChannels.end();
   }
 
@@ -64,7 +59,7 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatCh
   if (!file.OpenFile(m_xmlFile, 0))
   {
     kodi::Log(ADDON_LOG_ERROR, "XMLTV: failed to open xml-file.");
-    m_mutex.Unlock();
+    lock.unlock();
     return false;
   }
 
@@ -79,14 +74,14 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatCh
   if (doc.Parse(xml.c_str(), xml.length()) != XML_SUCCESS)
   {
     kodi::Log(ADDON_LOG_ERROR, "XMLTV: failed to parse xml-file.");
-    m_mutex.Unlock();
+    lock.unlock();
     return false;
   }
   XMLElement* tv = doc.FirstChildElement("tv");
   if (!tv)
   {
     kodi::Log(ADDON_LOG_ERROR, "XMLTV: no 'tv' section in xml-file.");
-    m_mutex.Unlock();
+    lock.unlock();
     return false;
   }
   XMLElement* programme = tv->FirstChildElement("programme");
@@ -192,9 +187,7 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatCh
     programme = programme->NextSiblingElement("programme");
 
   }
-  m_mutex.Unlock();
   return m_loadedChannels.find(cid) != m_loadedChannels.end();
-
 }
 
 bool XmlTV::isUpdateDue() {
