@@ -4,7 +4,6 @@
 #include <string>
 #include "ZatData.h"
 #include <sstream>
-#include "p8-platform/sockets/tcp.h"
 #include <map>
 #include <ctime>
 #include <random>
@@ -1756,7 +1755,7 @@ PVR_ERROR ZatData::GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, 
         m_providerUrl + "/zapi/watch/selective_recall/" + channel.cid + "/"
             + std::to_string(tag.GetUniqueBroadcastId()), dataStream.str());
   }
-  
+
   std::string strUrl = GetStreamUrl(jsonString, properties);
   if (!strUrl.empty())
   {
