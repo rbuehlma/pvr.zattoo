@@ -68,7 +68,7 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatCh
     xml += buffer;
   }
   file.Close();
-  delete buffer;
+  delete[] buffer;
 
   XMLDocument doc;
   if (doc.Parse(xml.c_str(), xml.length()) != XML_SUCCESS)
