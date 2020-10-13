@@ -93,7 +93,7 @@ std::string ZatData::HttpRequest(const std::string& action, const std::string& u
   if (statusCode == 403 && !isInit)
   {
     XBMC->Log(LOG_ERROR, "Open URL failed. Try to re-init session.");
-    if (!InitSession())
+    if (!InitSession(false))
     {
       XBMC->Log(LOG_ERROR, "Re-init of session. Failed.");
       return "";
@@ -294,10 +294,12 @@ std::string ZatData::GenerateUUID()
 
 bool ZatData::LoadAppId()
 {
+  if (!m_appToken.empty()) {
+    return true;
+  }
+  
   std::string html = HttpGet(m_providerUrl + "/login", true);
 
-  m_appToken = "";
-  
   if (!LoadAppTokenFromHtml(html)) {
     if (!LoadAppTokenFromJson(html)) {
       return LoadAppTokenFromFile();
@@ -409,15 +411,34 @@ Document ZatData::Login()
   return doc;
 }
 
-bool ZatData::InitSession()
+bool ZatData::ReinitSession()
 {
+  m_uuid = "";
+  m_pzuid = "";
+  m_beakerSessionId = "";
+  m_appToken = "";
+  
+  return InitSession(true);
+}
+
+bool ZatData::InitSession(bool isReinit)
+{
+  if (!LoadAppId())
+  {
+    return isReinit ? false : ReinitSession();
+  }
+  
+  std::string uuid = GetUUID();
+
+  SendHello(uuid);
+  
   std::string jsonString = HttpGet(m_providerUrl + "/zapi/v2/session", true);
   Document doc;
   doc.Parse(jsonString.c_str());
   if (doc.GetParseError() || !doc["success"].GetBool())
   {
     XBMC->Log(LOG_ERROR, "Initialize session failed.");
-    return false;
+    return isReinit ? false : ReinitSession();
   }
 
   if (!doc["session"]["loggedin"].GetBool())
@@ -431,7 +452,7 @@ bool ZatData::InitSession()
         || !doc["session"]["loggedin"].GetBool())
     {
       XBMC->Log(LOG_ERROR, "Login failed.");
-      return false;
+      return isReinit ? false : ReinitSession();
     }
     else
     {
@@ -677,17 +698,7 @@ ZatData::~ZatData()
 
 bool ZatData::Initialize()
 {
-  if (!LoadAppId())
-  {
-    return false;
-  }
-
-  std::string uuid = GetUUID();
-
-  SendHello(uuid);
-  //Ignore if hello fails
-
-  if (!InitSession()) {
+  if (!InitSession(false)) {
     return false;
   }
   
