@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.4.3"
+       version="19.4.4"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,8 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.4.4
+ - Improve session re-init
 v19.4.3
 - Remove p8 from debian control file
 v19.4.2
@@ -117,6 +119,12 @@ v19.0.1
  - Load description from xmltv file
 v19.0.0
  - Update to PVR addon API v6.0.0
+v18.1.21
+ - Improve session re-init
+v18.1.20
+ - Same as v18.1.19
+v18.1.19
+ - Support receiving app token from html and json
 v18.1.18
  - Fix receiving app token required for login
 v18.1.17

@@ -138,7 +138,8 @@ private:
   std::string GenerateUUID();
   bool SendHello(std::string uuid);
   rapidjson::Document Login();
-  bool InitSession();
+  bool InitSession(bool isReinit);
+  bool ReinitSession();
   std::string HttpGetCached(const std::string& url, time_t cacheDuration, const std::string& userAgent = "");
   std::string HttpGet(const std::string& url, bool isInit = false, const std::string& userAgent = "");
   std::string HttpDelete(const std::string& url, bool isInit = false);
