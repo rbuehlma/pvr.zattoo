@@ -863,12 +863,7 @@ std::string ZatData::GetChannelStreamUrl(int uniqueId, std::map<std::string, std
   XBMC->Log(LOG_DEBUG, "Get live url for channel %s", channel->cid.c_str());
 
   std::ostringstream dataStream;
-  dataStream << GetStreamParameters() << "&format=json";
-
-  if (m_recallEnabled)
-  {
-    dataStream << "&timeshift=" << m_maxRecallSeconds;
-  }
+  dataStream << GetStreamParameters() << "&format=json&timeshift=10800";
 
   std::string jsonString = HttpPost(m_providerUrl + "/zapi/watch/live/" + channel->cid, dataStream.str());
   
