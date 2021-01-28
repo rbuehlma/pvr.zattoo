@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.6.0"
+       version="19.6.1"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,8 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.6.1
+ - Fix timeshift for regions without full replay
 v19.6.0
 - Update PVR API 7.1.0
 v19.5.1
@@ -125,6 +127,8 @@ v19.0.1
  - Load description from xmltv file
 v19.0.0
  - Update to PVR addon API v6.0.0
+v18.1.22
+ - Fix timeshift for regions without full replay
 v18.1.21
  - Improve session re-init
 v18.1.20

@@ -936,12 +936,7 @@ PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& cha
   kodi::Log(ADDON_LOG_DEBUG, "Get live url for channel %s", ownChannel->cid.c_str());
 
   std::ostringstream dataStream;
-  dataStream << GetStreamParameters() << "&format=json";
-
-  if (m_recallEnabled)
-  {
-    dataStream << "&timeshift=" << m_maxRecallSeconds;
-  }
+  dataStream << GetStreamParameters() << "&format=json&timeshift=10800";
 
   std::string jsonString = HttpPost(m_providerUrl + "/zapi/watch/live/" + ownChannel->cid, dataStream.str());
 
