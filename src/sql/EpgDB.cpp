@@ -20,8 +20,8 @@ private:
 };
 
 EpgDB::EpgDB(std::string folder)
-: SQLConnection("EPG") {
-  std::string dbPath = folder + "test.sqlite";
+: SQLConnection("EPG-DB") {
+  std::string dbPath = folder + "epg.sqlite";
   Open(dbPath);
   if (!MigrateDbIfRequired()) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to migrate DB to version: %i", m_name.c_str(), DB_VERSION);
@@ -94,6 +94,7 @@ bool EpgDB::InsertBatch(std::vector<EpgDBInfo>& epgDBInfos) {
   
   if (!Execute(insert)) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to batch insert", m_name.c_str());
+    return false;
   }
   return true;
 }

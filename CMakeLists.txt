@@ -22,6 +22,7 @@ set(DEPLIBS ${TINYXML2_LIBRARIES} sqlite
 set(ZATTOO_SOURCES
 		src/sql/SQLConnection.cpp
 		src/sql/EpgDB.cpp
+		src/sql/RecordingsDB.cpp
 		src/Utils.cpp
 		src/client.cpp
 		src/Curl.cpp
@@ -37,6 +38,7 @@ set(ZATTOO_SOURCES
 set(ZATTOO_HEADERS
 		src/sql/SQLConnection.h
 		src/sql/EpgDB.h
+		src/sql/RecordingsDB.h
 		src/Cache.h
 		src/Curl.h
 		src/UpdateThread.h

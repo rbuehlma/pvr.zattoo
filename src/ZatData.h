@@ -12,6 +12,7 @@
 #include "XmlTV.h"
 #include "ZatChannel.h"
 #include "sql/EpgDB.h"
+#include "sql/RecordingsDB.h"
 
 class CZattooTVAddon;
 
@@ -28,14 +29,6 @@ struct PVRIptvEpgEntry
   time_t recordUntil;
   time_t replayUntil;
   time_t restartUntil;
-};
-
-struct ZatRecordingData
-{
-  std::string recordingId;
-  int playCount;
-  int lastPlayedPosition;
-  bool stillValid;
 };
 
 struct ZatRecordingDetails
@@ -118,17 +111,16 @@ private:
   std::vector<PVRZattooChannelGroup> m_channelGroups;
   std::map<int, ZatChannel> m_channelsByUid;
   std::map<std::string, ZatChannel> m_channelsByCid;
-  std::map<std::string, ZatRecordingData*> m_recordingsData;
   std::string m_beakerSessionId;
   std::string m_zattooSession;
   std::vector<UpdateThread*> m_updateThreads;
   std::string m_uuid = "";
   Categories m_categories;
   std::string m_providerUrl;
-  bool m_recordingsLoaded = false;
   std::string m_parentalPin;
   XmlTV *m_xmlTV = nullptr;
   EpgDB *m_epgDB;
+  RecordingsDB *m_recordingsDB;
 
   bool LoadAppId();
   bool LoadAppTokenFromFile();

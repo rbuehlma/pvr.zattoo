@@ -213,15 +213,13 @@ bool ZatData::ReadDataJson()
       itr != recordings.End(); ++itr)
   {
     const Value& recording = (*itr);
-    auto *recData = new ZatRecordingData();
-    recData->recordingId = GetStringOrEmpty(recording, "recordingId");
-    recData->playCount = recording["playCount"].GetInt();
-    recData->lastPlayedPosition = recording["lastPlayedPosition"].GetInt();
-    recData->stillValid = false;
-    m_recordingsData[recData->recordingId] = recData;
+    
+    RecordingDBInfo recordingDBInfo;
+    recordingDBInfo.recordingId = GetStringOrEmpty(recording, "recordingId");
+    recordingDBInfo.playCount = recording["playCount"].GetInt();
+    recordingDBInfo.lastPlayedPosition = recording["lastPlayedPosition"].GetInt();
+    m_recordingsDB->Set(recordingDBInfo);
   }
-
-  m_recordingsLoaded = false;
 
   if (doc.HasMember("uuid"))
   {
@@ -252,25 +250,6 @@ bool ZatData::WriteDataJson()
 
   Value a(kArrayType);
   Document::AllocatorType& allocator = d.GetAllocator();
-  for (auto const& item : m_recordingsData)
-  {
-    if (m_recordingsLoaded && !item.second->stillValid)
-    {
-      continue;
-    }
-
-    Value r;
-    r.SetObject();
-    Value recordingId;
-    recordingId.SetString(item.second->recordingId.c_str(),
-        item.second->recordingId.length(), allocator);
-    r.AddMember("recordingId", recordingId, allocator);
-    r.AddMember("playCount", item.second->playCount, allocator);
-    r.AddMember("lastPlayedPosition", item.second->lastPlayedPosition,
-        allocator);
-    a.PushBack(r, allocator);
-  }
-  d.AddMember("recordings", a, allocator);
 
   if (!m_uuid.empty())
   {
@@ -631,6 +610,7 @@ ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
 {
   
   m_epgDB = new EpgDB(UserPath());
+  m_recordingsDB = new RecordingsDB(UserPath());
   
   kodi::Log(ADDON_LOG_INFO, "Using useragent: %s", user_agent.c_str());
 
@@ -700,10 +680,6 @@ ZatData::~ZatData()
   for (auto const &updateThread : m_updateThreads)
   {
     delete updateThread;
-  }
-  for (auto const& item : m_recordingsData)
-  {
-    delete item.second;
   }
   m_channelGroups.clear();
   if (m_xmlTV)
@@ -1184,23 +1160,9 @@ std::map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd,
 PVR_ERROR ZatData::SetRecordingPlayCount(const kodi::addon::PVRRecording& recording, int count)
 {
   std::string recordingId = recording.GetRecordingId();
-  ZatRecordingData *recData;
-  if (m_recordingsData.find(recordingId) != m_recordingsData.end())
-  {
-    recData = m_recordingsData[recordingId];
-    recData->playCount = count;
-  }
-  else
-  {
-    recData = new ZatRecordingData();
-    recData->playCount = count;
-    recData->recordingId = recordingId;
-    recData->lastPlayedPosition = 0;
-    recData->stillValid = true;
-    m_recordingsData[recordingId] = recData;
-  }
-
-  WriteDataJson();
+  RecordingDBInfo recordingDBInfo = m_recordingsDB->Get(recordingId);
+  recordingDBInfo.playCount = count;
+  m_recordingsDB->Set(recordingDBInfo);
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -1208,35 +1170,18 @@ PVR_ERROR ZatData::SetRecordingLastPlayedPosition(const kodi::addon::PVRRecordin
     int lastplayedposition)
 {
   std::string recordingId = recording.GetRecordingId();
-  ZatRecordingData *recData;
-  if (m_recordingsData.find(recordingId) != m_recordingsData.end())
-  {
-    recData = m_recordingsData[recordingId];
-    recData->lastPlayedPosition = lastplayedposition;
-  }
-  else
-  {
-    recData = new ZatRecordingData();
-    recData->playCount = 0;
-    recData->recordingId = recordingId;
-    recData->lastPlayedPosition = lastplayedposition;
-    recData->stillValid = true;
-    m_recordingsData[recordingId] = recData;
-  }
-
-  WriteDataJson();
+  RecordingDBInfo recordingDBInfo = m_recordingsDB->Get(recordingId);
+  recordingDBInfo.lastPlayedPosition = lastplayedposition;
+  m_recordingsDB->Set(recordingDBInfo);
   return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR ZatData::GetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording, int& position)
 {
-  if (m_recordingsData.find(recording.GetRecordingId()) != m_recordingsData.end())
-  {
-    ZatRecordingData* recData = m_recordingsData[recording.GetRecordingId()];
-    position = recData->lastPlayedPosition;
-    return PVR_ERROR_NO_ERROR;
-  }
-  return PVR_ERROR_INVALID_PARAMETERS;
+  std::string recordingId = recording.GetRecordingId();
+  RecordingDBInfo recordingDBInfo = m_recordingsDB->Get(recordingId);
+  position = recordingDBInfo.lastPlayedPosition;
+  return PVR_ERROR_NO_ERROR;
 }
 
 bool ZatData::ParseRecordingsTimers(const Value& recordings, std::map<int, ZatRecordingDetails>& detailsById)
@@ -1524,17 +1469,16 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
         tag.SetGenreType(genre & 0xF0);
       }
 
-      if (m_recordingsData.find(tag.GetRecordingId()) != m_recordingsData.end())
-      {
-        ZatRecordingData* recData = m_recordingsData[tag.GetRecordingId()];
-        tag.SetPlayCount(recData->playCount);
-        tag.SetLastPlayedPosition(recData->lastPlayedPosition);
-        recData->stillValid = true;
-      }
+      
+      RecordingDBInfo recordingDBInfo = m_recordingsDB->Get(tag.GetRecordingId());
+      tag.SetPlayCount(recordingDBInfo.playCount);
+      tag.SetLastPlayedPosition(recordingDBInfo.lastPlayedPosition);
+      m_recordingsDB->Set(recordingDBInfo);
 
       results.Add(tag);
-      m_recordingsLoaded = true;
     }
+    
+    m_recordingsDB->Cleanup();
   }
 
   return PVR_ERROR_NO_ERROR;
