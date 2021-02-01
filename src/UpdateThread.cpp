@@ -2,7 +2,7 @@
 #include <ctime>
 #include "client.h"
 #include "ZatData.h"
-#include "Cache.h"
+#include "http/Cache.h"
 
 const time_t maximumUpdateInterval = 600;
 

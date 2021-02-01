@@ -1,7 +1,7 @@
 #include "Cache.h"
-#include "client.h"
+#include "../client.h"
 #include <kodi/Filesystem.h>
-#include "Utils.h"
+#include "../Utils.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 

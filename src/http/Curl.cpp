@@ -1,8 +1,7 @@
 #include "Curl.h"
 #include <kodi/Filesystem.h>
 #include <utility>
-#include "client.h"
-#include "Utils.h"
+#include "../Utils.h"
 
 Curl::Curl()
 = default;

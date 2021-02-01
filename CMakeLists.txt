@@ -24,10 +24,11 @@ set(ZATTOO_SOURCES
 		src/sql/EpgDB.cpp
 		src/sql/RecordingsDB.cpp
 		src/sql/ParameterDB.cpp
+		src/http/Curl.cpp
+		src/http/Cache.cpp
+		src/http/HttpClient.cpp
 		src/Utils.cpp
 		src/client.cpp
-		src/Curl.cpp
-		src/Cache.cpp
 		src/Settings.cpp
 		src/ZatData.cpp
 		src/UpdateThread.cpp
@@ -41,8 +42,9 @@ set(ZATTOO_HEADERS
 		src/sql/EpgDB.h
 		src/sql/RecordingsDB.h
 		src/sql/ParameterDB.h
-		src/Cache.h
-		src/Curl.h
+		src/http/Curl.h
+		src/http/Cache.h
+		src/http/HttpClient.h
 		src/UpdateThread.h
 		src/XmlTV.h
 		src/Settings.h
