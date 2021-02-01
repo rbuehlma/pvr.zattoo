@@ -135,13 +135,17 @@ std::string ZatData::HttpRequest(const std::string& action, const std::string& u
 
   if (statusCode == 403 && !isInit)
   {
-    kodi::Log(ADDON_LOG_ERROR, "Open URL failed. Try to re-init session.");
+    kodi::Log(ADDON_LOG_ERROR, "Open URL failed with 403. Try to re-init session.");
     if (!InitSession(false))
     {
       kodi::Log(ADDON_LOG_ERROR, "Re-init of session. Failed.");
       return "";
     }
     return HttpRequestToCurl(curl, action, url, postData, statusCode);
+  }
+  if (statusCode >= 400) {
+    kodi::Log(ADDON_LOG_ERROR, "Open URL failed with %i.", statusCode);
+    return "";
   }
   std::string sessionId = curl.GetCookie("beaker.session.id");
   if (!sessionId.empty() && m_beakerSessionId != sessionId)
@@ -625,6 +629,9 @@ ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
     m_parentalPin(parentalPin)
 
 {
+  
+  m_epgDB = new EpgDB(UserPath());
+  
   kodi::Log(ADDON_LOG_INFO, "Using useragent: %s", user_agent.c_str());
 
   switch (provider)
@@ -703,6 +710,7 @@ ZatData::~ZatData()
   {
     delete m_xmlTV;
   }
+  delete m_epgDB;
 }
 
 bool ZatData::Initialize()
@@ -1016,8 +1024,7 @@ PVR_ERROR ZatData::GetEPGForChannel(int channelUid, time_t start, time_t end, ko
   return PVR_ERROR_NO_ERROR;
 }
 
-void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
-    time_t iEnd)
+void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart, time_t iEnd)
 {
   ZatChannel *zatChannel = FindChannel(uniqueChannelId);
 
@@ -1040,6 +1047,9 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
         zatChannel->name.c_str(), iStart, iEnd);
     return;
   }
+  
+  std::vector<EpgDBInfo> epgDBInfos;
+  
   std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
   for (auto const &entry : *channelEpgCache)
   {
@@ -1067,6 +1077,14 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     tag.SetEpisodeNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
     tag.SetEpisodePartNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
     tag.SetEpisodeName(""); /* not supported */
+    
+    EpgDBInfo epgDBInfo;
+    
+    epgDBInfo.programId = epgEntry.iBroadcastId;
+    epgDBInfo.recordUntil = epgEntry.recordUntil;
+    epgDBInfo.replayUntil = epgEntry.replayUntil;
+    epgDBInfo.restartUntil = epgEntry.restartUntil;
+    epgDBInfos.push_back(epgDBInfo);
 
     int genre = m_categories.Category(epgEntry.strGenreString);
     if (genre)
@@ -1083,6 +1101,7 @@ void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart,
     kodi::addon::CInstancePVRClient::EpgEventStateChange(tag, EPG_EVENT_CREATED);
   }
   delete channelEpgCache;
+  m_epgDB->InsertBatch(epgDBInfos);
 }
 
 std::map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd,
@@ -1097,7 +1116,7 @@ std::map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd,
   while (tempEnd <= iEnd)
   {
     std::ostringstream urlStream;
-    urlStream << m_providerUrl << "/zapi/v2/cached/" + m_powerHash + "/guide/"
+    urlStream << m_providerUrl << "/zapi/v3/cached/" + m_powerHash + "/guide"
         << "?end=" << tempEnd << "&start=" << tempStart
         << "&format=json";
 
@@ -1105,19 +1124,15 @@ std::map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd,
 
     Document doc;
     doc.Parse(jsonString.c_str());
-    if (doc.GetParseError() || !doc["success"].GetBool())
+    if (doc.GetParseError())
     {
       return nullptr;
     }
 
     const Value& channels = doc["channels"];
 
-    //Load the channel groups and channels
-    for (Value::ConstValueIterator itr = channels.Begin();
-        itr != channels.End(); ++itr)
-    {
-      const Value& channelItem = (*itr);
-      std::string cid = GetStringOrEmpty(channelItem, "cid");
+    for (Value::ConstMemberIterator iter = channels.MemberBegin(); iter != channels.MemberEnd(); ++iter){
+      std::string cid = iter->name.GetString();
 
       int channelId = GetChannelId(cid.c_str());
       ZatChannel *channel = FindChannel(channelId);
@@ -1127,7 +1142,7 @@ std::map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd,
         continue;
       }
 
-      const Value& programs = channelItem["programs"];
+      const Value& programs = iter->value;
       for (Value::ConstValueIterator itr1 = programs.Begin();
           itr1 != programs.End(); ++itr1)
       {
@@ -1145,8 +1160,10 @@ std::map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd,
         entry.strIconPath = GetImageUrl(GetStringOrEmpty(program, "i_t"));
         entry.iChannelId = channel->iUniqueId;
         entry.strPlot = GetStringOrEmpty(program, "et");
-        entry.selectiveReplay = program["r_e"].GetBool();
-
+        entry.recordUntil = GetIntOrZero(program, "rg_u");
+        entry.replayUntil = GetIntOrZero(program, "sr_u");
+        entry.restartUntil = GetIntOrZero(program, "ry_u");
+        
         const Value& genres = program["g"];
         for (Value::ConstValueIterator itr2 = genres.Begin();
             itr2 != genres.End(); ++itr2)
@@ -1229,7 +1246,7 @@ bool ZatData::ParseRecordingsTimers(const Value& recordings, std::map<int, ZatRe
   {
     int bucketSize = 100;
     std::ostringstream urlStream;
-    urlStream << m_providerUrl << "/zapi/v3/cached/program/power_details/"
+    urlStream << m_providerUrl << "/zapi/v2/cached/program/power_details/"
         << m_powerHash << "?complete=True&program_ids=";
     while (bucketSize > 0 && recordingsItr != recordings.End())
     {
@@ -1632,12 +1649,8 @@ PVR_ERROR ZatData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isP
   }
   else
   {
-    time_t recallUntil = GetTimeForEpgTag(tag, "sr_u");
-    time_t restartUntil = GetTimeForEpgTag(tag, "ry_u");
-    
-    if (recallUntil > current_time || restartUntil > current_time) {
-      isPlayable = true;
-    }
+    EpgDBInfo dbInfo = m_epgDB->Get(tag.GetUniqueBroadcastId());
+    isPlayable = (dbInfo.replayUntil > current_time) || (dbInfo.restartUntil > current_time);
   }
   return PVR_ERROR_NO_ERROR;
 }
@@ -1650,23 +1663,10 @@ PVR_ERROR ZatData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& i
   }
   else
   {
-    ZatChannel channel = m_channelsByUid[tag.GetUniqueChannelId()];
-    if (!channel.recordingEnabled)
-    {
-      isRecordable = false;
-    }
-    else
-    {
-      time_t current_time;
-      time(&current_time);
-      time_t recordableUntil = GetTimeForEpgTag(tag, "rg_u");
-      
-      if (recordableUntil > current_time ) {
-        isRecordable = true;
-      } else {
-        isRecordable = false;
-      }
-    }
+    time_t current_time;
+    time(&current_time);
+    EpgDBInfo dbInfo = m_epgDB->Get(tag.GetUniqueBroadcastId());
+    isRecordable = dbInfo.recordUntil > current_time;
   }
   return PVR_ERROR_NO_ERROR;
 }
@@ -1733,6 +1733,15 @@ std::string ZatData::GetStringOrEmpty(const Value& jsonValue, const char* fieldN
     return "";
   }
   return jsonValue[fieldName].GetString();
+}
+
+int ZatData::GetIntOrZero(const Value& jsonValue, const char* fieldName)
+{
+  if (!jsonValue.HasMember(fieldName) || !jsonValue[fieldName].IsInt())
+  {
+    return 0;
+  }
+  return jsonValue[fieldName].GetInt();
 }
 
 std::string ZatData::GetImageUrl(const std::string& imageToken) {

@@ -11,6 +11,7 @@
 #include "rapidjson/document.h"
 #include "XmlTV.h"
 #include "ZatChannel.h"
+#include "sql/EpgDB.h"
 
 class CZattooTVAddon;
 
@@ -24,7 +25,9 @@ struct PVRIptvEpgEntry
   std::string strPlot;
   std::string strIconPath;
   std::string strGenreString;
-  bool selectiveReplay;
+  time_t recordUntil;
+  time_t replayUntil;
+  time_t restartUntil;
 };
 
 struct ZatRecordingData
@@ -125,6 +128,7 @@ private:
   bool m_recordingsLoaded = false;
   std::string m_parentalPin;
   XmlTV *m_xmlTV = nullptr;
+  EpgDB *m_epgDB;
 
   bool LoadAppId();
   bool LoadAppTokenFromFile();
@@ -152,6 +156,7 @@ private:
   int GetChannelId(const char * strChannelName);
   void GetEPGForChannelExternalService(int uniqueChannelId, time_t iStart, time_t iEnd);
   std::string GetStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName);
+  int GetIntOrZero(const rapidjson::Value& jsonValue, const char* fieldName);
   std::string GetImageUrl(const std::string& imageToken);
   std::string GetStreamTypeString();
   std::string GetStreamUrl(std::string& jsonString, std::vector<kodi::addon::PVRStreamProperty>& properties);

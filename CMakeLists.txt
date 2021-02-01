@@ -11,12 +11,17 @@ find_package(TinyXML2 REQUIRED)
 include_directories(${KODI_INCLUDE_DIR}
                     ${RAPIDJSON_INCLUDE_DIRS}
                     ${TINYXML2_INCLUDE_DIRS}
+					${PROJECT_SOURCE_DIR}/lib
 )
 
-set(DEPLIBS ${TINYXML2_LIBRARIES}
+add_subdirectory(lib/sqlite)
+
+set(DEPLIBS ${TINYXML2_LIBRARIES} sqlite
 )
 
 set(ZATTOO_SOURCES
+		src/sql/SQLConnection.cpp
+		src/sql/EpgDB.cpp
 		src/Utils.cpp
 		src/client.cpp
 		src/Curl.cpp
@@ -30,6 +35,8 @@ set(ZATTOO_SOURCES
 )
 
 set(ZATTOO_HEADERS
+		src/sql/SQLConnection.h
+		src/sql/EpgDB.h
 		src/Cache.h
 		src/Curl.h
 		src/UpdateThread.h

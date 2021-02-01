@@ -76,11 +76,20 @@ std::string Curl::Request(const std::string& action, const std::string& url, con
   for (auto const &entry : m_options)
   {
     file.CURLAddOption(ADDON_CURL_OPTION_PROTOCOL, entry.first.c_str(), entry.second);
+    file.CURLAddOption(ADDON_CURL_OPTION_PROTOCOL, "failonerror", "false");
   }
 
   if (!file.CURLOpen(ADDON_READ_NO_CACHE))
   {
-    statusCode = 403; //Fake statusCode for now
+    return "";
+  }
+  
+  std::string proto = file.GetPropertyValue(ADDON_FILE_PROPERTY_RESPONSE_PROTOCOL, "");
+  std::string::size_type posResponseCode = proto.find(' ');
+  if (posResponseCode != std::string::npos)
+    statusCode = atoi(proto.c_str() + (posResponseCode + 1));
+  
+  if (statusCode >= 400) {
     return "";
   }
 

@@ -21,13 +21,12 @@ ADDON_STATUS CZattooTVAddon::CreateInstance(int instanceType,
       return ADDON_STATUS_NEED_SETTINGS;
     }
 
-    /* Connect to ARGUS TV */
-    kodi::Log(ADDON_LOG_DEBUG, "Create Zat");
+    kodi::Log(ADDON_LOG_DEBUG, "Create Zattoo");
 
     std::string zatUsername = m_settings.GetZatUsername();
     std::string zatPassword = m_settings.GetZatPassword();
     bool zatFavoritesOnly = m_settings.GetZatFavoritesOnly();
-    bool zatAlternativeEpgService = m_settings.GetZatAlternativeEpgService();
+    bool zatAlternativeEpgService = false; //m_settings.GetZatAlternativeEpgService();
     bool zatAlternativeEpgServiceProvideSession = m_settings.GetZatAlternativeEpgServiceProvideSession();
     STREAM_TYPE streamType = m_settings.GetStreamType();
     bool zatEnableDolby = m_settings.GetZatEnableDolby();
@@ -38,7 +37,7 @@ ADDON_STATUS CZattooTVAddon::CreateInstance(int instanceType,
     ZatData* client = new ZatData(instance, version, zatUsername, zatPassword, zatFavoritesOnly,
         zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType, zatEnableDolby, provider, xmlTVFile, parentalPin);
     addonInstance = client;
-    kodi::Log(ADDON_LOG_DEBUG, "Zat created");
+    kodi::Log(ADDON_LOG_DEBUG, "Zattoo created");
 
     if (client->Initialize() && client->LoadChannels())
     {
