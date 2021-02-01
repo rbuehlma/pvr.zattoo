@@ -160,7 +160,7 @@ std::string ZatData::HttpRequest(const std::string& action, const std::string& u
   {
     kodi::Log(ADDON_LOG_DEBUG, "Got new zattooSession: %s..", zattooSession.substr(0, 5).c_str());
     m_zattooSession = zattooSession;
-    WriteDataJson();
+    m_parameterDB->Set("zattooSession", zattooSession);
   }
 
   return content;
@@ -207,62 +207,22 @@ bool ZatData::ReadDataJson()
     kodi::Log(ADDON_LOG_ERROR, "Parsing data.json failed.");
     return false;
   }
-
-  const Value& recordings = doc["recordings"];
-  for (Value::ConstValueIterator itr = recordings.Begin();
-      itr != recordings.End(); ++itr)
-  {
-    const Value& recording = (*itr);
-    
-    RecordingDBInfo recordingDBInfo;
-    recordingDBInfo.recordingId = GetStringOrEmpty(recording, "recordingId");
-    recordingDBInfo.playCount = recording["playCount"].GetInt();
-    recordingDBInfo.lastPlayedPosition = recording["lastPlayedPosition"].GetInt();
-    m_recordingsDB->Set(recordingDBInfo);
-  }
-
-  if (doc.HasMember("uuid"))
-  {
-    m_uuid = GetStringOrEmpty(doc, "uuid");
-    if (m_uuid.length() > 21) {
-      m_uuid = "";
-      kodi::Log(ADDON_LOG_DEBUG, "Old UUID ignored.");
-    } else {
-      kodi::Log(ADDON_LOG_DEBUG, "Loaded uuid: %s", m_uuid.c_str());
+  
+  if (doc.HasMember("recordings")) {
+    const Value& recordings = doc["recordings"];
+    for (Value::ConstValueIterator itr = recordings.Begin();
+        itr != recordings.End(); ++itr)
+    {
+      const Value& recording = (*itr);
+      
+      RecordingDBInfo recordingDBInfo;
+      recordingDBInfo.recordingId = GetStringOrEmpty(recording, "recordingId");
+      recordingDBInfo.playCount = recording["playCount"].GetInt();
+      recordingDBInfo.lastPlayedPosition = recording["lastPlayedPosition"].GetInt();
+      m_recordingsDB->Set(recordingDBInfo);
     }
   }
-
   kodi::Log(ADDON_LOG_DEBUG, "Loaded data.json.");
-  return true;
-}
-
-bool ZatData::WriteDataJson()
-{
-  kodi::vfs::CFile file;
-  if (!file.OpenFileForWrite(data_file, true))
-  {
-    kodi::Log(ADDON_LOG_ERROR, "Save data.json failed.");
-    return false;
-  }
-
-  Document d;
-  d.SetObject();
-
-  Value a(kArrayType);
-  Document::AllocatorType& allocator = d.GetAllocator();
-
-  if (!m_uuid.empty())
-  {
-    Value uuidValue;
-    uuidValue.SetString(m_uuid.c_str(), m_uuid.length(), allocator);
-    d.AddMember("uuid", uuidValue, allocator);
-  }
-
-  StringBuffer buffer;
-  Writer<StringBuffer> writer(buffer);
-  d.Accept(writer);
-  const char* output = buffer.GetString();
-  file.Write(output, strlen(output));
   return true;
 }
 
@@ -274,7 +234,7 @@ std::string ZatData::GetUUID()
   }
 
   m_uuid = GenerateUUID();
-  WriteDataJson();
+  m_parameterDB->Set("uuid", m_uuid);
   return m_uuid;
 }
 
@@ -448,7 +408,6 @@ bool ZatData::InitSession(bool isReinit)
     kodi::Log(ADDON_LOG_DEBUG, "Need to login.");
     m_zattooSession = "";
     m_beakerSessionId = "";
-    WriteDataJson();
     doc = Login();
     if (doc.GetParseError() || doc["account"].IsNull())
     {
@@ -611,6 +570,7 @@ ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
   
   m_epgDB = new EpgDB(UserPath());
   m_recordingsDB = new RecordingsDB(UserPath());
+  m_parameterDB = new ParameterDB(UserPath());
   
   kodi::Log(ADDON_LOG_INFO, "Using useragent: %s", user_agent.c_str());
 
@@ -668,6 +628,9 @@ ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
     m_providerUrl = "https://zattoo.com";
   }
 
+  m_uuid = m_parameterDB->Get("uuid");
+  m_zattooSession = m_parameterDB->Get("zattooSession");
+  
   ReadDataJson();
   if (!xmlTVFile.empty())
   {

@@ -13,6 +13,7 @@
 #include "ZatChannel.h"
 #include "sql/EpgDB.h"
 #include "sql/RecordingsDB.h"
+#include "sql/ParameterDB.h"
 
 class CZattooTVAddon;
 
@@ -121,13 +122,13 @@ private:
   XmlTV *m_xmlTV = nullptr;
   EpgDB *m_epgDB;
   RecordingsDB *m_recordingsDB;
+  ParameterDB *m_parameterDB;
 
   bool LoadAppId();
   bool LoadAppTokenFromFile();
   bool LoadAppTokenFromJson(std::string html);
   bool LoadAppTokenFromHtml(std::string html);
   bool ReadDataJson();
-  bool WriteDataJson();
   std::string GetUUID();
   std::string GenerateUUID();
   bool SendHello(std::string uuid);

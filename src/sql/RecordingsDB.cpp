@@ -77,7 +77,7 @@ bool RecordingsDB::Set(RecordingDBInfo& recordingDBInfo) {
   insert += "('" + recordingDBInfo.recordingId + "'," + std::to_string(recordingDBInfo.playCount) + "," + std::to_string(recordingDBInfo.lastPlayedPosition) + "," + std::to_string(recordingDBInfo.lastSeen) + ")";
   
   if (!Execute(insert)) {
-    kodi::Log(ADDON_LOG_ERROR, "%s: Failed to batch insert", m_name.c_str());
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed to insert", m_name.c_str());
     return false;
   }
   return true;
