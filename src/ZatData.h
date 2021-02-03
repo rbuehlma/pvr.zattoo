@@ -18,21 +18,6 @@
 
 class CZattooTVAddon;
 
-struct PVRIptvEpgEntry
-{
-  int iBroadcastId;
-  int iChannelId;
-  time_t startTime;
-  time_t endTime;
-  std::string strTitle;
-  std::string strPlot;
-  std::string strIconPath;
-  std::string strGenreString;
-  time_t recordUntil;
-  time_t replayUntil;
-  time_t restartUntil;
-};
-
 struct ZatRecordingDetails
 {
   std::string genre;
@@ -133,8 +118,6 @@ private:
   rapidjson::Document Login();
   bool InitSession(bool isReinit);
   bool ReinitSession();
-  std::map<time_t, PVRIptvEpgEntry>* LoadEPG(time_t iStart, time_t iEnd,
-      int uniqueChannelId);
   ZatChannel* FindChannel(int uniqueId);
   PVRZattooChannelGroup* FindGroup(const std::string& strName);
   std::string GetStreamTypeString();
@@ -146,7 +129,6 @@ private:
   std::string GetManifestType();
   std::string GetMimeType();
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties, const std::string& url);
-  time_t GetTimeForEpgTag(const kodi::addon::PVREPGTag& tag, const char * field);
   bool TryToReinitIf403(int statusCode);
   std::string HttpGetWithRetry(std::string url);
   std::string HttpPostWithRetry(std::string url, const std::string& postData);

@@ -1181,28 +1181,6 @@ PVR_ERROR ZatData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& i
   return PVR_ERROR_NO_ERROR;
 }
 
-time_t ZatData::GetTimeForEpgTag(const kodi::addon::PVREPGTag& tag, const char * field)
-{
-  std::ostringstream urlStream;
-  urlStream << "https://zattoo.com/zapi/v2/cached/program/power_details/" << m_powerHash << "?program_ids=" << tag.GetUniqueBroadcastId();
-  std::string jsonString = HttpGetCachedWithRetry(urlStream.str(), 86400);
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError())
-  {
-    return 0;
-  }
-  const Value& programs = doc["programs"];
-  for (Value::ConstValueIterator itr = programs.Begin(); itr != programs.End(); ++itr)
-  {
-    const Value& program = (*itr);
-    if (program.HasMember(field)) {
-      return program[field].GetInt();
-    }
-  }
-  return 0;
-}
-
 PVR_ERROR ZatData::GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
   PVR_ERROR ret = PVR_ERROR_FAILED;
