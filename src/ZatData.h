@@ -137,7 +137,6 @@ private:
       int uniqueChannelId);
   ZatChannel* FindChannel(int uniqueId);
   PVRZattooChannelGroup* FindGroup(const std::string& strName);
-  void GetEPGForChannelExternalService(int uniqueChannelId, time_t iStart, time_t iEnd);
   std::string GetStreamTypeString();
   std::string GetStreamUrl(std::string& jsonString, std::vector<kodi::addon::PVRStreamProperty>& properties);
   std::string GetStreamParameters();

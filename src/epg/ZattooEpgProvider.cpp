@@ -57,6 +57,8 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
     RegisterAlreadyLoaded(tempStart, tempEnd);
     const Value& channels = doc["channels"];
     
+    std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
+    m_epgDB.BeginTransaction();
     for (Value::ConstMemberIterator iter = channels.MemberBegin(); iter != channels.MemberEnd(); ++iter) {
       std::string cid = iter->name.GetString();
 
@@ -65,9 +67,7 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
       if (m_channelsByUid.count(uniqueChannelId) == 0) {
         continue;
       }
-      
-      std::unique_lock<std::mutex> lock(sendEpgToKodiMutex);
-      m_epgDB.BeginTransaction();
+
       const Value& programs = iter->value;
       for (Value::ConstValueIterator itr1 = programs.Begin();
           itr1 != programs.End(); ++itr1)
@@ -131,7 +131,6 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
         SendEpg(tag);
       }
       m_epgDB.EndTransaction();
-      lock.unlock();
     }
     tempStart = SkipAlreadyLoaded(tempEnd, iEnd);
     tempEnd = tempStart + 3600 * 5; //Add 5 hours

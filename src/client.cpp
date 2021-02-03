@@ -26,8 +26,8 @@ ADDON_STATUS CZattooTVAddon::CreateInstance(int instanceType,
     std::string zatUsername = m_settings.GetZatUsername();
     std::string zatPassword = m_settings.GetZatPassword();
     bool zatFavoritesOnly = m_settings.GetZatFavoritesOnly();
-    bool zatAlternativeEpgService = false; //m_settings.GetZatAlternativeEpgService();
-    bool zatAlternativeEpgServiceProvideSession = m_settings.GetZatAlternativeEpgServiceProvideSession();
+    bool useAlternativeApgService = m_settings.GetZatAlternativeEpgService()
+        && m_settings.GetZatAlternativeEpgServiceProvideSession();
     STREAM_TYPE streamType = m_settings.GetStreamType();
     bool zatEnableDolby = m_settings.GetZatEnableDolby();
     int provider = m_settings.GetProvider();
@@ -35,7 +35,7 @@ ADDON_STATUS CZattooTVAddon::CreateInstance(int instanceType,
     std::string parentalPin = m_settings.GetParentalPin();
 
     ZatData* client = new ZatData(instance, version, zatUsername, zatPassword, zatFavoritesOnly,
-        zatAlternativeEpgService && zatAlternativeEpgServiceProvideSession, streamType, zatEnableDolby, provider, xmlTVFile, parentalPin);
+        useAlternativeApgService, streamType, zatEnableDolby, provider, xmlTVFile, parentalPin);
     addonInstance = client;
     kodi::Log(ADDON_LOG_DEBUG, "Zattoo created");
 

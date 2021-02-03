@@ -6,7 +6,7 @@
 
 class ProcessRowCallback {
 public:
-  virtual ~ProcessRowCallback() = 0;
+  virtual ~ProcessRowCallback() {};
   virtual void ProcessRow(sqlite3_stmt* stmt) = 0;
 };
  

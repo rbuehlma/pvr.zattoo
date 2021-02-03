@@ -13,6 +13,7 @@
 #include "rapidjson/stringbuffer.h"
 #include <kodi/Filesystem.h>
 #include "epg/ZattooEpgProvider.h"
+#include "epg/EnhancedEpgProvider.h"
 
 #ifdef TARGET_ANDROID
 #include "to_string.h"
@@ -229,7 +230,7 @@ bool ZatData::InitSession(bool isReinit)
     kodi::Log(ADDON_LOG_DEBUG, "Need to login.");
     m_httpClient->ClearSession();
     doc = Login();
-    if (doc.GetParseError() || doc["account"].IsNull())
+    if (doc.GetParseError() || !doc["active"].GetBool())
     {
       kodi::Log(ADDON_LOG_ERROR, "Login failed.");
       return isReinit ? false : ReinitSession();
@@ -260,8 +261,12 @@ bool ZatData::InitSession(bool isReinit)
   if (m_epgProvider) {
     delete m_epgProvider;
   }
-  
-  m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_channelsByUid, m_powerHash);
+  if (m_alternativeEpgService) {
+    std::string country = m_serviceRegionCountry.empty() ? m_countryCode : m_serviceRegionCountry;
+    m_epgProvider = new EnhancedEpgProvider(this, *m_epgDB, *m_httpClient, m_categories, m_powerHash, country);
+  } else {
+    m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_channelsByUid, m_powerHash);
+  }
   return true;
 }
 
@@ -699,74 +704,6 @@ ZatChannel *ZatData::FindChannel(int uniqueId)
     }
   }
   return nullptr;
-}
-
-void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
-    time_t iStart, time_t iEnd)
-{
-  ZatChannel *zatChannel = FindChannel(uniqueChannelId);
-  std::string cid = zatChannel->cid;
-  std::ostringstream urlStream;
-  std::string country = m_serviceRegionCountry.empty() ? m_countryCode : m_serviceRegionCountry;
-  urlStream << "https://zattoo.buehlmann.net/epg/api/Epg/"
-      << country << "/" << m_powerHash << "/" << cid << "/" << iStart
-      << "/" << iEnd;
-  std::string jsonString = HttpGetCachedWithRetry(urlStream.str(), 86400);
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError())
-  {
-    return;
-  }
-  //std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
-  for (Value::ConstValueIterator itr = doc.Begin(); itr != doc.End(); ++itr)
-  {
-    const Value& program = (*itr);
-    kodi::addon::PVREPGTag tag;
-
-    tag.SetUniqueBroadcastId(static_cast<unsigned int>(program["Id"].GetInt()));
-    std::string title = Utils::JsonStringOrEmpty(program, "Title");
-    tag.SetTitle(title);
-    tag.SetUniqueChannelId(static_cast<unsigned int>(zatChannel->iUniqueId));
-    tag.SetStartTime(Utils::StringToTime(Utils::JsonStringOrEmpty(program, "StartTime")));
-    tag.SetEndTime(Utils::StringToTime(Utils::JsonStringOrEmpty(program, "EndTime")));
-    std::string description = Utils::JsonStringOrEmpty(program, "Description");
-    tag.SetPlotOutline(description);
-    tag.SetPlot(description);
-    tag.SetOriginalTitle(""); /* not supported */
-    tag.SetCast(""); /* not supported */
-    tag.SetDirector(""); /*SA not supported */
-    tag.SetWriter(""); /* not supported */
-    tag.SetYear(0); /* not supported */
-    tag.SetIMDBNumber(""); /* not supported */
-    std::string imageToken = Utils::JsonStringOrEmpty(program, "ImageToken");
-    std::string imageUrl;
-    if (!imageToken.empty()) {
-      imageUrl = Utils::GetImageUrl(imageToken);
-      tag.SetIconPath(imageUrl);
-    }
-    tag.SetParentalRating(0); /* not supported */
-    tag.SetStarRating(0); /* not supported */
-    tag.SetSeriesNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-    tag.SetEpisodeNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-    tag.SetEpisodePartNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-    std::string subtitle = Utils::JsonStringOrEmpty(program, "Subtitle");
-    tag.SetEpisodeName(subtitle);
-    std::string genreStr = Utils::JsonStringOrEmpty(program, "Genre");
-    int genre = m_categories.Category(genreStr);
-    if (genre)
-    {
-      tag.SetGenreSubType(genre & 0x0F);
-      tag.SetGenreType(genre & 0xF0);
-    }
-    else
-    {
-      tag.SetGenreType(EPG_GENRE_USE_STRING);
-      tag.SetGenreSubType(0); /* not supported */
-      tag.SetGenreDescription(genreStr);
-    }
-    kodi::addon::CInstancePVRClient::EpgEventStateChange(tag, EPG_EVENT_CREATED);
-  }
 }
 
 PVR_ERROR ZatData::GetEPGForChannel(int channelUid, time_t start, time_t end, kodi::addon::PVREPGTagsResultSet& results)
