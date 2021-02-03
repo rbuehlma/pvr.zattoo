@@ -4,6 +4,8 @@ const int DB_VERSION = 1;
 
 class ProcessParameterRowCallback : public ProcessRowCallback {
 public:
+  virtual ~ProcessParameterRowCallback() { }
+  
   void ProcessRow(sqlite3_stmt* stmt) {
     m_result = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
   }
@@ -48,7 +50,7 @@ bool ParameterDB::Migrate0To1() {
   std::string migrationScript = "";
   migrationScript += "create table PARAMETER (";
   migrationScript += " KEY text not null primary key,";
-  migrationScript += " VAUE text not null";
+  migrationScript += " VALUE text not null";
   migrationScript += ")";
   if (!Execute(migrationScript)) {
     return false;
@@ -69,7 +71,7 @@ bool ParameterDB::Set(std::string key, std::string value) {
 
 std::string ParameterDB::Get(std::string key) {
   ProcessParameterRowCallback callback;
-  if (!Query("select * from PARAMETER where KEY = '" + key + "'", callback)) {
+  if (!Query("select VALUE from PARAMETER where KEY = '" + key + "'", callback)) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to get parameter from db.", m_name.c_str());
   }
   return callback.Result();

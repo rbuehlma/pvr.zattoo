@@ -4,6 +4,8 @@ const int DB_VERSION = 1;
 
 class ProcessRecordingDBInfoRowCallback : public ProcessRowCallback {
 public:
+  virtual ~ProcessRecordingDBInfoRowCallback() { }
+  
   void ProcessRow(sqlite3_stmt* stmt) {
     m_result.recordingId = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
     m_result.playCount = sqlite3_column_int(stmt, 1);

@@ -24,7 +24,7 @@ HttpClient::~HttpClient()
 }
 
 void HttpClient::ClearSession() {
-  m_uuid = "";
+  m_uuid = GetUUID();
   m_beakerSessionId = "";  
 }
 
@@ -99,27 +99,33 @@ std::string HttpClient::HttpRequest(const std::string& action, const std::string
   Curl curl;
 
   curl.AddOption("acceptencoding", "gzip,deflate");
+  
+  std::string cookie = "";
 
   if (!m_beakerSessionId.empty())
   {
-    curl.AddOption("Cookie", "beaker.session.id=" + m_beakerSessionId);
+    cookie += "beaker.session.id=" + m_beakerSessionId + "; ";
   }
 
   if (!m_uuid.empty())
   {
-    curl.AddOption("Cookie", "uuid=" + m_uuid);
+    cookie += "uuid=" + m_uuid + "; ";
   }
 
   if (!m_zattooSession.empty())
   {
-    curl.AddOption("Cookie", "zattoo.session=" + m_zattooSession);
+    cookie += "zattoo.session=" + m_zattooSession + "; ";
+  }
+  
+  if (!cookie.empty()) {
+    curl.AddOption("Cookie", cookie);
   }
 
   curl.AddHeader("User-Agent", USER_AGENT);
 
   std::string content = HttpRequestToCurl(curl, action, url, postData, statusCode);
 
-  if (statusCode >= 400) {
+  if (statusCode >= 400 || statusCode < 200) {
     kodi::Log(ADDON_LOG_ERROR, "Open URL failed with %i.", statusCode);
     return "";
   }

@@ -1,6 +1,8 @@
 #ifndef SRC_ZATCHANNEL_H_
 #define SRC_ZATCHANNEL_H_
 
+#include <string>
+
 struct ZatChannel
 {
   int iUniqueId;

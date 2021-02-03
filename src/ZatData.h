@@ -14,6 +14,7 @@
 #include "sql/RecordingsDB.h"
 #include "sql/ParameterDB.h"
 #include "http/HttpClient.h"
+#include "epg/EpgProvider.h"
 
 class CZattooTVAddon;
 
@@ -121,6 +122,7 @@ private:
   RecordingsDB *m_recordingsDB;
   ParameterDB *m_parameterDB;
   HttpClient *m_httpClient;
+  EpgProvider *m_epgProvider = nullptr;
 
   bool LoadAppId();
   bool LoadAppTokenFromFile();
@@ -135,14 +137,9 @@ private:
       int uniqueChannelId);
   ZatChannel* FindChannel(int uniqueId);
   PVRZattooChannelGroup* FindGroup(const std::string& strName);
-  int GetChannelId(const char * strChannelName);
   void GetEPGForChannelExternalService(int uniqueChannelId, time_t iStart, time_t iEnd);
-  std::string GetStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName);
-  int GetIntOrZero(const rapidjson::Value& jsonValue, const char* fieldName);
-  std::string GetImageUrl(const std::string& imageToken);
   std::string GetStreamTypeString();
   std::string GetStreamUrl(std::string& jsonString, std::vector<kodi::addon::PVRStreamProperty>& properties);
-  static std::mutex sendEpgToKodiMutex;
   std::string GetStreamParameters();
   bool ParseRecordingsTimers(const rapidjson::Value& recordings, std::map<int, ZatRecordingDetails>& detailsById);
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);

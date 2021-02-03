@@ -75,11 +75,12 @@ std::string Curl::Request(const std::string& action, const std::string& url, con
   for (auto const &entry : m_options)
   {
     file.CURLAddOption(ADDON_CURL_OPTION_PROTOCOL, entry.first.c_str(), entry.second);
-    file.CURLAddOption(ADDON_CURL_OPTION_PROTOCOL, "failonerror", "false");
   }
+  file.CURLAddOption(ADDON_CURL_OPTION_PROTOCOL, "failonerror", "false");
 
   if (!file.CURLOpen(ADDON_READ_NO_CACHE))
   {
+    statusCode = -2;
     return "";
   }
   
@@ -121,7 +122,6 @@ std::string Curl::Request(const std::string& action, const std::string& url, con
     body += buf;
   }
 
-  statusCode = 200;
   return body;
 }
 

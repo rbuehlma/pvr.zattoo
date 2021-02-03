@@ -12,6 +12,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include <kodi/Filesystem.h>
+#include "epg/ZattooEpgProvider.h"
 
 #ifdef TARGET_ANDROID
 #include "to_string.h"
@@ -21,7 +22,6 @@ using namespace rapidjson;
 
 constexpr char app_token_file[] = "special://temp/zattoo_app_token";
 const char data_file[] = "special://profile/addon_data/pvr.zattoo/data.json";
-std::mutex ZatData::sendEpgToKodiMutex;
 
 std::string ZatData::GetManifestType()
 {
@@ -89,7 +89,7 @@ bool ZatData::ReadDataJson()
       const Value& recording = (*itr);
       
       RecordingDBInfo recordingDBInfo;
-      recordingDBInfo.recordingId = GetStringOrEmpty(recording, "recordingId");
+      recordingDBInfo.recordingId = Utils::JsonStringOrEmpty(recording, "recordingId");
       recordingDBInfo.playCount = recording["playCount"].GetInt();
       recordingDBInfo.lastPlayedPosition = recording["lastPlayedPosition"].GetInt();
       m_recordingsDB->Set(recordingDBInfo);
@@ -243,9 +243,9 @@ bool ZatData::InitSession(bool isReinit)
   const Value& account = doc["account"];
   const Value& nonlive = doc["nonlive"];
 
-  m_countryCode = GetStringOrEmpty(doc, "current_country");
-  m_serviceRegionCountry = GetStringOrEmpty(account, "service_country");
-  m_recallEnabled = GetStringOrEmpty(nonlive, "replay_availability") == "available";
+  m_countryCode = Utils::JsonStringOrEmpty(doc, "current_country");
+  m_serviceRegionCountry = Utils::JsonStringOrEmpty(account, "service_country");
+  m_recallEnabled = Utils::JsonStringOrEmpty(nonlive, "replay_availability") == "available";
   m_recordingEnabled = nonlive["recording_number_limit"].GetInt() > 0;
   kodi::Log(ADDON_LOG_INFO, "Current country code: %s", m_countryCode.c_str());
   kodi::Log(ADDON_LOG_INFO, "Service region country: %s",
@@ -255,7 +255,13 @@ bool ZatData::InitSession(bool isReinit)
       m_recallEnabled ? "enabled" : "disabled");
   kodi::Log(ADDON_LOG_INFO, "Recordings are %s",
       m_recordingEnabled ? "enabled" : "disabled");
-  m_powerHash = GetStringOrEmpty(doc, "power_guide_hash");
+  m_powerHash = Utils::JsonStringOrEmpty(doc, "power_guide_hash");
+  
+  if (m_epgProvider) {
+    delete m_epgProvider;
+  }
+  
+  m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_channelsByUid, m_powerHash);
   return true;
 }
 
@@ -293,7 +299,7 @@ bool ZatData::LoadChannels()
   {
     PVRZattooChannelGroup group;
     const Value& groupItem = (*itr);
-    group.name = GetStringOrEmpty(groupItem, "name");
+    group.name = Utils::JsonStringOrEmpty(groupItem, "name");
     m_channelGroups.insert(m_channelGroups.end(), group);
   }
   const Value& channels = doc["channels"];
@@ -306,18 +312,18 @@ bool ZatData::LoadChannels()
         itr2 != qualities.End(); ++itr2)
     {
       const Value& qualityItem = (*itr2);
-      std::string avail = GetStringOrEmpty(qualityItem, "availability");
+      std::string avail = Utils::JsonStringOrEmpty(qualityItem, "availability");
       if (avail == "available")
       {
         ZatChannel channel;
-        channel.name = GetStringOrEmpty(qualityItem, "title");
-        std::string cid = GetStringOrEmpty(channelItem, "cid");
-        channel.iUniqueId = GetChannelId(cid.c_str());
+        channel.name = Utils::JsonStringOrEmpty(qualityItem, "title");
+        std::string cid = Utils::JsonStringOrEmpty(channelItem, "cid");
+        channel.iUniqueId = Utils::GetChannelId(cid.c_str());
         channel.cid = cid;
         channel.iChannelNumber = ++channelNumber;
         channel.strLogoPath = "http://logos.zattic.com";
         channel.strLogoPath.append(
-            GetStringOrEmpty(qualityItem, "logo_white_84"));
+            Utils::JsonStringOrEmpty(qualityItem, "logo_white_84"));
         channel.recordingEnabled =
             channelItem.HasMember("recording") ?
                 channelItem["recording"].GetBool() : false;
@@ -356,15 +362,6 @@ bool ZatData::LoadChannels()
     m_channelGroups.insert(m_channelGroups.end(), favGroup);
 
   return true;
-}
-
-int ZatData::GetChannelId(const char * strChannelName)
-{
-  int iId = 0;
-  int c;
-  while ((c = *strChannelName++))
-    iId = ((iId << 5) + iId) + c; /* iId * 33 + c */
-  return abs(iId);
 }
 
 PVR_ERROR ZatData::GetChannelGroupsAmount(int& amount)
@@ -646,14 +643,14 @@ std::string ZatData::GetStreamUrl(std::string& jsonString, std::vector<kodi::add
     return "";
   }
   const Value& watchUrls = doc["stream"]["watch_urls"];
-  std::string url = GetStringOrEmpty(doc["stream"], "url");
+  std::string url = Utils::JsonStringOrEmpty(doc["stream"], "url");
   for (Value::ConstValueIterator itr = watchUrls.Begin(); itr != watchUrls.End(); ++itr)
   {
     const Value& watchUrl = (*itr);
     kodi::Log(ADDON_LOG_DEBUG, "Selected url for maxrate: %d", watchUrl["maxrate"].GetInt());
-    url = GetStringOrEmpty(watchUrl, "url");
+    url = Utils::JsonStringOrEmpty(watchUrl, "url");
     if (m_streamType == DASH_WIDEVINE) {
-      std::string licenseUrl = GetStringOrEmpty(watchUrl, "license_url");
+      std::string licenseUrl = Utils::JsonStringOrEmpty(watchUrl, "license_url");
       properties.emplace_back("inputstream.adaptive.license_key", licenseUrl + "||A{SSM}|");
       properties.emplace_back("inputstream.adaptive.license_type", "com.widevine.alpha");
     }
@@ -721,19 +718,19 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
   {
     return;
   }
-  std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
+  //std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
   for (Value::ConstValueIterator itr = doc.Begin(); itr != doc.End(); ++itr)
   {
     const Value& program = (*itr);
     kodi::addon::PVREPGTag tag;
 
     tag.SetUniqueBroadcastId(static_cast<unsigned int>(program["Id"].GetInt()));
-    std::string title = GetStringOrEmpty(program, "Title");
+    std::string title = Utils::JsonStringOrEmpty(program, "Title");
     tag.SetTitle(title);
     tag.SetUniqueChannelId(static_cast<unsigned int>(zatChannel->iUniqueId));
-    tag.SetStartTime(Utils::StringToTime(GetStringOrEmpty(program, "StartTime")));
-    tag.SetEndTime(Utils::StringToTime(GetStringOrEmpty(program, "EndTime")));
-    std::string description = GetStringOrEmpty(program, "Description");
+    tag.SetStartTime(Utils::StringToTime(Utils::JsonStringOrEmpty(program, "StartTime")));
+    tag.SetEndTime(Utils::StringToTime(Utils::JsonStringOrEmpty(program, "EndTime")));
+    std::string description = Utils::JsonStringOrEmpty(program, "Description");
     tag.SetPlotOutline(description);
     tag.SetPlot(description);
     tag.SetOriginalTitle(""); /* not supported */
@@ -742,10 +739,10 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     tag.SetWriter(""); /* not supported */
     tag.SetYear(0); /* not supported */
     tag.SetIMDBNumber(""); /* not supported */
-    std::string imageToken = GetStringOrEmpty(program, "ImageToken");
+    std::string imageToken = Utils::JsonStringOrEmpty(program, "ImageToken");
     std::string imageUrl;
     if (!imageToken.empty()) {
-      imageUrl = GetImageUrl(imageToken);
+      imageUrl = Utils::GetImageUrl(imageToken);
       tag.SetIconPath(imageUrl);
     }
     tag.SetParentalRating(0); /* not supported */
@@ -753,9 +750,9 @@ void ZatData::GetEPGForChannelExternalService(int uniqueChannelId,
     tag.SetSeriesNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
     tag.SetEpisodeNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
     tag.SetEpisodePartNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-    std::string subtitle = GetStringOrEmpty(program, "Subtitle");
+    std::string subtitle = Utils::JsonStringOrEmpty(program, "Subtitle");
     tag.SetEpisodeName(subtitle);
-    std::string genreStr = GetStringOrEmpty(program, "Genre");
+    std::string genreStr = Utils::JsonStringOrEmpty(program, "Genre");
     int genre = m_categories.Category(genreStr);
     if (genre)
     {
@@ -784,159 +781,12 @@ PVR_ERROR ZatData::GetEPGForChannel(int channelUid, time_t start, time_t end, ko
 
 void ZatData::GetEPGForChannelAsync(int uniqueChannelId, time_t iStart, time_t iEnd)
 {
-  ZatChannel *zatChannel = FindChannel(uniqueChannelId);
-
-  if (m_xmlTV && m_xmlTV->GetEPGForChannel(zatChannel->cid, m_channelsByCid))
-  {
+  if (!m_epgProvider) {
+    kodi::Log(ADDON_LOG_WARNING, "EPG Provider not ready.");
     return;
   }
-
-  if (m_alternativeEpgService)
-  {
-    GetEPGForChannelExternalService(uniqueChannelId, iStart, iEnd);
-    return;
-  }
-
-  std::map<time_t, PVRIptvEpgEntry>* channelEpgCache = LoadEPG(iStart, iEnd,
-      uniqueChannelId);
-  if (channelEpgCache == nullptr)
-  {
-    kodi::Log(ADDON_LOG_INFO, "Loading epg faild for channel '%s' from %lu to %lu",
-        zatChannel->name.c_str(), iStart, iEnd);
-    return;
-  }
-  
-  std::vector<EpgDBInfo> epgDBInfos;
-  
-  std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
-  for (auto const &entry : *channelEpgCache)
-  {
-    PVRIptvEpgEntry epgEntry = entry.second;
-
-    kodi::addon::PVREPGTag tag;
-
-    tag.SetUniqueBroadcastId(static_cast<unsigned int>(epgEntry.iBroadcastId));
-    tag.SetTitle(epgEntry.strTitle);
-    tag.SetUniqueChannelId(static_cast<unsigned int>(epgEntry.iChannelId));
-    tag.SetStartTime(epgEntry.startTime);
-    tag.SetEndTime(epgEntry.endTime);
-    tag.SetPlotOutline(epgEntry.strPlot);
-    tag.SetPlot(epgEntry.strPlot);
-    tag.SetOriginalTitle(""); /* not supported */
-    tag.SetCast(""); /* not supported */
-    tag.SetDirector(""); /*SA not supported */
-    tag.SetWriter(""); /* not supported */
-    tag.SetYear(0); /* not supported */
-    tag.SetIMDBNumber(""); /* not supported */
-    tag.SetIconPath(epgEntry.strIconPath);
-    tag.SetParentalRating(0); /* not supported */
-    tag.SetStarRating(0); /* not supported */
-    tag.SetSeriesNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-    tag.SetEpisodeNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-    tag.SetEpisodePartNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-    tag.SetEpisodeName(""); /* not supported */
-    
-    EpgDBInfo epgDBInfo;
-    
-    epgDBInfo.programId = epgEntry.iBroadcastId;
-    epgDBInfo.recordUntil = epgEntry.recordUntil;
-    epgDBInfo.replayUntil = epgEntry.replayUntil;
-    epgDBInfo.restartUntil = epgEntry.restartUntil;
-    epgDBInfos.push_back(epgDBInfo);
-
-    int genre = m_categories.Category(epgEntry.strGenreString);
-    if (genre)
-    {
-      tag.SetGenreSubType(genre & 0x0F);
-      tag.SetGenreType(genre & 0xF0);
-    }
-    else
-    {
-      tag.SetGenreType(EPG_GENRE_USE_STRING);
-      tag.SetGenreSubType(0); /* not supported */
-      tag.SetGenreDescription(epgEntry.strGenreString);
-    }
-    kodi::addon::CInstancePVRClient::EpgEventStateChange(tag, EPG_EVENT_CREATED);
-  }
-  delete channelEpgCache;
-  m_epgDB->InsertBatch(epgDBInfos);
-}
-
-std::map<time_t, PVRIptvEpgEntry>* ZatData::LoadEPG(time_t iStart, time_t iEnd,
-    int uniqueChannelId)
-{
-  //Do some time magic that the start date is not to far in the past because zattoo doesnt like that
-  time_t tempStart = iStart - (iStart % (3600 / 2)) - 86400;
-  time_t tempEnd = tempStart + 3600 * 5; //Add 5 hours
-
-  auto *epgCache = new std::map<time_t, PVRIptvEpgEntry>();
-
-  while (tempEnd <= iEnd)
-  {
-    std::ostringstream urlStream;
-    urlStream << m_providerUrl << "/zapi/v3/cached/" + m_powerHash + "/guide"
-        << "?end=" << tempEnd << "&start=" << tempStart
-        << "&format=json";
-
-    std::string jsonString = HttpGetCachedWithRetry(urlStream.str(), 86400);
-
-    Document doc;
-    doc.Parse(jsonString.c_str());
-    if (doc.GetParseError())
-    {
-      return nullptr;
-    }
-
-    const Value& channels = doc["channels"];
-
-    for (Value::ConstMemberIterator iter = channels.MemberBegin(); iter != channels.MemberEnd(); ++iter){
-      std::string cid = iter->name.GetString();
-
-      int channelId = GetChannelId(cid.c_str());
-      ZatChannel *channel = FindChannel(channelId);
-
-      if (!channel || channel->iUniqueId != uniqueChannelId)
-      {
-        continue;
-      }
-
-      const Value& programs = iter->value;
-      for (Value::ConstValueIterator itr1 = programs.Begin();
-          itr1 != programs.End(); ++itr1)
-      {
-        const Value& program = (*itr1);
-
-        const Type& checkType = program["t"].GetType();
-        if (checkType != kStringType)
-          continue;
-
-        PVRIptvEpgEntry entry;
-        entry.strTitle = GetStringOrEmpty(program, "t");
-        entry.startTime = program["s"].GetInt();
-        entry.endTime = program["e"].GetInt();
-        entry.iBroadcastId = program["id"].GetInt();
-        entry.strIconPath = GetImageUrl(GetStringOrEmpty(program, "i_t"));
-        entry.iChannelId = channel->iUniqueId;
-        entry.strPlot = GetStringOrEmpty(program, "et");
-        entry.recordUntil = GetIntOrZero(program, "rg_u");
-        entry.replayUntil = GetIntOrZero(program, "sr_u");
-        entry.restartUntil = GetIntOrZero(program, "ry_u");
-        
-        const Value& genres = program["g"];
-        for (Value::ConstValueIterator itr2 = genres.Begin();
-            itr2 != genres.End(); ++itr2)
-        {
-          entry.strGenreString = (*itr2).GetString();
-          break;
-        }
-
-        (*epgCache)[entry.startTime] = entry;
-      }
-    }
-    tempStart = tempEnd;
-    tempEnd = tempStart + 3600 * 5; //Add 5 hours
-  }
-  return epgCache;
+  ZatChannel* channel = FindChannel(uniqueChannelId);
+  m_epgProvider->LoadEPGForChannel(*channel, iStart, iEnd);
 }
 
 PVR_ERROR ZatData::SetRecordingPlayCount(const kodi::addon::PVRRecording& recording, int count)
@@ -1011,7 +861,7 @@ bool ZatData::ParseRecordingsTimers(const Value& recordings, std::map<int, ZatRe
         {
           details.genre = "";
         }
-        details.description = GetStringOrEmpty(program, "d");
+        details.description = Utils::JsonStringOrEmpty(program, "d");
         detailsById.insert(
             std::pair<int, ZatRecordingDetails>(program["id"].GetInt(), details));
       }
@@ -1053,7 +903,7 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     const Value& recording = (*itr);
     int programId = recording["program_id"].GetInt();
 
-    std::string cid = GetStringOrEmpty(recording, "cid");
+    std::string cid = Utils::JsonStringOrEmpty(recording, "cid");
     auto iterator = m_channelsByCid.find(cid);
     if (iterator == m_channelsByCid.end())
     {
@@ -1074,16 +924,16 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     }
 
     time_t startTime = Utils::StringToTime(
-        GetStringOrEmpty(recording, "start"));
+        Utils::JsonStringOrEmpty(recording, "start"));
     if (startTime > current_time)
     {
       kodi::addon::PVRTimer tag;
 
       tag.SetClientIndex(static_cast<unsigned int>(recording["id"].GetInt()));
-      tag.SetTitle(GetStringOrEmpty(recording, "title"));
-      tag.SetSummary(GetStringOrEmpty(recording, "episode_title"));
+      tag.SetTitle(Utils::JsonStringOrEmpty(recording, "title"));
+      tag.SetSummary(Utils::JsonStringOrEmpty(recording, "episode_title"));
       time_t endTime = Utils::StringToTime(
-          GetStringOrEmpty(recording, "end").c_str());
+          Utils::JsonStringOrEmpty(recording, "end").c_str());
       tag.SetStartTime(startTime);
       tag.SetEndTime(endTime);
       tag.SetState(PVR_TIMER_STATE_SCHEDULED);
@@ -1125,7 +975,7 @@ PVR_ERROR ZatData::GetTimersAmount(int& amount)
   {
     const Value& recording = (*itr);
     time_t startTime = Utils::StringToTime(
-        GetStringOrEmpty(recording, "start"));
+        Utils::JsonStringOrEmpty(recording, "start"));
     if (startTime > current_time)
     {
       amount++;
@@ -1198,7 +1048,7 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
     const Value& recording = (*itr);
     int programId = recording["program_id"].GetInt();
 
-    std::string cid = GetStringOrEmpty(recording, "cid");
+    std::string cid = Utils::JsonStringOrEmpty(recording, "cid");
     auto iterator = m_channelsByCid.find(cid);
     if (iterator == m_channelsByCid.end())
     {
@@ -1219,7 +1069,7 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
     }
 
     time_t startTime = Utils::StringToTime(
-        GetStringOrEmpty(recording, "start"));
+        Utils::JsonStringOrEmpty(recording, "start"));
     if (startTime <= current_time)
     {
       kodi::addon::PVRRecording tag;
@@ -1230,17 +1080,17 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
       tag.SetIsDeleted(false);
 
       tag.SetRecordingId(std::to_string(recording["id"].GetInt()));
-      tag.SetTitle(GetStringOrEmpty(recording, "title"));
-      tag.SetEpisodeName(GetStringOrEmpty(recording, "episode_title"));
+      tag.SetTitle(Utils::JsonStringOrEmpty(recording, "title"));
+      tag.SetEpisodeName(Utils::JsonStringOrEmpty(recording, "episode_title"));
       tag.SetPlot(hasDetails ? detailIterator->second.description : "");
 
-      std::string imageToken = GetStringOrEmpty(recording, "image_token");
-      std::string imageUrl = GetImageUrl(imageToken);;
+      std::string imageToken = Utils::JsonStringOrEmpty(recording, "image_token");
+      std::string imageUrl = Utils::GetImageUrl(imageToken);;
       tag.SetIconPath(imageUrl);
       tag.SetChannelUid(channel.iUniqueId);
       tag.SetChannelName(channel.name);
       time_t endTime = Utils::StringToTime(
-          GetStringOrEmpty(recording, "end").c_str());
+          Utils::JsonStringOrEmpty(recording, "end").c_str());
       tag.SetRecordingTime(startTime);
       tag.SetDuration(static_cast<int>(endTime - startTime));
 
@@ -1287,7 +1137,7 @@ PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
   {
     const Value& recording = (*itr);
     time_t startTime = Utils::StringToTime(
-        GetStringOrEmpty(recording, "start"));
+        Utils::JsonStringOrEmpty(recording, "start"));
     if (startTime <= current_time)
     {
       amount++;
@@ -1447,28 +1297,6 @@ PVR_ERROR ZatData::GetEPGTagEdl(const kodi::addon::PVREPGTag& tag, std::vector<k
   entry.SetType(PVR_EDL_TYPE_COMBREAK);
   edl.emplace_back(entry);
   return PVR_ERROR_NO_ERROR;
-}
-
-std::string ZatData::GetStringOrEmpty(const Value& jsonValue, const char* fieldName)
-{
-  if (!jsonValue.HasMember(fieldName) || !jsonValue[fieldName].IsString())
-  {
-    return "";
-  }
-  return jsonValue[fieldName].GetString();
-}
-
-int ZatData::GetIntOrZero(const Value& jsonValue, const char* fieldName)
-{
-  if (!jsonValue.HasMember(fieldName) || !jsonValue[fieldName].IsInt())
-  {
-    return 0;
-  }
-  return jsonValue[fieldName].GetInt();
-}
-
-std::string ZatData::GetImageUrl(const std::string& imageToken) {
-  return "https://images.zattic.com/cms/" + imageToken + "/format_640x360.jpg";
 }
 
 bool ZatData::TryToReinitIf403(int statusCode) {

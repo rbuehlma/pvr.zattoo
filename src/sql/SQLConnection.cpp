@@ -2,6 +2,8 @@
 
 class ProcessSingleIntRowCallback : public ProcessRowCallback {
 public:
+  virtual ~ProcessSingleIntRowCallback() { }
+  
   void ProcessRow(sqlite3_stmt* stmt) {
     m_result = sqlite3_column_int(stmt, 0);
   }
@@ -36,6 +38,8 @@ bool SQLConnection::Open(std::string& file) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Can't open database: %s", m_name.c_str(), sqlite3_errmsg(m_db));
     return false;
   }
+  sqlite3_exec(m_db, "PRAGMA synchronous = OFF;", NULL, NULL, NULL);
+  sqlite3_exec(m_db, "PRAGMA journal_mode = OFF;", NULL, NULL, NULL);
   EnsureVersionTable();
   return true;
 }
@@ -109,3 +113,12 @@ int SQLConnection::GetVersion() {
 bool SQLConnection::SetVersion(int newVersion) {
   return Execute("update SCHEMA_VERSION set VERSION = " + std::to_string(newVersion));
 }
+
+void SQLConnection::BeginTransaction() {
+  sqlite3_exec(m_db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+}
+
+void SQLConnection::EndTransaction() {
+  sqlite3_exec(m_db, "END TRANSACTION;", NULL, NULL, NULL);
+}
+

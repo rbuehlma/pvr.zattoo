@@ -27,6 +27,8 @@ set(ZATTOO_SOURCES
 		src/http/Curl.cpp
 		src/http/Cache.cpp
 		src/http/HttpClient.cpp
+		src/epg/ZattooEpgProvider.cpp
+		src/epg/EpgProvider.cpp
 		src/Utils.cpp
 		src/client.cpp
 		src/Settings.cpp
@@ -45,6 +47,8 @@ set(ZATTOO_HEADERS
 		src/http/Curl.h
 		src/http/Cache.h
 		src/http/HttpClient.h
+		src/epg/EpgProvider.h
+		src/epg/ZattooEpgProvider.h
 		src/UpdateThread.h
 		src/XmlTV.h
 		src/Settings.h

@@ -3,6 +3,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "rapidjson/document.h"
+
 
 class Utils
 {
@@ -15,4 +17,8 @@ public:
   static std::vector<std::string> SplitString(const std::string &str,
       const char &delim, int maxParts = 0);
   static time_t StringToTime(const std::string &timeString);
+  static int GetChannelId(const char * strChannelName);
+  static std::string GetImageUrl(const std::string& imageToken);
+  static std::string JsonStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName);
+  static int JsonIntOrZero(const rapidjson::Value& jsonValue, const char* fieldName);
 };

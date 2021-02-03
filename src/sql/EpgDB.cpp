@@ -4,6 +4,8 @@ const int DB_VERSION = 1;
 
 class ProcessEpgDBInfoRowCallback : public ProcessRowCallback {
 public:
+  virtual ~ProcessEpgDBInfoRowCallback() { }
+
   void ProcessRow(sqlite3_stmt* stmt) {
     m_result.programId = sqlite3_column_int(stmt, 0);
     m_result.recordUntil = sqlite3_column_int(stmt, 1);
@@ -27,9 +29,16 @@ EpgDB::EpgDB(std::string folder)
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to migrate DB to version: %i", m_name.c_str(), DB_VERSION);
   }
   Cleanup();
+  
+  std::string str = "insert into EPG_INFO values (?, ?, ?, ?)";
+  int ret = sqlite3_prepare_v2(m_db, str.c_str(), str.size() + 1, &m_prepareInsertStatement, nullptr);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed to prepare insert statement.", m_name.c_str());
+  }
 }
 
 EpgDB::~EpgDB() {
+  sqlite3_finalize(m_prepareInsertStatement);
 }
 
 bool EpgDB::MigrateDbIfRequired() {
@@ -76,27 +85,33 @@ void EpgDB::Cleanup() {
   }
 }
 
-bool EpgDB::InsertBatch(std::vector<EpgDBInfo>& epgDBInfos) {
-  std::string insert = "replace into EPG_INFO VALUES";
-  std::string separator = " ";
-  std::vector<EpgDBInfo>::iterator it;
-  for (it = epgDBInfos.begin(); it != epgDBInfos.end(); ++it)
-  {
-    EpgDBInfo &epgDBInfo = (*it);
-    
-    insert += separator + "("
-        + std::to_string(epgDBInfo.programId) + ","
-        + std::to_string(epgDBInfo.recordUntil) + ","
-        + std::to_string(epgDBInfo.replayUntil) + ","
-        + std::to_string(epgDBInfo.restartUntil) + ")";
-    separator = ", ";
-  }
-  
-  if (!Execute(insert)) {
-    kodi::Log(ADDON_LOG_ERROR, "%s: Failed to batch insert", m_name.c_str());
+bool EpgDB::Insert(EpgDBInfo &epgDBInfo) {
+  int ret = sqlite3_bind_int(m_prepareInsertStatement, 1, epgDBInfo.programId);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 1.", m_name.c_str());
     return false;
   }
-  return true;
+  ret = sqlite3_bind_int(m_prepareInsertStatement, 2, epgDBInfo.recordUntil);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 2.", m_name.c_str());
+    return false;
+  }
+  ret = sqlite3_bind_int(m_prepareInsertStatement, 3, epgDBInfo.replayUntil);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 3.", m_name.c_str());
+    return false;
+  }
+  ret = sqlite3_bind_int(m_prepareInsertStatement, 4, epgDBInfo.restartUntil);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 4.", m_name.c_str());
+    return false;
+  }
+
+  ret = sqlite3_step(m_prepareInsertStatement);
+
+  sqlite3_reset(m_prepareInsertStatement);
+  
+  return ret == SQLITE_DONE;
 }
 
 EpgDBInfo EpgDB::Get(int programId) {

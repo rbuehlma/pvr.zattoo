@@ -16,13 +16,14 @@ class EpgDB : public SQLConnection
 public:
   EpgDB(std::string folder);
   ~EpgDB();
-  bool InsertBatch(std::vector<EpgDBInfo>& epgDBInfos);
+  bool Insert(EpgDBInfo &epgDBInfo);
   EpgDBInfo Get(int programId);
 private:
   bool MigrateDbIfRequired();
   bool Migrate0To1();
   void Cleanup();
   time_t m_nextCleanupDue = 0;
+  sqlite3_stmt *m_prepareInsertStatement;
 };
 
 #endif /* SRC_SQL_EPGDB_H_ */
