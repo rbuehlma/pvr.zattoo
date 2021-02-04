@@ -6,7 +6,7 @@
 #include "rapidjson/stringbuffer.h"
 
 #ifdef TARGET_WINDOWS
-#include <windows.h>
+#include "../windows.h"
 #ifdef CreateDirectory
 #undef CreateDirectory
 #endif

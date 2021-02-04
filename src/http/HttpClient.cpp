@@ -3,7 +3,6 @@
 #include <random>
 #include "../md5.h"
 #include "../client.h"
-#include <unistd.h>
 
 static const std::string USER_AGENT = std::string("Kodi/")
     + std::string(STR(KODI_VERSION)) + std::string(" pvr.zattoo/")
@@ -49,7 +48,7 @@ std::string HttpClient::GenerateUUID()
         "abcdefghijklmnopqrstuvwxyz"
         "-";
     
-    srand( (unsigned) time(NULL) * getpid());
+    srand( (unsigned) time(NULL));
     
     for (int i = 0; i < 21; ++i)
     {

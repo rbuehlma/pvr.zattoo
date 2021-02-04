@@ -1,7 +1,3 @@
-//
-// Created by johannes on 04.02.16.
-//
-
 #include "UpdateThread.h"
 #include "categories.h"
 #include <map>
