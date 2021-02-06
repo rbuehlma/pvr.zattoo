@@ -1,6 +1,6 @@
-#include "XmlTV.h"
+#include "XmlTVEpgProvider.h"
 #ifdef TARGET_WINDOWS
-#include "windows.h"
+#include "../windows.h"
 #endif
 
 #include <sstream>
@@ -14,9 +14,11 @@
 using namespace tinyxml2;
 
 const time_t minimumUpdateDelay = 600;
+const std::string TEMP_FILE_NAME = "xmltv_tmp_epg.xml";
 
-XmlTV::XmlTV(kodi::addon::CInstancePVRClient& instance, std::string xmlFile) :
-  m_xmlFile(xmlFile), m_lastUpdate(0), m_instance(instance)
+XmlTVEpgProvider::XmlTVEpgProvider(kodi::addon::CInstancePVRClient *addon, std::string xmlFile, std::map<std::string, ZatChannel>& channelsByCid, EpgProvider &fallbackProvider) :
+  m_xmlFile(xmlFile), m_lastUpdate(0), m_addon(addon), m_channelsByCid(channelsByCid), m_fallbackProvider(fallbackProvider),
+  EpgProvider(addon)
 {
   if (!kodi::vfs::FileExists(m_xmlFile, true))
   {
@@ -31,49 +33,43 @@ XmlTV::XmlTV(kodi::addon::CInstancePVRClient& instance, std::string xmlFile) :
   }
 }
 
-XmlTV::~XmlTV()
+XmlTVEpgProvider::~XmlTVEpgProvider()
 {
   m_xmlFile = "";
 }
 
-bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatChannel> &channelsByCid)
+bool XmlTVEpgProvider::LoadEPGForChannel(ZatChannel &zatChannel, time_t iStart, time_t iEnd)
 {
-  if (!m_xmlFile.empty() && !kodi::vfs::FileExists(m_xmlFile, true))
-  {
-    return false;
+  bool dataFromXML = LoadEPGFromFile(zatChannel);
+  if (dataFromXML) {
+    return true;
   }
+  return m_fallbackProvider.LoadEPGForChannel(zatChannel, iStart, iEnd);
+}
 
+
+bool XmlTVEpgProvider::LoadEPGFromFile(ZatChannel &zatChannel)
+{
   std::unique_lock<std::mutex> lock(m_mutex);
 
   if (!isUpdateDue()) {
     lock.unlock();
-    return m_loadedChannels.find(cid) != m_loadedChannels.end();
+    return m_loadedChannels.find(zatChannel.cid) != m_loadedChannels.end();
   }
 
   m_loadedChannels.clear();
+  
+  std::string tmpFile = m_addon->UserPath() + TEMP_FILE_NAME;
+  if (!copyFileToTempFileIfNewer(tmpFile)) {
+    return m_loadedChannels.find(zatChannel.cid) != m_loadedChannels.end();
+  }
 
-  std::string xml;
   kodi::vfs::CFile file;
-  int bufferLen = 1024 * 1024;
-  char *buffer = new char[bufferLen];
-  if (!file.OpenFile(m_xmlFile, 0))
-  {
-    kodi::Log(ADDON_LOG_ERROR, "XMLTV: failed to open xml-file.");
-    lock.unlock();
-    return false;
-  }
-
-  while (int dataRead = file.Read(buffer, bufferLen - 1) > 0) {
-    buffer[dataRead] = 0;
-    xml += buffer;
-  }
-  file.Close();
-  delete[] buffer;
 
   XMLDocument doc;
-  if (doc.Parse(xml.c_str(), xml.length()) != XML_SUCCESS)
+  if (doc.LoadFile(tmpFile.c_str()) != XML_SUCCESS)
   {
-    kodi::Log(ADDON_LOG_ERROR, "XMLTV: failed to parse xml-file.");
+    kodi::Log(ADDON_LOG_ERROR, "XMLTV: failed to open xml-file.");
     lock.unlock();
     return false;
   }
@@ -105,8 +101,8 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatCh
 
     m_loadedChannels.insert(channel);
 
-    auto channelIterator = channelsByCid.find(channel);
-    if (channelIterator == channelsByCid.end()) {
+    auto channelIterator = m_channelsByCid.find(channel);
+    if (channelIterator == m_channelsByCid.end()) {
       programme = programme->NextSiblingElement("programme");
       continue;
     }
@@ -182,15 +178,15 @@ bool XmlTV::GetEPGForChannel(const std::string &cid, std::map<std::string, ZatCh
       }
     }
 
-    m_instance.EpgEventStateChange(tag, EPG_EVENT_CREATED);
+    m_addon->EpgEventStateChange(tag, EPG_EVENT_CREATED);
 
     programme = programme->NextSiblingElement("programme");
 
   }
-  return m_loadedChannels.find(cid) != m_loadedChannels.end();
+  return m_loadedChannels.find(zatChannel.cid) != m_loadedChannels.end();
 }
 
-bool XmlTV::isUpdateDue() {
+bool XmlTVEpgProvider::isUpdateDue() {
   time_t currentTime;
   time(&currentTime);
   if (m_lastUpdate + minimumUpdateDelay > currentTime) {
@@ -200,12 +196,28 @@ bool XmlTV::isUpdateDue() {
   return true;
 }
 
-time_t XmlTV::StringToTime(const std::string &timeString)
+time_t XmlTVEpgProvider::StringToTime(const std::string &timeString)
 {
   struct tm tm
   { };
   strptime(timeString.c_str(), "%Y%m%d%H%M%S", &tm);
   time_t ret = timegm(&tm);
   return ret;
+}
+
+bool XmlTVEpgProvider::copyFileToTempFileIfNewer(std::string &tempFile) {
+  if (!m_xmlFile.empty() && !kodi::vfs::FileExists(m_xmlFile, true))
+  {
+    return false;
+  }
+  kodi::vfs::FileStatus fileStatus;
+  kodi::vfs::StatFile(m_xmlFile, fileStatus);
+  if (fileStatus.GetModificationTime() == m_lastFileModification) {
+    return false;
+  }
+
+  m_lastFileModification = fileStatus.GetModificationTime();
+  kodi::Log(ADDON_LOG_INFO, "XMLTV file %s has been updated. Loading new data.", m_xmlFile.c_str());
+  return kodi::vfs::CopyFile(m_xmlFile, tempFile);
 }
 

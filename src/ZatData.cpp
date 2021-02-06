@@ -14,6 +14,7 @@
 #include <kodi/Filesystem.h>
 #include "epg/ZattooEpgProvider.h"
 #include "epg/EnhancedEpgProvider.h"
+#include "epg/XmlTVEpgProvider.h"
 
 #ifdef TARGET_ANDROID
 #include "to_string.h"
@@ -267,6 +268,9 @@ bool ZatData::InitSession(bool isReinit)
   } else {
     m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_channelsByUid, m_powerHash);
   }
+  if (!m_xmlTVFile.empty()) {
+    m_epgProvider = new XmlTVEpgProvider(this, m_xmlTVFile, m_channelsByCid, *m_epgProvider);
+  }
   return true;
 }
 
@@ -386,8 +390,8 @@ ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
     m_streamType(streamType),
     m_username(u),
     m_password(p),
-    m_parentalPin(parentalPin)
-
+    m_parentalPin(parentalPin),
+    m_xmlTVFile(xmlTVFile)
 {
   
   m_epgDB = new EpgDB(UserPath());
@@ -450,10 +454,6 @@ ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
   }
   
   ReadDataJson();
-  if (!xmlTVFile.empty())
-  {
-    m_xmlTV = new XmlTV(*this, xmlTVFile);
-  }
 }
 
 ZatData::~ZatData()
@@ -463,9 +463,9 @@ ZatData::~ZatData()
     delete updateThread;
   }
   m_channelGroups.clear();
-  if (m_xmlTV)
-  {
-    delete m_xmlTV;
+
+  if (m_epgProvider) {
+    delete m_epgProvider;
   }
   delete m_httpClient;
   delete m_parameterDB;

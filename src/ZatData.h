@@ -4,7 +4,6 @@
 #include <thread>
 #include <mutex>
 #include "rapidjson/document.h"
-#include "XmlTV.h"
 #include "ZatChannel.h"
 #include "sql/EpgDB.h"
 #include "sql/RecordingsDB.h"
@@ -98,7 +97,7 @@ private:
   Categories m_categories;
   std::string m_providerUrl;
   std::string m_parentalPin;
-  XmlTV *m_xmlTV = nullptr;
+  std::string m_xmlTVFile;
   EpgDB *m_epgDB;
   RecordingsDB *m_recordingsDB;
   ParameterDB *m_parameterDB;
