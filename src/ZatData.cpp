@@ -643,7 +643,7 @@ PVR_ERROR ZatData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& re
 std::string ZatData::GetStreamUrl(std::string& jsonString, std::vector<kodi::addon::PVRStreamProperty>& properties) {
   Document doc;
   doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["success"].GetBool())
+  if (doc.GetParseError() || !doc.HasMember("stream"))
   {
     return "";
   }
@@ -1111,9 +1111,9 @@ PVR_ERROR ZatData::GetRecordingStreamProperties(const kodi::addon::PVRRecording&
   kodi::Log(ADDON_LOG_DEBUG, "Get url for recording %s", recording.GetRecordingId().c_str());
 
   std::ostringstream dataStream;
-  dataStream << "recording_id=" << recording.GetRecordingId() << GetStreamParameters();
+  dataStream << GetStreamParameters();
 
-  std::string jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/watch", dataStream.str());
+  std::string jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/watch/recording/" + recording.GetRecordingId(), dataStream.str());
 
   std::string strUrl = GetStreamUrl(jsonString, properties);
   PVR_ERROR ret = PVR_ERROR_FAILED;
@@ -1192,7 +1192,8 @@ PVR_ERROR ZatData::GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, 
   kodi::Log(ADDON_LOG_DEBUG, "Get timeshift url for channel %s and program %i", channel.cid.c_str(), tag.GetUniqueBroadcastId());
 
   dataStream << GetStreamParameters();
-  jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/watch/recall/" + channel.cid + "/" + std::to_string(tag.GetUniqueBroadcastId()), dataStream.str());
+  dataStream << "&pre_padding=0&post_padding=0";
+  jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/v3/watch/replay/" + channel.cid + "/" + std::to_string(tag.GetUniqueBroadcastId()), dataStream.str());
 
   std::string strUrl = GetStreamUrl(jsonString, properties);
   if (!strUrl.empty())
