@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.6.1"
+       version="19.7.0"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,11 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.7.0
+ - Use Zattoo v3 API
+ - Move addon data to sqlite db
+ - Refactor loading EPG data
+ - Fix loading app token
 v19.6.1
  - Fix timeshift for regions without full replay
 v19.6.0

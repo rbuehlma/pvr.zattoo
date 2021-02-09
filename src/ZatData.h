@@ -1,39 +1,17 @@
-//
-// Created by johannes on 04.02.16.
-//
-
 #include "UpdateThread.h"
 #include "categories.h"
-#include "Curl.h"
 #include <map>
 #include <thread>
 #include <mutex>
 #include "rapidjson/document.h"
-#include "XmlTV.h"
 #include "ZatChannel.h"
+#include "sql/EpgDB.h"
+#include "sql/RecordingsDB.h"
+#include "sql/ParameterDB.h"
+#include "http/HttpClient.h"
+#include "epg/EpgProvider.h"
 
 class CZattooTVAddon;
-
-struct PVRIptvEpgEntry
-{
-  int iBroadcastId;
-  int iChannelId;
-  time_t startTime;
-  time_t endTime;
-  std::string strTitle;
-  std::string strPlot;
-  std::string strIconPath;
-  std::string strGenreString;
-  bool selectiveReplay;
-};
-
-struct ZatRecordingData
-{
-  std::string recordingId;
-  int playCount;
-  int lastPlayedPosition;
-  bool stillValid;
-};
 
 struct ZatRecordingDetails
 {
@@ -111,53 +89,35 @@ private:
   std::string m_countryCode;
   std::string m_serviceRegionCountry;
   bool m_recallEnabled = false;
-  bool m_selectiveRecallEnabled = false;
   bool m_recordingEnabled = false;
   std::vector<PVRZattooChannelGroup> m_channelGroups;
   std::map<int, ZatChannel> m_channelsByUid;
   std::map<std::string, ZatChannel> m_channelsByCid;
-  std::map<std::string, ZatRecordingData*> m_recordingsData;
-  int64_t m_maxRecallSeconds = 0;
-  std::string m_beakerSessionId;
-  std::string m_pzuid;
   std::vector<UpdateThread*> m_updateThreads;
-  std::string m_uuid = "";
   Categories m_categories;
   std::string m_providerUrl;
-  bool m_recordingsLoaded = false;
   std::string m_parentalPin;
-  XmlTV *m_xmlTV = nullptr;
+  std::string m_xmlTVFile;
+  EpgDB *m_epgDB;
+  RecordingsDB *m_recordingsDB;
+  ParameterDB *m_parameterDB;
+  HttpClient *m_httpClient;
+  EpgProvider *m_epgProvider = nullptr;
 
   bool LoadAppId();
+  bool LoadAppTokenFromTokenJson(std::string tokenJsonPath);
   bool LoadAppTokenFromFile();
   bool LoadAppTokenFromJson(std::string html);
   bool LoadAppTokenFromHtml(std::string html);
   bool ReadDataJson();
-  bool WriteDataJson();
-  std::string GetUUID();
-  std::string GenerateUUID();
-  bool SendHello(std::string uuid);
+  bool SendHello();
   rapidjson::Document Login();
   bool InitSession(bool isReinit);
   bool ReinitSession();
-  std::string HttpGetCached(const std::string& url, time_t cacheDuration, const std::string& userAgent = "");
-  std::string HttpGet(const std::string& url, bool isInit = false, const std::string& userAgent = "");
-  std::string HttpDelete(const std::string& url, bool isInit = false);
-  std::string HttpPost(const std::string& url, const std::string& postData, bool isInit = false, const std::string& userAgent = "");
-  std::string HttpRequest(const std::string& action, const std::string& url, const std::string& postData, bool isInit, const std::string& userAgent);
-  std::string HttpRequestToCurl(Curl &curl, const std::string& action, const std::string& url,
-                           const std::string& postData, int &statusCode);
-  std::map<time_t, PVRIptvEpgEntry>* LoadEPG(time_t iStart, time_t iEnd,
-      int uniqueChannelId);
   ZatChannel* FindChannel(int uniqueId);
   PVRZattooChannelGroup* FindGroup(const std::string& strName);
-  int GetChannelId(const char * strChannelName);
-  void GetEPGForChannelExternalService(int uniqueChannelId, time_t iStart, time_t iEnd);
-  std::string GetStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName);
-  std::string GetImageUrl(const std::string& imageToken);
   std::string GetStreamTypeString();
   std::string GetStreamUrl(std::string& jsonString, std::vector<kodi::addon::PVRStreamProperty>& properties);
-  static std::mutex sendEpgToKodiMutex;
   std::string GetStreamParameters();
   bool ParseRecordingsTimers(const rapidjson::Value& recordings, std::map<int, ZatRecordingDetails>& detailsById);
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
@@ -165,4 +125,8 @@ private:
   std::string GetManifestType();
   std::string GetMimeType();
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties, const std::string& url);
+  bool TryToReinitIf403(int statusCode);
+  std::string HttpGetWithRetry(std::string url);
+  std::string HttpPostWithRetry(std::string url, const std::string& postData);
+  std::string HttpGetCachedWithRetry(std::string url, time_t cacheDuration);
 };

@@ -125,3 +125,54 @@ time_t Utils::StringToTime(const std::string &timeString)
   time_t ret = timegm(&tm);
   return ret;
 }
+
+int Utils::GetChannelId(const char * strChannelName)
+{
+  int iId = 0;
+  int c;
+  while ((c = *strChannelName++))
+    iId = ((iId << 5) + iId) + c; /* iId * 33 + c */
+  return abs(iId);
+}
+
+std::string Utils::GetImageUrl(const std::string& imageToken) {
+  return "https://images.zattic.com/cms/" + imageToken + "/format_640x360.jpg";
+}
+
+std::string Utils::JsonStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName)
+{
+  if (!jsonValue.HasMember(fieldName) || !jsonValue[fieldName].IsString())
+  {
+    return "";
+  }
+  return jsonValue[fieldName].GetString();
+}
+
+int Utils::JsonIntOrZero(const rapidjson::Value& jsonValue, const char* fieldName)
+{
+  if (!jsonValue.HasMember(fieldName) || !jsonValue[fieldName].IsInt())
+  {
+    return 0;
+  }
+  return jsonValue[fieldName].GetInt();
+}
+
+bool Utils::JsonBoolOrFalse(const rapidjson::Value& jsonValue, const char* fieldName)
+{
+  if (!jsonValue.HasMember(fieldName))
+  {
+    return false;
+  }
+
+  if (jsonValue[fieldName].IsBool())
+  {
+    return jsonValue[fieldName].GetBool();
+  }
+
+  if (jsonValue[fieldName].IsInt())
+  {
+    return jsonValue[fieldName].GetInt() != 0;
+  }
+
+  return false;
+}

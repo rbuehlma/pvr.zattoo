@@ -1,11 +1,12 @@
 #ifndef SRC_ZATCHANNEL_H_
 #define SRC_ZATCHANNEL_H_
 
+#include <string>
+
 struct ZatChannel
 {
   int iUniqueId;
   int iChannelNumber;
-  int selectiveRecallSeconds;
   bool recordingEnabled;
   std::string name;
   std::string strLogoPath;
