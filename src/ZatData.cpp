@@ -1105,7 +1105,7 @@ std::string ZatData::GetStreamParameters() {
 std::string ZatData::GetStreamTypeString() {
   switch (m_streamType) {
     case HLS:
-      return "hls";
+      return "hls7";
     case DASH_WIDEVINE:
       return "dash_widevine";
     default:
