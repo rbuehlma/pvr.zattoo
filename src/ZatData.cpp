@@ -106,16 +106,35 @@ bool ZatData::LoadAppId()
   if (!m_appToken.empty()) {
     return true;
   }
-  int statusCode;
-  std::string html = m_httpClient->HttpGet(m_providerUrl + "/login", statusCode);
-
-  if (!LoadAppTokenFromHtml(html)) {
-    if (!LoadAppTokenFromJson(html)) {
-      m_appToken = m_parameterDB->Get("appToken");
-      return !m_appToken.empty();
+  
+  if (!LoadAppTokenFromTokenJson("token.json")) {
+    int statusCode;
+    std::string html = m_httpClient->HttpGet(m_providerUrl + "/login", statusCode);
+  
+    if (!LoadAppTokenFromHtml(html)) {
+      if (!LoadAppTokenFromJson(html)) {
+        m_appToken = m_parameterDB->Get("appToken");
+        return !m_appToken.empty();
+      }
     }
   }
   m_parameterDB->Set("appToken", m_appToken);
+  return true;
+}
+
+bool ZatData::LoadAppTokenFromTokenJson(std::string tokenJsonPath) {
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpGet(m_providerUrl + "/" + tokenJsonPath, statusCode);
+
+  Document doc;
+  doc.Parse(jsonString.c_str());
+  if (doc.GetParseError() || !doc["success"].GetBool())
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "Failed to load json from %s", tokenJsonPath.c_str());
+    return false;
+  }
+
+  m_appToken = doc["session_token"].GetString();
   return true;
 }
 
@@ -148,18 +167,7 @@ bool ZatData::LoadAppTokenFromJson(std::string html) {
   }
   endPos = content.find("\"", basePos);
   std::string tokenJsonPath = content.substr(basePos, endPos - basePos);
-  std::string jsonString = m_httpClient->HttpGet(m_providerUrl + "/" + tokenJsonPath, statusCode);
-
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["success"].GetBool())
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Failed to load json from %s", tokenJsonPath.c_str());
-    return false;
-  }
-
-  m_appToken = doc["session_token"].GetString();
-  return true;
+  return LoadAppTokenFromTokenJson(tokenJsonPath);
 }
 
 bool ZatData::SendHello()

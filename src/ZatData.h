@@ -105,6 +105,7 @@ private:
   EpgProvider *m_epgProvider = nullptr;
 
   bool LoadAppId();
+  bool LoadAppTokenFromTokenJson(std::string tokenJsonPath);
   bool LoadAppTokenFromFile();
   bool LoadAppTokenFromJson(std::string html);
   bool LoadAppTokenFromHtml(std::string html);
