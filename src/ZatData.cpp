@@ -248,7 +248,7 @@ bool ZatData::InitSession(bool isReinit)
   m_countryCode = Utils::JsonStringOrEmpty(doc, "current_country");
   m_serviceRegionCountry = Utils::JsonStringOrEmpty(account, "service_country");
   m_recallEnabled = Utils::JsonStringOrEmpty(nonlive, "replay_availability") == "available";
-  m_recordingEnabled = nonlive["recording_number_limit"].GetInt() > 0;
+  m_recordingEnabled = Utils::JsonBoolOrFalse(nonlive, "recording_number_limit");
   kodi::Log(ADDON_LOG_INFO, "Current country code: %s", m_countryCode.c_str());
   kodi::Log(ADDON_LOG_INFO, "Service region country: %s",
       m_serviceRegionCountry.c_str());

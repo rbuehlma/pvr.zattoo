@@ -80,4 +80,8 @@ set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DZATTOO_VERSION=${ZATTOO_VERSION} -DKO
 
 build_addon(pvr.zattoo ZATTOO DEPLIBS)
 
+set_target_properties(pvr.zattoo PROPERTIES CXX_VISIBILITY_PRESET internal
+                                            C_VISIBILITY_PRESET internal
+                                            VISIBLITY_INLINES_HIDDEN ON)
+
 include(CPack)

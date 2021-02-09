@@ -157,3 +157,22 @@ int Utils::JsonIntOrZero(const rapidjson::Value& jsonValue, const char* fieldNam
   return jsonValue[fieldName].GetInt();
 }
 
+bool Utils::JsonBoolOrFalse(const rapidjson::Value& jsonValue, const char* fieldName)
+{
+  if (!jsonValue.HasMember(fieldName))
+  {
+    return false;
+  }
+
+  if (jsonValue[fieldName].IsBool())
+  {
+    return jsonValue[fieldName].GetBool();
+  }
+
+  if (jsonValue[fieldName].IsInt())
+  {
+    return jsonValue[fieldName].GetInt() != 0;
+  }
+
+  return false;
+}
