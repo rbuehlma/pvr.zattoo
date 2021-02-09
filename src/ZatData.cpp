@@ -298,13 +298,16 @@ bool ZatData::LoadAppId()
     return true;
   }
   
-  std::string html = HttpGet(m_providerUrl + "/login", true);
-
-  if (!LoadAppTokenFromHtml(html)) {
-    if (!LoadAppTokenFromJson(html)) {
-      return LoadAppTokenFromFile();
+  if (!LoadAppTokenFromTokenJson("token.json")) {
+    std::string html = HttpGet(m_providerUrl + "/login", true);
+    
+    if (!LoadAppTokenFromHtml(html)) {
+      if (!LoadAppTokenFromJson(html)) {
+        return LoadAppTokenFromFile();
+      }
     }
   }
+  
   void* file;
   if (!(file = XBMC->OpenFileForWrite(app_token_file, true)))
   {
@@ -316,6 +319,22 @@ bool ZatData::LoadAppId()
     XBMC->CloseFile(file);
   }
   return true;
+}
+
+bool ZatData::LoadAppTokenFromTokenJson(std::string tokenJsonPath) {
+  std::string jsonString = HttpGet(m_providerUrl + "/" + tokenJsonPath, true);
+
+  Document doc;
+  doc.Parse(jsonString.c_str());
+  if (doc.GetParseError() || !doc["success"].GetBool())
+  {
+    XBMC->Log(LOG_DEBUG, "Failed to load json from %s", tokenJsonPath.c_str());
+    return false;
+  }
+
+  m_appToken = doc["session_token"].GetString();
+  return true;
+
 }
 
 bool ZatData::LoadAppTokenFromFile() {
@@ -358,18 +377,8 @@ bool ZatData::LoadAppTokenFromJson(std::string html) {
   }
   endPos = content.find("\"", basePos);
   std::string tokenJsonPath = content.substr(basePos, endPos - basePos);
-  std::string jsonString = HttpGet(m_providerUrl + "/" + tokenJsonPath, true);
 
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["success"].GetBool())
-  {
-    XBMC->Log(LOG_DEBUG, "Failed to load json from %s", tokenJsonPath.c_str());
-    return false;
-  }
-
-  m_appToken = doc["session_token"].GetString();
-  return true;
+  return LoadAppTokenFromTokenJson(tokenJsonPath);
 }
 
 bool ZatData::SendHello(std::string uuid)
