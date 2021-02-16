@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.7.1"
+       version="19.7.2"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,10 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.7.2
+ - Fix duplicate requests
+ - Trigger update after deleting timer and recording
+ - Fix return status of deleting timer and recording
 v19.7.1
  - Fix HLS stream
 v19.7.0

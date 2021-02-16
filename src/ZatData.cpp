@@ -958,7 +958,8 @@ PVR_ERROR ZatData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDel
 
   Document doc;
   doc.Parse(jsonString.c_str());
-  return doc.GetParseError() && doc["success"].GetBool() ? PVR_ERROR_NO_ERROR : PVR_ERROR_FAILED;
+  kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+  return !doc.GetParseError() && doc["success"].GetBool() ? PVR_ERROR_NO_ERROR : PVR_ERROR_FAILED;
 }
 
 void ZatData::AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes)
@@ -1154,7 +1155,8 @@ PVR_ERROR ZatData::DeleteRecording(const kodi::addon::PVRRecording& recording)
 
   Document doc;
   doc.Parse(jsonString.c_str());
-  return doc.GetParseError() && doc["success"].GetBool() ? PVR_ERROR_NO_ERROR : PVR_ERROR_FAILED;
+  kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+  return !doc.GetParseError() && doc["success"].GetBool() ? PVR_ERROR_NO_ERROR : PVR_ERROR_FAILED;
 }
 
 PVR_ERROR ZatData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable)
@@ -1232,7 +1234,7 @@ bool ZatData::TryToReinitIf403(int statusCode) {
     }
     kodi::Log(ADDON_LOG_ERROR, "Re-init of session. Failed.");
   }
-  return true;
+  return false;
 }
 
 std::string ZatData::HttpGetWithRetry(std::string url) {
