@@ -30,7 +30,6 @@ set(ZATTOO_SOURCES
     src/epg/EpgProvider.cpp
     src/epg/ZattooEpgProvider.cpp
     src/epg/EnhancedEpgProvider.cpp
-    src/epg/XmlTVEpgProvider.cpp
     src/Utils.cpp
     src/client.cpp
     src/Settings.cpp
@@ -51,7 +50,6 @@ set(ZATTOO_HEADERS
     src/epg/EpgProvider.h
     src/epg/ZattooEpgProvider.h
     src/epg/EnhancedEpgProvider.h
-    src/epg/XmlTVEpgProvider.h
     src/UpdateThread.h
     src/Settings.h
     src/Utils.h

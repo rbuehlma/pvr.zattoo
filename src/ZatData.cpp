@@ -14,7 +14,6 @@
 #include <kodi/Filesystem.h>
 #include "epg/ZattooEpgProvider.h"
 #include "epg/EnhancedEpgProvider.h"
-#include "epg/XmlTVEpgProvider.h"
 
 #ifdef TARGET_ANDROID
 #include "to_string.h"
@@ -276,9 +275,6 @@ bool ZatData::InitSession(bool isReinit)
   } else {
     m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_channelsByUid, m_powerHash);
   }
-  if (!m_xmlTVFile.empty()) {
-    m_epgProvider = new XmlTVEpgProvider(this, m_xmlTVFile, m_channelsByCid, *m_epgProvider);
-  }
   return true;
 }
 
@@ -390,7 +386,7 @@ PVR_ERROR ZatData::GetChannelGroupsAmount(int& amount)
 ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
       const std::string& u, const std::string& p, bool favoritesOnly,
       bool alternativeEpgService, const STREAM_TYPE& streamType, bool enableDolby, int provider,
-      const std::string& xmlTVFile, const std::string& parentalPin) :
+      const std::string& parentalPin) :
     kodi::addon::CInstancePVRClient(instance, version),
     m_alternativeEpgService(alternativeEpgService),
     m_favoritesOnly(favoritesOnly),
@@ -398,8 +394,7 @@ ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
     m_streamType(streamType),
     m_username(u),
     m_password(p),
-    m_parentalPin(parentalPin),
-    m_xmlTVFile(xmlTVFile)
+    m_parentalPin(parentalPin)
 {
   
   m_epgDB = new EpgDB(UserPath());

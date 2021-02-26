@@ -31,7 +31,7 @@ public:
   ZatData(KODI_HANDLE instance, const std::string& version,
       const std::string& username, const std::string& password, bool favoritesOnly,
       bool alternativeEpgService, const STREAM_TYPE& streamType, bool enableDolby, int provider,
-      const std::string& xmlTVFile, const std::string& parentalPin);
+      const std::string& parentalPin);
   ~ZatData();
   bool Initialize();
   bool LoadChannels();
@@ -97,7 +97,6 @@ private:
   Categories m_categories;
   std::string m_providerUrl;
   std::string m_parentalPin;
-  std::string m_xmlTVFile;
   EpgDB *m_epgDB;
   RecordingsDB *m_recordingsDB;
   ParameterDB *m_parameterDB;
