@@ -120,7 +120,7 @@ private:
   std::string GetStreamParameters();
   bool ParseRecordingsTimers(const rapidjson::Value& recordings, std::map<int, ZatRecordingDetails>& detailsById);
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
-  bool Record(int programId);
+  bool Record(int programId, bool series);
   std::string GetManifestType();
   std::string GetMimeType();
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties, const std::string& url);
