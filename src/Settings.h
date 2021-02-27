@@ -32,7 +32,6 @@ public:
   bool GetZatAlternativeEpgServiceProvideSession() const { return m_zatAlternativeEpgServiceProvideSession; }
   STREAM_TYPE GetStreamType() const { return m_streamType; }
   const std::string GetParentalPin() const { return m_parentalPin; }
-  const std::string GetXmlTVFile() const { return m_xmlTVFile; }
   int GetProvider() const { return m_provider; }
 
 private:
@@ -44,6 +43,5 @@ private:
   bool m_zatAlternativeEpgServiceProvideSession = false;
   STREAM_TYPE m_streamType = DASH;
   std::string m_parentalPin;
-  std::string m_xmlTVFile;
   int m_provider = 0;
 };

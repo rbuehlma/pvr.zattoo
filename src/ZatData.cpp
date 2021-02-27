@@ -14,7 +14,6 @@
 #include <kodi/Filesystem.h>
 #include "epg/ZattooEpgProvider.h"
 #include "epg/EnhancedEpgProvider.h"
-#include "epg/XmlTVEpgProvider.h"
 
 #ifdef TARGET_ANDROID
 #include "to_string.h"
@@ -276,9 +275,6 @@ bool ZatData::InitSession(bool isReinit)
   } else {
     m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_channelsByUid, m_powerHash);
   }
-  if (!m_xmlTVFile.empty()) {
-    m_epgProvider = new XmlTVEpgProvider(this, m_xmlTVFile, m_channelsByCid, *m_epgProvider);
-  }
   return true;
 }
 
@@ -390,7 +386,7 @@ PVR_ERROR ZatData::GetChannelGroupsAmount(int& amount)
 ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
       const std::string& u, const std::string& p, bool favoritesOnly,
       bool alternativeEpgService, const STREAM_TYPE& streamType, bool enableDolby, int provider,
-      const std::string& xmlTVFile, const std::string& parentalPin) :
+      const std::string& parentalPin) :
     kodi::addon::CInstancePVRClient(instance, version),
     m_alternativeEpgService(alternativeEpgService),
     m_favoritesOnly(favoritesOnly),
@@ -398,8 +394,7 @@ ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
     m_streamType(streamType),
     m_username(u),
     m_password(p),
-    m_parentalPin(parentalPin),
-    m_xmlTVFile(xmlTVFile)
+    m_parentalPin(parentalPin)
 {
   
   m_epgDB = new EpgDB(UserPath());
@@ -819,14 +814,14 @@ bool ZatData::ParseRecordingsTimers(const Value& recordings, std::map<int, ZatRe
 
 PVR_ERROR ZatData::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types)
 {
-  AddTimerType(types, 0, PVR_TIMER_TYPE_ATTRIBUTE_NONE);
-  AddTimerType(types, 1, PVR_TIMER_TYPE_IS_MANUAL);
+  AddTimerType(types, 0, PVR_TIMER_TYPE_REQUIRES_EPG_TAG_ON_CREATE);
+  AddTimerType(types, 1, PVR_TIMER_TYPE_REQUIRES_EPG_SERIES_ON_CREATE | PVR_TIMER_TYPE_IS_REPEATING);
   return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 {
-  std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/playlist");
+  std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/v2/playlist");
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -894,13 +889,43 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
       UpdateThread::SetNextRecordingUpdate(startTime);
     }
   }
+  
+  if (doc.HasMember("recorded_tv_series")) {
+    const Value& recordingsTvSeries = doc["recorded_tv_series"];
+  
+    for (Value::ConstValueIterator itr = recordingsTvSeries.Begin();
+        itr != recordingsTvSeries.End(); ++itr)
+    {
+      const Value& recording = (*itr);
+      int tvSeriesId = recording["tv_series_id"].GetInt();
+  
+      std::string cid = Utils::JsonStringOrEmpty(recording, "cid");
+      auto iterator = m_channelsByCid.find(cid);
+      if (iterator == m_channelsByCid.end())
+      {
+        kodi::Log(ADDON_LOG_ERROR, "Channel %s not found for series recording: %i",
+            cid.c_str(), tvSeriesId);
+        continue;
+      }
+      ZatChannel channel = iterator->second;
+    
+      //genre
+      kodi::addon::PVRTimer tag;
 
+      tag.SetClientIndex(static_cast<unsigned int>(tvSeriesId));
+      tag.SetTitle(Utils::JsonStringOrEmpty(recording, "title"));
+      tag.SetState(PVR_TIMER_STATE_SCHEDULED);
+      tag.SetTimerType(2);
+      tag.SetClientChannelUid(channel.iUniqueId);
+      results.Add(tag);
+    }
+  }
   return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR ZatData::GetTimersAmount(int& amount)
 {
-  std::string jsonString = HttpGetCachedWithRetry(m_providerUrl + "/zapi/playlist", 60);
+  std::string jsonString = HttpGetCachedWithRetry(m_providerUrl + "/zapi/v2/playlist", 60);
 
   time_t current_time;
   time(&current_time);
@@ -936,7 +961,7 @@ PVR_ERROR ZatData::AddTimer(const kodi::addon::PVRTimer& timer)
   {
     ret = PVR_ERROR_REJECTED;
   }
-  else if (!Record(timer.GetEPGUid()))
+  else if (!Record(timer.GetEPGUid(), timer.GetTimerType() == 2))
   {
     ret = PVR_ERROR_REJECTED;
   }
@@ -951,10 +976,47 @@ PVR_ERROR ZatData::AddTimer(const kodi::addon::PVRTimer& timer)
 
 PVR_ERROR ZatData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDelete)
 {
-  std::ostringstream dataStream;
-  dataStream << "recording_id=" << timer.GetClientIndex() << "";
+  bool series = timer.GetTimerType() == 2;
+  int recordingId = -1;
+  
+  if (series) {  
+    std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/v2/playlist");
 
-  std::string jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/playlist/remove", dataStream.str());
+    Document doc;
+    doc.Parse(jsonString.c_str());
+    if (doc.GetParseError() || !doc["success"].GetBool())
+    {
+      return PVR_ERROR_FAILED;
+    }
+
+    const Value& recordings = doc["recordings"];
+
+    for (Value::ConstValueIterator itr = recordings.Begin();
+        itr != recordings.End(); ++itr)
+    {
+      const Value& recording = (*itr);
+      
+      int seriesId = recording["tv_series_id"].GetInt();
+      
+      if (seriesId == timer.GetClientIndex()) {
+        recordingId = recording["id"].GetInt();
+        break;
+      }
+    }
+    if (recordingId == -1) {
+      kodi::Log(ADDON_LOG_ERROR, "Did not find recording for serie %d.", timer.GetClientIndex());
+      return PVR_ERROR_FAILED;
+    }
+  } else {
+    recordingId = timer.GetClientIndex();
+  }
+  
+  std::ostringstream dataStream;
+  dataStream << "remove_recording=false&recording_id=" << recordingId << "";
+
+  std::string path = series ? "/zapi/series_recording/remove" : "/zapi/playlist/remove";
+
+  std::string jsonString = HttpPostWithRetry(m_providerUrl + path, dataStream.str());
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -972,7 +1034,7 @@ void ZatData::AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int id
 
 PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results)
 {
-  std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/playlist");
+  std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/v2/playlist");
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -1063,7 +1125,7 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
 
 PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
 {
-  std::string jsonString = HttpGetCachedWithRetry(m_providerUrl + "/zapi/playlist", 60);
+  std::string jsonString = HttpGetCachedWithRetry(m_providerUrl + "/zapi/v2/playlist", 60);
 
   time_t current_time;
   time(&current_time);
@@ -1135,11 +1197,12 @@ PVR_ERROR ZatData::GetRecordingStreamProperties(const kodi::addon::PVRRecording&
   return ret;
 }
 
-bool ZatData::Record(int programId)
+bool ZatData::Record(int programId, bool series)
 {
   std::ostringstream dataStream;
-  dataStream << "program_id=" << programId;
-
+  
+  dataStream << "program_id=" << programId << "&series_force=False&series=" << (series ? "True" : "False");
+  
   std::string jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/playlist/program", dataStream.str());
   Document doc;
   doc.Parse(jsonString.c_str());

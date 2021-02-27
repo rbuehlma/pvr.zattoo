@@ -31,11 +31,10 @@ ADDON_STATUS CZattooTVAddon::CreateInstance(int instanceType,
     STREAM_TYPE streamType = m_settings.GetStreamType();
     bool zatEnableDolby = m_settings.GetZatEnableDolby();
     int provider = m_settings.GetProvider();
-    std::string xmlTVFile = m_settings.GetXmlTVFile();
     std::string parentalPin = m_settings.GetParentalPin();
 
     ZatData* client = new ZatData(instance, version, zatUsername, zatPassword, zatFavoritesOnly,
-        useAlternativeApgService, streamType, zatEnableDolby, provider, xmlTVFile, parentalPin);
+        useAlternativeApgService, streamType, zatEnableDolby, provider, parentalPin);
     addonInstance = client;
     kodi::Log(ADDON_LOG_DEBUG, "Zattoo created");
 

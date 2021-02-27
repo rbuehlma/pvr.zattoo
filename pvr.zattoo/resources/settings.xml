@@ -78,17 +78,6 @@
           </constraints>
           <control type="edit" format="string" />
         </setting>
-        <setting id="xmlTVFile" type="path" label="30011">
-          <level>0</level>
-          <default></default>
-          <constraints>
-            <writable>false</writable>
-            <allowempty>true</allowempty>
-          </constraints>
-          <control type="button" format="file">
-            <heading>30011</heading>
-          </control>
-        </setting>
       </group>
       <group id="2" label="30016">
         <setting id="provide_zattoo_session" type="boolean" label="30012">

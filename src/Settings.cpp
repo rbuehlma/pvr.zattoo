@@ -69,20 +69,6 @@ bool CSettings::Load()
     m_parentalPin = "";
   }
 
-  if (!kodi::CheckSettingString("xmlTVFile", m_xmlTVFile))
-  {
-    /* If setting is unknown fallback to defaults */
-    kodi::Log(ADDON_LOG_ERROR, "Couldn't get 'xmlTVFile' setting, falling back to 'empty' as default");
-    m_xmlTVFile = "";
-  }
-
-  if (!kodi::CheckSettingString("xmlTVFile", m_xmlTVFile))
-  {
-    /* If setting is unknown fallback to defaults */
-    kodi::Log(ADDON_LOG_ERROR, "Couldn't get 'xmlTVFile' setting, falling back to 'empty' as default");
-    m_xmlTVFile = "";
-  }
-
   if (!kodi::CheckSettingInt("provider", m_provider))
   {
     /* If setting is unknown fallback to defaults */
@@ -167,15 +153,6 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     tmp_sParentalPin = m_parentalPin;
     m_parentalPin = settingValue.GetString();
     if (tmp_sParentalPin != m_parentalPin)
-      return ADDON_STATUS_NEED_RESTART;
-  }
-  else if (settingName == "xmlTVFile")
-  {
-    std::string tmp_sXmlTVFile;
-    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'xmlTVFile'");
-    tmp_sXmlTVFile = m_xmlTVFile;
-    m_xmlTVFile = settingValue.GetString();
-    if (tmp_sXmlTVFile != m_xmlTVFile)
       return ADDON_STATUS_NEED_RESTART;
   }
   else if (settingName == "provider")

@@ -48,10 +48,6 @@ msgctxt "#30010"
 msgid "Enable Dolby"
 msgstr "Enable support for dolby"
 
-msgctxt "#30011"
-msgid "XMLTV-File"
-msgstr "The XMLTV-File to provide custom EPG."
-
 msgctxt "#30012"
 msgid "Allow providing Zattoo session to service"
 msgstr "Allow providing Zattoo session to service"
