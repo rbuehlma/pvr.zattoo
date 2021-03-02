@@ -28,8 +28,6 @@ public:
   const std::string& GetZatPassword() const { return m_zatPassword; }
   bool GetZatFavoritesOnly() const { return m_zatFavoritesOnly; }
   bool GetZatEnableDolby() const { return m_zatEnableDolby; }
-  bool GetZatAlternativeEpgService() const { return m_zatAlternativeEpgService; }
-  bool GetZatAlternativeEpgServiceProvideSession() const { return m_zatAlternativeEpgServiceProvideSession; }
   STREAM_TYPE GetStreamType() const { return m_streamType; }
   const std::string GetParentalPin() const { return m_parentalPin; }
   int GetProvider() const { return m_provider; }
@@ -39,8 +37,6 @@ private:
   std::string m_zatPassword;
   bool m_zatFavoritesOnly = false;
   bool m_zatEnableDolby = true;
-  bool m_zatAlternativeEpgService = false;
-  bool m_zatAlternativeEpgServiceProvideSession = false;
   STREAM_TYPE m_streamType = DASH;
   std::string m_parentalPin;
   int m_provider = 0;

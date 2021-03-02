@@ -39,22 +39,6 @@ bool CSettings::Load()
     m_zatEnableDolby = true;
   }
 
-  if (!kodi::CheckSettingBoolean("alternativeepgservice_https", m_zatAlternativeEpgService))
-  {
-    /* If setting is unknown fallback to defaults */
-    kodi::Log(ADDON_LOG_ERROR,
-              "Couldn't get 'alternativeepgservice_https' setting, falling back to 'false' as default");
-    m_zatAlternativeEpgService = false;
-  }
-
-  if (!kodi::CheckSettingBoolean("provide_zattoo_session", m_zatAlternativeEpgServiceProvideSession))
-  {
-    /* If setting is unknown fallback to defaults */
-    kodi::Log(ADDON_LOG_ERROR,
-              "Couldn't get 'provide_zattoo_session' setting, falling back to 'false' as default");
-    m_zatAlternativeEpgServiceProvideSession = false;
-  }
-
   if (!kodi::CheckSettingEnum<STREAM_TYPE>("streamtype", m_streamType))
   {
     /* If setting is unknown fallback to defaults */
@@ -116,24 +100,6 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     if (m_zatEnableDolby != settingValue.GetBoolean())
     {
       m_zatEnableDolby = settingValue.GetBoolean();
-      return ADDON_STATUS_NEED_RESTART;
-    }
-  }
-  else if (settingName == "alternativeepgservice_https")
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'alternativeepgservice_https' from %u to %u", m_zatAlternativeEpgService, settingValue.GetBoolean());
-    if (m_zatAlternativeEpgService != settingValue.GetBoolean())
-    {
-      m_zatAlternativeEpgService = settingValue.GetBoolean();
-      return ADDON_STATUS_NEED_RESTART;
-    }
-  }
-  else if (settingName == "provide_zattoo_session")
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'alternativeepgservice_https' from %u to %u", m_zatAlternativeEpgServiceProvideSession, settingValue.GetBoolean());
-    if (m_zatAlternativeEpgServiceProvideSession != settingValue.GetBoolean())
-    {
-      m_zatAlternativeEpgServiceProvideSession = settingValue.GetBoolean();
       return ADDON_STATUS_NEED_RESTART;
     }
   }

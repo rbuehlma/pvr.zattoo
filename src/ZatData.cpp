@@ -13,7 +13,6 @@
 #include "rapidjson/stringbuffer.h"
 #include <kodi/Filesystem.h>
 #include "epg/ZattooEpgProvider.h"
-#include "epg/EnhancedEpgProvider.h"
 
 #ifdef TARGET_ANDROID
 #include "to_string.h"
@@ -269,12 +268,7 @@ bool ZatData::InitSession(bool isReinit)
   if (m_epgProvider) {
     delete m_epgProvider;
   }
-  if (m_alternativeEpgService) {
-    std::string country = m_serviceRegionCountry.empty() ? m_countryCode : m_serviceRegionCountry;
-    m_epgProvider = new EnhancedEpgProvider(this, *m_epgDB, *m_httpClient, m_categories, m_powerHash, country);
-  } else {
-    m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_channelsByUid, m_powerHash);
-  }
+  m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_channelsByUid, m_powerHash);
   return true;
 }
 
@@ -385,10 +379,9 @@ PVR_ERROR ZatData::GetChannelGroupsAmount(int& amount)
 
 ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
       const std::string& u, const std::string& p, bool favoritesOnly,
-      bool alternativeEpgService, const STREAM_TYPE& streamType, bool enableDolby, int provider,
+      const STREAM_TYPE& streamType, bool enableDolby, int provider,
       const std::string& parentalPin) :
     kodi::addon::CInstancePVRClient(instance, version),
-    m_alternativeEpgService(alternativeEpgService),
     m_favoritesOnly(favoritesOnly),
     m_enableDolby(enableDolby),
     m_streamType(streamType),
