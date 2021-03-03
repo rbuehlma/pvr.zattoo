@@ -25,9 +25,15 @@ ZattooEpgProvider::ZattooEpgProvider(
   m_channelsByUid(channelsByUid)
 {
   time(&lastCleanup);
+  m_detailsThreadRunning = true;
+  m_detailsThread = std::thread([&] { DetailsThread(); });
 }
 
-ZattooEpgProvider::~ZattooEpgProvider() { }
+ZattooEpgProvider::~ZattooEpgProvider() {
+  m_detailsThreadRunning = false;
+  if (m_detailsThread.joinable())
+    m_detailsThread.join();
+}
 
 bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, time_t iEnd) {
   time_t tempStart = iStart - (iStart % (3600 / 2)) - 86400;
@@ -78,28 +84,10 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
         if (checkType != kStringType)
           continue;
         
-        kodi::addon::PVREPGTag tag;
-        tag.SetUniqueBroadcastId(static_cast<unsigned int>(program["id"].GetInt()));
-        tag.SetTitle(Utils::JsonStringOrEmpty(program, "t"));
-        tag.SetUniqueChannelId(static_cast<unsigned int>(uniqueChannelId));
-        tag.SetStartTime(program["s"].GetInt());
-        tag.SetEndTime(program["e"].GetInt());
-        tag.SetPlotOutline(Utils::JsonStringOrEmpty(program, "et"));
-        tag.SetPlot(Utils::JsonStringOrEmpty(program, "et"));
-        tag.SetOriginalTitle(""); /* not supported */
-        tag.SetCast(""); /* not supported */
-        tag.SetDirector(""); /*SA not supported */
-        tag.SetWriter(""); /* not supported */
-        tag.SetYear(0); /* not supported */
-        tag.SetIMDBNumber(""); /* not supported */
-        tag.SetIconPath(Utils::GetImageUrl(Utils::JsonStringOrEmpty(program, "i_t")));
-        tag.SetParentalRating(0); /* not supported */
-        tag.SetStarRating(0); /* not supported */
-        tag.SetSeriesNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-        tag.SetEpisodeNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-        tag.SetEpisodePartNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-        tag.SetEpisodeName(""); /* not supported */
-               
+        int programId = program["id"].GetInt();
+        
+        EpgDBInfo epgDBInfo = m_epgDB.Get(programId);
+        
         const Value& genres = program["g"];
         std::string genreString;
         for (Value::ConstValueIterator itr2 = genres.Begin();
@@ -108,27 +96,24 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
           genreString = (*itr2).GetString();
           break;
         }
-
-        int genre = m_categories.Category(genreString);
-        if (genre)
-        {
-          tag.SetGenreSubType(genre & 0x0F);
-          tag.SetGenreType(genre & 0xF0);
-        }
-        else
-        {
-          tag.SetGenreType(EPG_GENRE_USE_STRING);
-          tag.SetGenreSubType(0); /* not supported */
-          tag.SetGenreDescription(genreString);
-        }
         
-        EpgDBInfo epgDBInfo;
         epgDBInfo.programId = program["id"].GetInt();
         epgDBInfo.recordUntil = Utils::JsonIntOrZero(program, "rg_u");
         epgDBInfo.replayUntil = Utils::JsonIntOrZero(program, "sr_u");
         epgDBInfo.restartUntil = Utils::JsonIntOrZero(program, "ry_u");
+        epgDBInfo.startTime = program["s"].GetInt();
+        epgDBInfo.endTime = program["e"].GetInt();
+        epgDBInfo.title = Utils::JsonStringOrEmpty(program, "t"); 
+        epgDBInfo.subtitle = Utils::JsonStringOrEmpty(program, "et");
+        if (!epgDBInfo.detailsLoaded) {
+          epgDBInfo.description = Utils::JsonStringOrEmpty(program, "et");
+        }
+        epgDBInfo.genre = genreString;
+        epgDBInfo.imageToken = Utils::JsonStringOrEmpty(program, "i_t");
+        epgDBInfo.cid = cid;
         m_epgDB.Insert(epgDBInfo);
-        SendEpg(tag);
+        
+        SendEpgDBInfo(epgDBInfo);
       }
       m_epgDB.EndTransaction();
     }
@@ -136,6 +121,49 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
     tempEnd = tempStart + 3600 * 5; //Add 5 hours
   }
   return true;
+}
+
+void ZattooEpgProvider::SendEpgDBInfo(EpgDBInfo &epgDBInfo) {
+  
+  int uniqueChannelId = Utils::GetChannelId(epgDBInfo.cid.c_str());
+  
+  kodi::addon::PVREPGTag tag;
+  tag.SetUniqueBroadcastId(static_cast<unsigned int>(epgDBInfo.programId));
+  tag.SetTitle(epgDBInfo.title);
+  tag.SetUniqueChannelId(static_cast<unsigned int>(uniqueChannelId));
+  tag.SetStartTime(epgDBInfo.startTime);
+  tag.SetEndTime(epgDBInfo.endTime);
+  tag.SetPlotOutline(epgDBInfo.description);
+  tag.SetPlot(epgDBInfo.description);
+  tag.SetEpisodeName(epgDBInfo.subtitle);
+  tag.SetOriginalTitle(""); /* not supported */
+  tag.SetCast(""); /* not supported */
+  tag.SetDirector(""); /*SA not supported */
+  tag.SetWriter(""); /* not supported */
+  tag.SetYear(0); /* not supported */
+  tag.SetIMDBNumber(""); /* not supported */
+  tag.SetIconPath(Utils::GetImageUrl(epgDBInfo.imageToken));
+  tag.SetParentalRating(0); /* not supported */
+  tag.SetStarRating(0); /* not supported */
+  tag.SetSeriesNumber(epgDBInfo.season);
+  tag.SetEpisodeNumber(epgDBInfo.episode);  
+  tag.SetEpisodePartNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
+  
+  std::string genreStr = epgDBInfo.genre;
+  int genre = m_categories.Category(genreStr);
+  if (genre)
+  {
+    tag.SetGenreSubType(genre & 0x0F);
+    tag.SetGenreType(genre & 0xF0);
+  }
+  else
+  {
+    tag.SetGenreType(EPG_GENRE_USE_STRING);
+    tag.SetGenreSubType(0); /* not supported */
+    tag.SetGenreDescription(genreStr);
+  }
+
+  SendEpg(tag);
 }
 
 void ZattooEpgProvider::CleanupAlreadyLoaded() {
@@ -172,5 +200,76 @@ time_t ZattooEpgProvider::SkipAlreadyLoaded(time_t startTime, time_t endTime) {
     }
   }
   return newStartTime;
+}
+
+void ZattooEpgProvider::DetailsThread()
+{
+  std::this_thread::sleep_for(std::chrono::seconds(10));
+  kodi::Log(ADDON_LOG_DEBUG, "Details thread started");
+  while (m_detailsThreadRunning)
+  {
+    std::list<EpgDBInfo> epgDBInfos = m_epgDB.GetWithWhere("DETAILS_LOADED=0 order by abs(strftime('%s','now')-END_TIME) limit 300;");
+    kodi::Log(ADDON_LOG_DEBUG, "Loading details for %d epg entries.", epgDBInfos.size());
+    if (epgDBInfos.size() > 0) {
+      std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
+      m_epgDB.BeginTransaction();
+      std::vector<EpgDBInfo> infos(epgDBInfos.begin(), epgDBInfos.end());
+      std::ostringstream ids;
+      std::map<int, EpgDBInfo> epgDBInfoById;
+
+      bool first = true;
+      for (EpgDBInfo &epgDBInfo: infos) {
+        if (first) {
+          first = false;
+        } else {
+          ids << ",";
+        }
+        ids << epgDBInfo.programId;
+        epgDBInfoById[epgDBInfo.programId] = epgDBInfo;
+
+      }
+      std::ostringstream urlStream;
+      urlStream << m_providerUrl << "/zapi/v2/cached/program/power_details/"
+          << m_powerHash << "?complete=True&program_ids=" << ids.str();
+      
+      int statusCode;
+      std::string jsonString = m_httpClient.HttpGet(urlStream.str(), statusCode);
+
+      Document detailDoc;
+      detailDoc.Parse(jsonString.c_str());
+      if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
+      {
+        kodi::Log(ADDON_LOG_ERROR, "Failed to load details for program.");
+        m_detailsThreadRunning = false;
+        
+      }
+      else
+      {
+        const Value& programs = detailDoc["programs"];
+        for (Value::ConstValueIterator progItr = programs.Begin();
+            progItr != programs.End(); ++progItr)
+        {
+          const Value &program = *progItr;
+          int programId = program["id"].GetInt();
+          EpgDBInfo &epgDBInfo = epgDBInfoById[programId];
+          epgDBInfo.description = Utils::JsonStringOrEmpty(program, "d");
+          epgDBInfo.season = program.HasMember("s_no") && !program["s_no"].IsNull() ? program["s_no"].GetInt() : -1;
+          epgDBInfo.episode = program.HasMember("e_no") && !program["e_no"].IsNull() ? program["e_no"].GetInt() : -1;
+
+          epgDBInfo.detailsLoaded=1;
+          m_epgDB.Update(epgDBInfo);
+          SendEpgDBInfo(epgDBInfo);
+        }
+      }
+      for (EpgDBInfo &epgDBInfo: infos) {
+        if (!epgDBInfo.detailsLoaded) {
+          epgDBInfo.detailsLoaded = 1;
+          m_epgDB.Update(epgDBInfo);
+        }
+      }
+      m_epgDB.EndTransaction();
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+  }
 }
 

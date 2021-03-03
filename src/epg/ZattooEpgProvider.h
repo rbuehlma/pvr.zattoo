@@ -4,6 +4,8 @@
 #include <string>
 #include <list>
 #include <map>
+#include <atomic>
+#include <thread>
 #include "EpgProvider.h"
 #include "../sql/EpgDB.h"
 #include "../http/HttpClient.h"
@@ -33,6 +35,8 @@ private:
   time_t SkipAlreadyLoaded(time_t startTime, time_t endTime);
   void RegisterAlreadyLoaded(time_t startTime, time_t endTime);
   void CleanupAlreadyLoaded();
+  void DetailsThread();
+  void SendEpgDBInfo(EpgDBInfo &epgDBInfo);
   time_t lastCleanup;
   EpgDB &m_epgDB;
   HttpClient &m_httpClient;
@@ -41,6 +45,9 @@ private:
   std::string m_providerUrl;
   std::list<LoadedTimeslots> m_loadedTimeslots;
   std::map<int, ZatChannel> &m_channelsByUid;
+  std::atomic<bool> m_detailsThreadRunning = {false};
+  std::thread m_detailsThread;
+
 };
 
 #endif /* SRC_EPG_ZATTOOEPGPROVIDER_H_ */
