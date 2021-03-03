@@ -48,24 +48,12 @@ msgctxt "#30010"
 msgid "Enable Dolby"
 msgstr "Enable support for dolby"
 
-msgctxt "#30012"
-msgid "Allow providing Zattoo session to service"
-msgstr "Allow providing Zattoo session to service"
-
-msgctxt "#30013"
-msgid "Use enhanced EPG service"
-msgstr "This is an external service to gather additional EPG information and speed up EPG loading."
-
 msgctxt "#30014"
 msgid "Zattoo"
 msgstr ""
 
 msgctxt "#30015"
 msgid "General"
-msgstr ""
-
-msgctxt "#30016"
-msgid "External EPG service"
 msgstr ""
 
 msgctxt "#30099"

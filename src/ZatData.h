@@ -30,7 +30,7 @@ class ATTRIBUTE_HIDDEN ZatData : public kodi::addon::CInstancePVRClient
 public:
   ZatData(KODI_HANDLE instance, const std::string& version,
       const std::string& username, const std::string& password, bool favoritesOnly,
-      bool alternativeEpgService, const STREAM_TYPE& streamType, bool enableDolby, int provider,
+      const STREAM_TYPE& streamType, bool enableDolby, int provider,
       const std::string& parentalPin);
   ~ZatData();
   bool Initialize();
@@ -78,7 +78,6 @@ public:
   }
 
 private:
-  bool m_alternativeEpgService;
   bool m_favoritesOnly;
   bool m_enableDolby;
   STREAM_TYPE m_streamType;

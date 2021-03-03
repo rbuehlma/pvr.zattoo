@@ -29,7 +29,6 @@ set(ZATTOO_SOURCES
     src/http/HttpClient.cpp
     src/epg/EpgProvider.cpp
     src/epg/ZattooEpgProvider.cpp
-    src/epg/EnhancedEpgProvider.cpp
     src/Utils.cpp
     src/client.cpp
     src/Settings.cpp
@@ -49,7 +48,6 @@ set(ZATTOO_HEADERS
     src/http/HttpClient.h
     src/epg/EpgProvider.h
     src/epg/ZattooEpgProvider.h
-    src/epg/EnhancedEpgProvider.h
     src/UpdateThread.h
     src/Settings.h
     src/Utils.h

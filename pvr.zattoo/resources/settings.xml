@@ -79,21 +79,6 @@
           <control type="edit" format="string" />
         </setting>
       </group>
-      <group id="2" label="30016">
-        <setting id="provide_zattoo_session" type="boolean" label="30012">
-          <level>0</level>
-          <default>false</default>
-          <control type="toggle" />
-        </setting>
-        <setting id="alternativeepgservice_https" type="boolean" label="30013">
-          <level>0</level>
-          <default>false</default>
-          <control type="toggle" />
-          <dependencies>
-            <dependency type="enable" setting="provide_zattoo_session">true</dependency>
-          </dependencies>
-        </setting>
-      </group>
     </category>
   </section>
 </settings>
