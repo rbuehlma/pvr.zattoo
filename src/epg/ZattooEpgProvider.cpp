@@ -13,7 +13,7 @@ ZattooEpgProvider::ZattooEpgProvider(
     EpgDB &epgDB,
     HttpClient &httpClient,
     Categories &categories,
-    std::map<int, ZatChannel> &channelsByUid,
+    std::map<std::string, ZatChannel> &visibleChannelsByCid,
     std::string powerHash
   ):
   EpgProvider(addon),
@@ -22,7 +22,7 @@ ZattooEpgProvider::ZattooEpgProvider(
   m_categories(categories),
   m_powerHash(powerHash),
   m_providerUrl(providerUrl),
-  m_channelsByUid(channelsByUid)
+  m_visibleChannelsByCid(visibleChannelsByCid)
 {
   time(&lastCleanup);
   m_detailsThreadRunning = true;
@@ -70,7 +70,7 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
 
       int uniqueChannelId = Utils::GetChannelId(cid.c_str());
       
-      if (m_channelsByUid.count(uniqueChannelId) == 0) {
+      if (m_visibleChannelsByCid.count(cid) == 0) {
         continue;
       }
 
@@ -124,6 +124,10 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
 }
 
 void ZattooEpgProvider::SendEpgDBInfo(EpgDBInfo &epgDBInfo) {
+  
+  if (m_visibleChannelsByCid.count(epgDBInfo.cid) == 0) {
+    return;
+  }
   
   int uniqueChannelId = Utils::GetChannelId(epgDBInfo.cid.c_str());
   

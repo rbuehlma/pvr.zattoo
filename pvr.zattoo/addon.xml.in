@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.7.4"
+       version="19.7.5"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,8 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.7.5
+ - Do not load EPG for channels not listed
 v19.7.4
  - Load additional EPG information directly from Zattoo
  - Remove enhanced EPG provider

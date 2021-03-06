@@ -26,7 +26,7 @@ public:
       EpgDB &epgDB, 
       HttpClient &httpClient, 
       Categories &categories,
-      std::map<int, ZatChannel> &channelsByUid, 
+      std::map<std::string, ZatChannel> &visibleChannelsByCid, 
       std::string powerHash
   );
   virtual ~ZattooEpgProvider();
@@ -44,7 +44,7 @@ private:
   std::string m_powerHash;
   std::string m_providerUrl;
   std::list<LoadedTimeslots> m_loadedTimeslots;
-  std::map<int, ZatChannel> &m_channelsByUid;
+  std::map<std::string, ZatChannel> &m_visibleChannelsByCid;
   std::atomic<bool> m_detailsThreadRunning = {false};
   std::thread m_detailsThread;
 

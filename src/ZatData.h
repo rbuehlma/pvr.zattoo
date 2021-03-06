@@ -92,6 +92,7 @@ private:
   std::vector<PVRZattooChannelGroup> m_channelGroups;
   std::map<int, ZatChannel> m_channelsByUid;
   std::map<std::string, ZatChannel> m_channelsByCid;
+  std::map<std::string, ZatChannel> m_visibleChannelsByCid;
   std::vector<UpdateThread*> m_updateThreads;
   Categories m_categories;
   std::string m_providerUrl;

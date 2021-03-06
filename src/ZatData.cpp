@@ -268,7 +268,7 @@ bool ZatData::InitSession(bool isReinit)
   if (m_epgProvider) {
     delete m_epgProvider;
   }
-  m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_channelsByUid, m_powerHash);
+  m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_visibleChannelsByCid, m_powerHash);
   return true;
 }
 
@@ -367,7 +367,12 @@ bool ZatData::LoadChannels()
 
   if (!favGroup.channels.empty())
     m_channelGroups.insert(m_channelGroups.end(), favGroup);
-
+  
+  for (const PVRZattooChannelGroup &group : m_channelGroups) {
+    for (const ZatChannel &channel : group.channels) {
+      m_visibleChannelsByCid[channel.cid] = channel;
+    }
+  }
   return true;
 }
 
@@ -580,7 +585,7 @@ PVR_ERROR ZatData::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& gr
 
 PVR_ERROR ZatData::GetChannelsAmount(int& amount)
 {
-  amount = static_cast<int>(m_channelsByCid.size());
+  amount = static_cast<int>(m_visibleChannelsByCid.size());
   return PVR_ERROR_NO_ERROR;
 }
 
