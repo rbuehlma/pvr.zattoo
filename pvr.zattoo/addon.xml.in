@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.7.5"
+       version="19.7.6"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,8 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.7.6
+ - Try to get current epg from Zattoo if replay fails
 v19.7.5
  - Do not load EPG for channels not listed
 v19.7.4

@@ -1254,26 +1254,68 @@ PVR_ERROR ZatData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& i
 
 PVR_ERROR ZatData::GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
-  PVR_ERROR ret = PVR_ERROR_FAILED;
   std::ostringstream dataStream;
   ZatChannel channel = m_channelsByUid[tag.GetUniqueChannelId()];
+  
+  std::string url = GetStreamUrlForProgram(channel.cid, tag.GetUniqueBroadcastId(), properties);
+  
+  if (url.empty()) {
+    kodi::Log(ADDON_LOG_WARNING, "Could not get url for channel %s and program %i. Try to get new EPG tag.", channel.cid.c_str(), tag.GetUniqueBroadcastId());
+    time_t referenceTime = (tag.GetStartTime() + tag.GetEndTime()) / 2;
+    std::ostringstream urlStream;
+    urlStream << m_providerUrl << "/zapi/v3/cached/" + m_powerHash + "/guide"
+        << "?end=" << referenceTime << "&start=" << referenceTime
+        << "&format=json";
+
+    int statusCode;
+    std::string jsonString = m_httpClient->HttpGet(urlStream.str(), statusCode);
+
+    Document doc;
+    doc.Parse(jsonString.c_str());
+    if (doc.GetParseError())
+    {
+      kodi::Log(ADDON_LOG_ERROR, "Loading epg failed at %i", referenceTime);
+      return PVR_ERROR_FAILED;
+    }
+    const Value& channels = doc["channels"];
+    if (!channels.HasMember(channel.cid.c_str())) {
+      kodi::Log(ADDON_LOG_ERROR, "Channel not found in epg.");
+      return PVR_ERROR_FAILED;
+    }
+    const Value& channelEpg = channels[channel.cid.c_str()];
+    if (!channelEpg.IsArray() || channelEpg.GetArray().Empty()) {
+      kodi::Log(ADDON_LOG_ERROR, "Channel has no program at time %i.", referenceTime);
+      return PVR_ERROR_FAILED;
+    }
+    const Value& program = channelEpg.GetArray()[0];
+    int newProgramId = program["id"].GetInt();
+    
+    url = GetStreamUrlForProgram(channel.cid, newProgramId, properties);
+    
+    if (url.empty()) {
+      kodi::Log(ADDON_LOG_ERROR, "Could not get url for channel %s and program %i.", channel.cid.c_str(), newProgramId);
+      return PVR_ERROR_FAILED;
+    }
+  }
+  
+  SetStreamProperties(properties, url);
+  return PVR_ERROR_NO_ERROR;
+}
+
+std::string ZatData::GetStreamUrlForProgram(const std::string& cid, int programId, std::vector<kodi::addon::PVRStreamProperty>& properties)
+{
+  std::ostringstream dataStream;
 
   std::string jsonString;
 
-  kodi::Log(ADDON_LOG_DEBUG, "Get timeshift url for channel %s and program %i", channel.cid.c_str(), tag.GetUniqueBroadcastId());
+  kodi::Log(ADDON_LOG_DEBUG, "Get timeshift url for channel %s and program %i", cid.c_str(), programId);
 
   dataStream << GetStreamParameters();
   dataStream << "&pre_padding=0&post_padding=0";
-  jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/v3/watch/replay/" + channel.cid + "/" + std::to_string(tag.GetUniqueBroadcastId()), dataStream.str());
+  jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/v3/watch/replay/" + cid + "/" + std::to_string(programId), dataStream.str());
 
   std::string strUrl = GetStreamUrl(jsonString, properties);
-  if (!strUrl.empty())
-  {
-    SetStreamProperties(properties, strUrl);
-    ret = PVR_ERROR_NO_ERROR;
-  }
-
-  return ret;
+  return strUrl;
 }
 
 PVR_ERROR ZatData::GetEPGTagEdl(const kodi::addon::PVREPGTag& tag, std::vector<kodi::addon::PVREDLEntry>& edl)
