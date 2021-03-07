@@ -1,6 +1,6 @@
 #include "EpgDB.h"
 
-const int DB_VERSION = 2;
+const int DB_VERSION = 3;
 
 class ProcessEpgDBInfoRowCallback : public ProcessRowCallback {
 public:
@@ -86,6 +86,11 @@ bool EpgDB::MigrateDbIfRequired() {
         return false;
       }
       break;
+    case 2:
+      if (!Migrate2To3()) {
+        return false;
+      }
+      break;
     }
     currentVersion = GetVersion();
   }
@@ -144,6 +149,14 @@ bool EpgDB::Migrate1To2() {
   }
   
   return SetVersion(2);
+}
+
+bool EpgDB::Migrate2To3() {
+  kodi::Log(ADDON_LOG_INFO, "%s: Migrate to version 3.", m_name.c_str());
+  if (!Execute("update EPG_INFO set DETAILS_LOADED = 0;")) {
+    return false;
+  }
+  return SetVersion(3);
 }
 
 void EpgDB::Cleanup() {

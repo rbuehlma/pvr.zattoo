@@ -36,6 +36,7 @@ private:
   bool MigrateDbIfRequired();
   bool Migrate0To1();
   bool Migrate1To2();
+  bool Migrate2To3();
   void Cleanup();
   time_t m_nextCleanupDue = 0;
   sqlite3_stmt *m_prepareInsertStatement;

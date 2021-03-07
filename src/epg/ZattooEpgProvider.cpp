@@ -36,10 +36,10 @@ ZattooEpgProvider::~ZattooEpgProvider() {
 }
 
 bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, time_t iEnd) {
+  CleanupAlreadyLoaded();
   time_t tempStart = iStart - (iStart % (3600 / 2)) - 86400;
   tempStart = SkipAlreadyLoaded(tempStart, iEnd);
   time_t tempEnd = tempStart + 3600 * 5; //Add 5 hours
-  CleanupAlreadyLoaded();
   while (tempStart < iEnd)
   {
     if (tempEnd > iEnd) {
@@ -173,14 +173,14 @@ void ZattooEpgProvider::SendEpgDBInfo(EpgDBInfo &epgDBInfo) {
 void ZattooEpgProvider::CleanupAlreadyLoaded() {
   time_t now;
   time(&now);
-  if (lastCleanup < now + 60) {
+  if (lastCleanup + 60 > now) {
     return;
   }
   lastCleanup = now;
   
   m_loadedTimeslots.erase(
       std::remove_if(m_loadedTimeslots.begin(), m_loadedTimeslots.end(),
-          [&now](const LoadedTimeslots & o) { return o.loaded < now - 180; }),
+          [&now](const LoadedTimeslots & o) { return o.loaded < now - 60; }),
           m_loadedTimeslots.end());
 }
 
@@ -219,7 +219,7 @@ void ZattooEpgProvider::DetailsThread()
       m_epgDB.BeginTransaction();
       std::vector<EpgDBInfo> infos(epgDBInfos.begin(), epgDBInfos.end());
       std::ostringstream ids;
-      std::map<int, EpgDBInfo> epgDBInfoById;
+      std::map<int, EpgDBInfo*> epgDBInfoById;
 
       bool first = true;
       for (EpgDBInfo &epgDBInfo: infos) {
@@ -229,7 +229,7 @@ void ZattooEpgProvider::DetailsThread()
           ids << ",";
         }
         ids << epgDBInfo.programId;
-        epgDBInfoById[epgDBInfo.programId] = epgDBInfo;
+        epgDBInfoById[epgDBInfo.programId] = &epgDBInfo;
 
       }
       std::ostringstream urlStream;
@@ -255,14 +255,14 @@ void ZattooEpgProvider::DetailsThread()
         {
           const Value &program = *progItr;
           int programId = program["id"].GetInt();
-          EpgDBInfo &epgDBInfo = epgDBInfoById[programId];
-          epgDBInfo.description = Utils::JsonStringOrEmpty(program, "d");
-          epgDBInfo.season = program.HasMember("s_no") && !program["s_no"].IsNull() ? program["s_no"].GetInt() : -1;
-          epgDBInfo.episode = program.HasMember("e_no") && !program["e_no"].IsNull() ? program["e_no"].GetInt() : -1;
+          EpgDBInfo *epgDBInfo = epgDBInfoById[programId];
+          epgDBInfo->description = Utils::JsonStringOrEmpty(program, "d");
+          epgDBInfo->season = program.HasMember("s_no") && !program["s_no"].IsNull() ? program["s_no"].GetInt() : -1;
+          epgDBInfo->episode = program.HasMember("e_no") && !program["e_no"].IsNull() ? program["e_no"].GetInt() : -1;
 
-          epgDBInfo.detailsLoaded=1;
-          m_epgDB.Update(epgDBInfo);
-          SendEpgDBInfo(epgDBInfo);
+          epgDBInfo->detailsLoaded=1;
+          m_epgDB.Update(*epgDBInfo);
+          SendEpgDBInfo(*epgDBInfo);
         }
       }
       for (EpgDBInfo &epgDBInfo: infos) {
