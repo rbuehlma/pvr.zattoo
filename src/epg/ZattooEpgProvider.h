@@ -32,6 +32,7 @@ public:
   virtual ~ZattooEpgProvider();
   virtual bool LoadEPGForChannel(ZatChannel &zatChannel, time_t iStart, time_t iEnd);
 private:
+  static std::mutex loadedTimeslotsMutex;
   time_t SkipAlreadyLoaded(time_t startTime, time_t endTime);
   void RegisterAlreadyLoaded(time_t startTime, time_t endTime);
   void CleanupAlreadyLoaded();
@@ -47,7 +48,6 @@ private:
   std::map<std::string, ZatChannel> &m_visibleChannelsByCid;
   std::atomic<bool> m_detailsThreadRunning = {false};
   std::thread m_detailsThread;
-
 };
 
 #endif /* SRC_EPG_ZATTOOEPGPROVIDER_H_ */

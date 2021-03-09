@@ -7,6 +7,8 @@
 
 using namespace rapidjson;
 
+std::mutex ZattooEpgProvider::loadedTimeslotsMutex;
+
 ZattooEpgProvider::ZattooEpgProvider(
     kodi::addon::CInstancePVRClient *addon,
     std::string providerUrl,
@@ -177,7 +179,7 @@ void ZattooEpgProvider::CleanupAlreadyLoaded() {
     return;
   }
   lastCleanup = now;
-  
+  std::lock_guard<std::mutex> lock(loadedTimeslotsMutex);
   m_loadedTimeslots.erase(
       std::remove_if(m_loadedTimeslots.begin(), m_loadedTimeslots.end(),
           [&now](const LoadedTimeslots & o) { return o.loaded < now - 60; }),
@@ -189,11 +191,13 @@ void ZattooEpgProvider::RegisterAlreadyLoaded(time_t startTime, time_t endTime) 
   slot.start = startTime;
   slot.end = endTime;
   time(&slot.loaded);
+  std::lock_guard<std::mutex> lock(loadedTimeslotsMutex);
   m_loadedTimeslots.push_back(slot);
 }
 
 time_t ZattooEpgProvider::SkipAlreadyLoaded(time_t startTime, time_t endTime) {
   time_t newStartTime = startTime;
+  std::lock_guard<std::mutex> lock(loadedTimeslotsMutex);
   std::vector<LoadedTimeslots> slots(m_loadedTimeslots.begin(), m_loadedTimeslots.end());
   for (LoadedTimeslots slot: slots) {
     if (slot.start <= newStartTime && slot.end > newStartTime) {
