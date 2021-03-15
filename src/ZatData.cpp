@@ -1261,7 +1261,7 @@ PVR_ERROR ZatData::GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, 
   
   if (url.empty()) {
     kodi::Log(ADDON_LOG_WARNING, "Could not get url for channel %s and program %i. Try to get new EPG tag.", channel.cid.c_str(), tag.GetUniqueBroadcastId());
-    time_t referenceTime = (tag.GetStartTime() + tag.GetEndTime()) / 2;
+    time_t referenceTime = (tag.GetStartTime() / 2) + (tag.GetEndTime() / 2);
     std::ostringstream urlStream;
     urlStream << m_providerUrl << "/zapi/v3/cached/" + m_powerHash + "/guide"
         << "?end=" << referenceTime << "&start=" << referenceTime
