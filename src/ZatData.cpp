@@ -378,6 +378,12 @@ bool ZatData::LoadChannels()
 
 PVR_ERROR ZatData::GetChannelGroupsAmount(int& amount)
 {
+  
+  if (!m_initDone)
+  {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  
   amount = static_cast<int>(m_channelGroups.size());
   return PVR_ERROR_NO_ERROR;
 }
@@ -477,6 +483,7 @@ ZatData::~ZatData()
 bool ZatData::Initialize()
 {
   if (!InitSession(false)) {
+    m_initDone = false;
     return false;
   }
 
@@ -484,7 +491,7 @@ bool ZatData::Initialize()
   {
     m_updateThreads.emplace_back(new UpdateThread(*this, i, this));
   }
-
+  m_initDone = true;
   return true;
 }
 
@@ -535,6 +542,11 @@ PVR_ERROR ZatData::GetChannelGroups(bool radio, kodi::addon::PVRChannelGroupsRes
 {
   if (radio)
     return PVR_ERROR_NOT_IMPLEMENTED;
+  
+  if (!m_initDone)
+  {
+    return PVR_ERROR_SERVER_ERROR;
+  }
 
   for (const auto& group : m_channelGroups)
   {
@@ -564,6 +576,12 @@ PVRZattooChannelGroup *ZatData::FindGroup(const std::string &strName)
 PVR_ERROR ZatData::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& group,
                                           kodi::addon::PVRChannelGroupMembersResultSet& results)
 {
+  
+  if (!m_initDone)
+  {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  
   PVRZattooChannelGroup *myGroup;
   if ((myGroup = FindGroup(group.GetGroupName())) != nullptr)
   {
@@ -585,6 +603,11 @@ PVR_ERROR ZatData::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& gr
 
 PVR_ERROR ZatData::GetChannelsAmount(int& amount)
 {
+  if (!m_initDone)
+  {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  
   amount = static_cast<int>(m_visibleChannelsByCid.size());
   return PVR_ERROR_NO_ERROR;
 }
@@ -593,6 +616,11 @@ PVR_ERROR ZatData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& re
 {
   if (radio)
     return PVR_ERROR_NO_ERROR;
+  
+  if (!m_initDone)
+  {
+    return PVR_ERROR_SERVER_ERROR;
+  }
 
   std::vector<PVRZattooChannelGroup>::iterator it;
   for (it = m_channelGroups.begin(); it != m_channelGroups.end(); ++it)
@@ -819,6 +847,12 @@ PVR_ERROR ZatData::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types)
 
 PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 {
+  
+  if (!m_initDone)
+  {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  
   std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/v2/playlist");
 
   Document doc;
@@ -923,6 +957,12 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
 PVR_ERROR ZatData::GetTimersAmount(int& amount)
 {
+  
+  if (!m_initDone)
+  {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  
   std::string jsonString = HttpGetCachedWithRetry(m_providerUrl + "/zapi/v2/playlist", 60);
 
   time_t current_time;
@@ -1032,6 +1072,12 @@ void ZatData::AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int id
 
 PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results)
 {
+  
+  if (!m_initDone)
+  {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  
   std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/v2/playlist");
 
   Document doc;
@@ -1123,6 +1169,12 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
 
 PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
 {
+  
+  if (!m_initDone)
+  {
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  
   std::string jsonString = HttpGetCachedWithRetry(m_providerUrl + "/zapi/v2/playlist", 60);
 
   time_t current_time;

@@ -78,6 +78,7 @@ public:
   }
 
 private:
+  bool m_initDone = false;
   bool m_favoritesOnly;
   bool m_enableDolby;
   STREAM_TYPE m_streamType;
