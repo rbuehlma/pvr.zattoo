@@ -1,0 +1,41 @@
+From 152511689bd9b9cdeed6a580479698e13df056b6 Mon Sep 17 00:00:00 2001
+From: Philipp A Hartmann <pah@qo.cx>
+Date: Sun, 15 Jul 2018 16:02:03 +0200
+Subject: [PATCH 3/3] Suppress -Wformat-overflow warning/error
+
+GCC 7 and later warn about overflow/truncation when using
+sprintf and related functions with fixed-size buffers.
+
+Suppress the warning in schematest.cpp.
+---
+ test/perftest/schematest.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/test/perftest/schematest.cpp b/test/perftest/schematest.cpp
+index 468f5fe6..7d27344b 100644
+--- a/test/perftest/schematest.cpp
++++ b/test/perftest/schematest.cpp
+@@ -11,6 +11,11 @@
+ 
+ using namespace rapidjson;
+ 
++RAPIDJSON_DIAG_PUSH
++#if defined(__GNUC__) && __GNUC__ >= 7
++RAPIDJSON_DIAG_OFF(format-overflow)
++#endif
++
+ template <typename Allocator>
+ static char* ReadFile(const char* filename, Allocator& allocator) {
+     const char *paths[] = {
+@@ -42,6 +47,8 @@ static char* ReadFile(const char* filename, Allocator& allocator) {
+     return json;
+ }
+ 
++RAPIDJSON_DIAG_POP
++
+ class Schema : public PerfTest {
+ public:
+     Schema() {}
+-- 
+2.18.0
+

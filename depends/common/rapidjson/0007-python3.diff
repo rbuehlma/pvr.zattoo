@@ -1,0 +1,10 @@
+Index: b/bin/jsonschema/bin/jsonschema_suite
+===================================================================
+--- a/bin/jsonschema/bin/jsonschema_suite
++++ b/bin/jsonschema/bin/jsonschema_suite
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env python
++#! /usr/bin/python3
+ from __future__ import print_function
+ import sys
+ import textwrap

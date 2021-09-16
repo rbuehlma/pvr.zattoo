@@ -1,0 +1,55 @@
+From a26267d16dcdc22a15722917a51dc50cdc8aaac0 Mon Sep 17 00:00:00 2001
+From: Philipp A Hartmann <pah@qo.cx>
+Date: Sun, 15 Jul 2018 16:01:02 +0200
+Subject: [PATCH 2/3] Fix -Wsign-conversion warnings/errors
+
+GCC 8 (incorrectly) warns about sign conversions in (constant)
+array size expressions:
+
+error: conversion to 'long unsigned int' from 'int' may
+change the sign of the result [-Werror=sign-conversion]
+     char schemaBuffer_[128 * 1024];
+
+Make these expressions unsigned by adding a 'u' suffix to
+the first operands.
+---
+ include/rapidjson/schema.h   | 2 +-
+ test/unittest/schematest.cpp | 2 +-
+ test/unittest/simdtest.cpp   | 4 ++--
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+--- a/include/rapidjson/schema.h
++++ b/include/rapidjson/schema.h
+@@ -400,7 +400,7 @@
+                 enum_ = static_cast<uint64_t*>(allocator_->Malloc(sizeof(uint64_t) * v->Size()));
+                 for (ConstValueIterator itr = v->Begin(); itr != v->End(); ++itr) {
+                     typedef Hasher<EncodingType, MemoryPoolAllocator<> > EnumHasherType;
+-                    char buffer[256 + 24];
++                    char buffer[256u + 24];
+                     MemoryPoolAllocator<> hasherAllocator(buffer, sizeof(buffer));
+                     EnumHasherType h(&hasherAllocator, 256);
+                     itr->Accept(h);
+--- a/test/unittest/schematest.cpp
++++ b/test/unittest/schematest.cpp
+@@ -1117,7 +1117,7 @@
+     typename DocumentType::AllocatorType documentAllocator_;
+     typename SchemaDocumentType::AllocatorType schemaAllocator_;
+     char documentBuffer_[16384];
+-    char schemaBuffer_[128 * 1024];
++    char schemaBuffer_[128u * 1024];
+ };
+ 
+ TEST(SchemaValidator, TestSuite) {
+--- a/test/unittest/simdtest.cpp
++++ b/test/unittest/simdtest.cpp
+@@ -105,8 +105,8 @@
+ 
+ template <unsigned parseFlags, typename StreamType>
+ void TestScanCopyUnescapedString() {
+-    char buffer[1024 + 5 + 32];
+-    char backup[1024 + 5 + 32];
++    char buffer[1024u + 5 + 32];
++    char backup[1024u + 5 + 32];
+ 
+     // Test "ABCDABCD...\\"
+     for (size_t offset = 0; offset < 32; offset++) {
