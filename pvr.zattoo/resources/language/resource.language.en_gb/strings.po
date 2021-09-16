@@ -12,127 +12,212 @@ msgstr ""
 "Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#. Setting to set used stream username
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30000"
 msgid "Username"
 msgstr ""
 
+#. Setting to set used stream password
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30001"
 msgid "Password"
 msgstr ""
 
+#. Boolean setting to use favourite streams only
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30002"
 msgid "Favourite channels only"
-msgstr "Load only channels which are in the favourite list"
+msgstr ""
 
+#. Help text to setting #30002
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30003"
-msgid "Stream type"
-msgstr "The stream type"
+msgid "Load only channels which are in the favourite list."
+msgstr ""
 
+#. Selection spinner on settings to get wanted stream type
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30004"
+msgid "Stream type"
+msgstr ""
+
+#. Help text to setting #30004
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30005"
+msgid "To select wanted encrypted stream type."
+msgstr ""
+
+#. Selection value for setting defined with id #30004
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30006"
 msgid "dash"
 msgstr ""
 
-msgctxt "#30005"
+#. Selection value for setting defined with id #30004
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30007"
 msgid "hls"
 msgstr ""
 
-msgctxt "#30006"
+#. Selection value for setting defined with id #30004
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30008"
 msgid "dash_widevine"
 msgstr ""
 
-msgctxt "#30007"
+#. Text setting to set used parental pin
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30009"
 msgid "Parental pin"
-msgstr "Parental pin"
+msgstr ""
 
+#. Boolean setting to enable dolby stream usage
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30010"
 msgid "Enable Dolby"
-msgstr "Enable support for dolby"
+msgstr ""
 
+#. Help text to setting #30010
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30011"
+msgid "Enable support for dolby."
+msgstr ""
+
+#. Settings category label
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30014"
 msgid "Zattoo"
 msgstr ""
 
+#. Settings group label
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30015"
 msgid "General"
 msgstr ""
 
-msgctxt "#30099"
+#. Selection list on settings to get wanted stream provider
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30098"
 msgid "Provider"
-msgstr "The provider of the Zattoo service"
+msgstr ""
 
+#. Help text to setting #30098
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30099"
+msgid "The stream provider to use with this addon."
+msgstr ""
+
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30100"
 msgid "Zattoo"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30101"
 msgid "Netplus"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30102"
 msgid "Quickline"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30103"
 msgid "m-net"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30104"
 msgid "WALY.TV"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30105"
 msgid "meinewelt.cc"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30106"
 msgid "BBV-tv.net"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30107"
 msgid "VTXtv.ch"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30108"
 msgid "myvisiontv.ch"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30109"
 msgid "GLATTvision.ch"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30110"
 msgid "SAKtv.ch"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30111"
 msgid "NetCologne"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30112"
 msgid "EWE.de"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30113"
 msgid "quantum TV"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30114"
 msgid "Salt.ch"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30115"
 msgid "swb TV"
 msgstr ""
 
+#. Selection value for setting defined with id #30099
+#: pvr.zattoo/resources/settings.xml
 msgctxt "#30116"
 msgid "1&1 TV"
 msgstr ""
 
+#. Notification message to show on screen if username or password not set
+#: src/client.cpp
 msgctxt "#30200"
 msgid "Missing username or password"
-msgstr "Missing username or password"
+msgstr ""
 
+#. Fail message (string currently not used on addon)
 msgctxt "#30201"
 msgid "Login failed!"
-msgstr "Login failed!"
+msgstr ""
 
