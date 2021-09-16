@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.7.10"
+       version="20.0.0"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -32,6 +32,10 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v20.0.0
+ - Fix some compile warnings by depends build of rapidjson
+ - Cleanup language texts in strings.po and addon.xml
+ - Add german translation
 v19.7.10
  - Return error if addon is not connected
 v19.7.9
