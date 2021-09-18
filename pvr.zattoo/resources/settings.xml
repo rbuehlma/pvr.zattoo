@@ -22,29 +22,29 @@
             <hidden>true</hidden>
           </control>
         </setting>
-        <setting id="favoritesonly" type="boolean" label="30002">
+        <setting id="favoritesonly" type="boolean" label="30002" help="30003">
           <level>0</level>
           <default>false</default>
           <control type="toggle" />
         </setting>
-        <setting id="streamtype" type="integer" label="30003">
+        <setting id="streamtype" type="integer" label="30004" help="30005">
           <level>0</level>
           <default>0</default>
           <constraints>
             <options>
-              <option label="30004">0</option> <!-- dash -->
-              <option label="30005">1</option> <!-- hls -->
-              <option label="30006">2</option> <!-- dash_widevine -->
+              <option label="30006">0</option> <!-- dash -->
+              <option label="30007">1</option> <!-- hls -->
+              <option label="30008">2</option> <!-- dash_widevine -->
             </options>
           </constraints>
           <control type="spinner" format="integer" />
 		</setting>
-		<setting id="enableDolby" type="boolean" label="30010">
+		<setting id="enableDolby" type="boolean" label="30010" help="30011">
           <level>0</level>
           <default>true</default>
           <control type="toggle" />
         </setting>
-        <setting id="provider" type="integer" label="30099">
+        <setting id="provider" type="integer" label="30098" help="30099">
           <level>0</level>
           <default>0</default>
           <constraints>
@@ -70,7 +70,7 @@
           </constraints>
           <control type="list" format="integer" />
 		</setting>
-        <setting id="parentalPin" type="string" label="30007">
+        <setting id="parentalPin" type="string" label="30009">
           <level>0</level>
           <default></default>
           <constraints>
