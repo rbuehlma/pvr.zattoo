@@ -509,6 +509,7 @@ PVR_ERROR ZatData::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
   capabilities.SetSupportsDescrambleInfo(false);
   capabilities.SetSupportsRecordingEdl(true);
   capabilities.SetSupportsRecordings(m_recordingEnabled);
+  capabilities.SetSupportsRecordingsDelete(m_recordingEnabled);
   capabilities.SetSupportsTimers(m_recordingEnabled);
 
   return PVR_ERROR_NO_ERROR;
