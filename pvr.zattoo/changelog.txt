@@ -1,0 +1,464 @@
+v20.1.0
+- Kodi PVR API to 8.0.0
+  - Add supports recordings delete capability
+  - Enforce EDL limits
+v20.0.0
+ - Fix some compile warnings by depends build of rapidjson
+ - Cleanup language texts in strings.po and addon.xml
+ - Add german translation
+v19.7.10
+ - Return error if addon is not connected
+v19.7.9
+ - Fix replay fallback if epg tag has changed
+v19.7.8
+ - Fix concurrent access to list
+v19.7.7
+ - Fix loading detailed epg information
+v19.7.6
+ - Try to get current epg from Zattoo if replay fails
+v19.7.5
+ - Do not load EPG for channels not listed
+v19.7.4
+ - Load additional EPG information directly from Zattoo
+ - Remove enhanced EPG provider
+v19.7.3
+ - Remove support for XmlTV files
+ - Support series recording
+v19.7.2
+ - Fix duplicate requests
+ - Trigger update after deleting timer and recording
+ - Fix return status of deleting timer and recording
+v19.7.1
+ - Fix HLS stream
+v19.7.0
+ - Use Zattoo v3 API
+ - Move addon data to sqlite db
+ - Refactor loading EPG data
+ - Fix loading app token
+v19.6.1
+ - Fix timeshift for regions without full replay
+v19.6.0
+- Update PVR API 7.1.0
+v19.5.1
+ - Rebuild
+v19.5.0
+ - Update PVR API 7.0.2
+v19.4.4
+ - Improve session re-init
+v19.4.3
+- Remove p8 from debian control file
+v19.4.2
+ - Remove p8-platform dependency
+ - Use std::thread
+ - Fix char buffer delete
+ - Use std:mutex
+ - Remove unused p8-platform headers
+v19.4.1
+ - Fix replay
+v19.4.0
+ - Update PVR API 7.0.0
+ - Major changes to match new API
+v19.3.2
+ - Support receiving app token from html and json
+v19.3.1
+ - Fix receiving app token required for login
+v19.3.0
+ - Update PVR API 6.5.1
+ - Update Global API 1.2.0
+v19.2.20
+ - Update PVR API 6.5.0
+v19.2.19
+ - Use Kodi filesystem to load xmltv file
+v19.2.18
+ - Update PVR API 6.4.0
+ - Correct license name on addon.xml
+ - Minor cleanups
+ - Add french categories
+v19.2.17
+ - Warn missing categories only once
+v19.2.16
+ - Fix Zattoo login
+v19.2.15
+ - Rebuild of 19.2.14
+v19.2.14
+ - Update PVR API 6.3.0
+v19.2.13
+ - Update Debian build code
+ - Minor cleanups
+ - Add license name and source url to addon.xml
+ - Add GPL2 license file and show GPL2 on README.md
+v19.2.12
+ - Update PVR API 6.2.0
+v19.2.11
+ - Do not show cache parse error if file has been removed
+v19.2.10
+ - Fix login with credentials containing exclamation mark (!) in password
+v19.2.9
+ - Add support for parental pin
+ - Use selective recall flag by programme
+v19.2.8
+ - Improve caching of epg data
+v19.2.7
+ - Fix translations
+ - Reduce number of update threads
+ - Init update threads after login
+v19.2.6
+ - Fix changelog in xml
+v19.2.5
+ - Add inputstream.adaptive as dependency
+ - Move changelog to addon metadata
+v19.2.4
+ - Add option to disable Dolby
+ - Improve update of recordings and timer
+v19.2.3
+ - Support Dolby
+v19.2.2
+ - Serialize sending EPG to Kodi.
+v19.2.1
+ - Update cmake build system to Version 3.5
+v19.2.0
+ - Recompile for 6.1.0 PVR Addon API compatibility
+v19.1.0
+ - Update to GUI addon API v5.14.0
+v19.0.4
+ - Fallback to country code if service region country is missing
+v19.0.3
+ - Fix loading xmltv data
+v19.0.2
+ - Improve loading xmltv file
+v19.0.1
+ - Load description from xmltv file
+v19.0.0
+ - Update to PVR addon API v6.0.0
+v18.1.22
+ - Fix timeshift for regions without full replay
+v18.1.21
+ - Improve session re-init
+v18.1.20
+ - Same as v18.1.19
+v18.1.19
+ - Support receiving app token from html and json
+v18.1.18
+ - Fix receiving app token required for login
+v18.1.17
+ - Use Kodi filesystem to load xmltv file
+v18.1.16
+ - Warn missing categories only once
+v18.1.15
+ - Fix Zattoo login
+v18.1.14
+ - Do not show cache parse error if file has been removed
+v18.1.13
+ - Fix login with credentials containing exclamation mark (!) in password
+v18.1.12
+ - Add support for parental pin
+ - Use selective recall flag by programme
+v18.1.11
+ - Improve caching of epg data
+v18.1.10
+ - Fix translations
+ - Reduce number of update threads
+ - Init update threads after login
+v18.1.9
+ - Fix changelog in xml
+v18.1.8
+ - Add inputstream.adaptive as dependency
+ - Move changelog to addon metadata
+v18.1.7
+ - Add option to disable Dolby
+ - Improve update of recordings and timer
+v18.1.6
+ - Support Dolby
+v18.1.5
+ - Serialize sending EPG to Kodi.
+v18.1.4
+ - Fallback to country code if service region country is missing
+v18.1.3
+ - Fix loading xmltv data
+v18.1.2
+ - Improve loading xmltv file
+v18.1.1
+ - Load description from xmltv file
+v18.1.0
+ - Support DASH widevine streams
+v18.0.68
+ - Fix setting image url for epg
+v18.0.67
+ - Fix image url for epg and recordings
+v18.0.66
+ - Fix reseller configuration
+v18.0.65
+ - Use TLS for external epg service
+ - Inform that the zattoo session is provided to the epg service
+v18.0.64
+ - Set genre before transferring timer
+v18.0.63
+ - Add 1&amp;1 TV as reseller
+v18.0.62
+ - Add swb TV as reseller
+v18.0.61
+ - Add tinyxml2 as dependency (thanks to Rechi)
+ - Cleanup c++ code (thanks to ksooo)
+v18.0.60
+ - Support external xmltv files
+v18.0.59
+ - Add tv.salt.ch as reseller
+v18.0.58
+ - Fix uuid handling
+v18.0.57
+ - Cleanup &amp; improvements (thanks to Currywurst)
+v18.0.56
+ - Fix segmentation fault
+ - Reduce log on level notice
+v18.0.55
+ - Fix wrong null ptr check in GetRecordingLastPlayedPosition
+v18.0.54
+ - Fix build with rapid json used by kodi
+v18.0.53
+ - Fix loading details of more than 200 recordings
+v18.0.52
+ - Fix loading detail recording data
+v18.0.51
+ - Enable replay also for hls streams
+v18.0.50
+ - Store app token in case it cannot be fetched from Zattoo
+v18.0.49
+ - Fix error if no recordings are available
+v18.0.48
+ - Update to PVR addon API v5.10.1
+v18.0.47
+ - Fix deadlock due to missing mutex.unlock()
+v18.0.46
+ - Fix loading recordings data
+v18.0.45
+ - Use v4 login api
+ - Improve logging
+v18.0.44
+ - Update to PVR addon API v5.10.0
+v18.0.43
+ - Improve handling of recordings
+v18.0.42
+ - Do not drop recording state if recordings are not yet loaded
+v18.0.41
+ - Store uuid after generating
+v18.0.40
+ - Improve storing session cookie
+v18.0.39
+ - Shorten session cookies in log
+v18.0.38
+ - Persist Zattoo session
+v18.0.37
+ - Cleanup cache also when recordings are not avialable
+ - Provide addon version to Zattoo upon login
+v18.0.36
+ - Seek 5 minutes into recording stream
+v18.0.35
+ - Seek 5 minutes into replay stream
+v18.0.34
+ - Use service region country for epg
+v18.0.33
+ - Fix valgrind output
+v18.0.32
+ - Cleanup due to merge in Kodi
+v18.0.31
+ - Add quantum TV as reseller
+v18.0.30
+ - Set mime type to prevent HEAD request
+ - Enable manifest refresh
+v18.0.29
+ - Support selective recall and restart
+v18.0.28
+ - Revert "Allow playing current program from start without recall"
+v18.0.27
+ - Disable playing future program
+v18.0.26
+ - Allow playing current program from start without recall
+v18.0.25
+ - Add some session information to log output
+v18.0.24
+ - Sync time handling with pvr.teleboy
+v18.0.23
+ - Add missing epg categories
+v18.0.22
+ - Search for eit_categories.txt in system addon path
+v18.0.21
+ - Search for logos in system addon path
+v18.0.20
+ - Fix race conditions while closing the addon
+v18.0.19
+ - Fix case where session is still alive while addon starts
+ - Improve cache cleanup
+ - Change some log levels
+v18.0.18
+ - Fix time zone for EPG
+v18.0.17
+ - Add some reseller
+ -- netplus.tv
+ -- mobiltv.quickline.com
+ -- tvplus.m-net.de
+ -- player.waly.tv
+ -- meinewelt.cc
+ -- bbv-tv.net
+ -- vtxtv.ch
+ -- myvisiontv.ch
+ -- iptv.glattvision.ch
+ -- saktv.ch
+ -- nettv.netcologne.de
+ -- tvonline.ewe.de
+v18.0.16
+ - Make loading EPG multithreaded
+v18.0.15
+ - Add debian folder
+ - Remove tinyxml2
+v18.0.14
+ - Fix crash when loading EPG
+ - Fix selection of Quickline
+v18.0.13
+ - Add support for Zattoo reseller (Quickline and Net+)
+v18.0.12
+ - Improve EPG loading
+v18.0.11
+ - Try to fix loading of guide
+v18.0.10
+ - Rename GetFileProperty to GetFilePropertyValue
+v18.0.9
+ - Fix build and solve warnings
+v18.0.8
+ - Load EPG async
+v18.0.7
+ - Replace libcurl with kodi implementation
+ - Add cache to improve loading time of recordings and timer
+v18.0.6
+ - Adapt to final pvr api 5.7.0
+v18.0.5
+ - Fix exception when loading timer
+v18.0.4
+ - Remove unused code
+ - Reformat code
+ - Replace libyajl with rapidjson
+v18.0.3
+ - Implement new replay api
+v18.0.2
+ - Allow selection between dash and hls stream
+v18.0.1
+ - Adapt to new api
+ - Merge dash branch into master
+v18.0.0
+ - Initial support for Kodi 18 Leia
+ - Added minimalistic support for PVR Addon API 5.3.0
+v0.2.11
+ - Merge v0.1.32
+v0.2.10
+ - Merge v0.1.31
+v0.2.9
+ - Merge v0.1.30
+v0.2.8
+ - Fix error upon installation without settings
+v0.2.7
+ - Fix some minor memory leaks
+ - Add new time-shift parameter to "watch" request
+v0.2.6
+ - Merge v0.1.29
+v0.2.5
+ - Merge v0.1.28
+v0.2.4
+ - Merge v0.1.27
+v0.2.3
+ - Merge v0.1.26
+v0.2.2
+ - Merge v0.1.24
+v0.2.1
+ - Temporary fix to show correct epg in case of replay
+v0.2.0
+ - Enable DASH
+ - Enable Seeking (may not work with current inputstream.mpd)
+ - Enable recording of past shows
+ - Enable RePlay-TV
+ - Please note that this version requires a patched version of Kodi v17
+v0.1.33
+ - Initial support for Kodi 18 Leia
+ - Added minimalistic support for PVR Addon API 5.3.0
+v0.1.32
+ - Implement alternative EPG service to speed up and include description
+v0.1.31
+ - Refactor epg cache to solve memory issue
+v0.1.30
+ - Fix error upon installation without settings
+ - Fix memory leaks
+ - Remove some unused code
+ - Sync code with zattoo_dash branch where possible
+v0.1.29
+ - Use libcurl to support https
+v0.1.28
+ - Fix case where no genre is available
+v0.1.27
+ - Map genre in guid
+ - Add genre to recording and timer
+ - Add plot to recording
+v0.1.26
+ - Fix en_gb translations
+ - Show channel name for recordings
+v0.1.25
+ - URL-Encode username and password
+v0.1.24
+ - New logo and fanart
+ - Add LICENSE.txt
+ - Add english translation
+v0.1.23
+ - Adapt to new API version
+v0.1.22
+ - Support resume time and watch count
+v0.1.21
+ - Re-add own HTTP implementation to allow access to cookies
+v0.1.20
+ - Do not store app token and uuid anymore as Kodi does not store cookies since v17 beta 3
+v0.1.19
+ - Generate and store a unique UUID for every installation
+ - Ignore if hello fails
+v0.1.18
+ - Improve login handling
+ - Re-init session if we get errors on loading pages
+v0.1.17
+ - Update timers &amp; recordings every 10 minutes or if a timer has reacht its start time
+v0.1.16
+ - Fix another memory leak
+ - Add option to only load favorites
+v0.1.15
+ - Fix memory leaks
+v0.1.14
+ - Add channel logos to addon (thanks to yattaah)
+v0.1.13
+ - Refactor login and session handling
+v0.1.12
+ - Always check that json is returned
+v0.1.11
+ - Reuse session if possible
+v0.1.10
+ - Preserve application token
+v0.1.9
+ - Revert to using hls stream
+v0.1.8
+ - Fix initial load. Open settings dialog if required
+v0.1.7
+ - Fix windows build
+ - Make recordings visible in EPG timeline
+v0.1.6
+ - Fix linking of libYajl for OSX (and maybe also for other environments)
+v0.1.5
+ - Fix sorting of favourites by using the first n channel numbers for them
+ - Offset the remaining channels by the number of favourites to prevent overlaps
+v0.1.4
+ - Support deletion of timer (planned recording)
+ - Refresh timers after change
+v0.1.3
+ - Support creating timers (for recordings)
+ - Support deletion of recordings
+v0.1.2
+ - Support watching recordings
+v0.1.1
+ - Replace own HTTP implementation with Curl from Kodi
+v0.1.0
+ - Support Kodi v17
+v0.0.3
+ - Favoriten werden nun geladen
+ - Es werden nun so viele EPG Daten im vorraus geladen wie in Kodi eingestellt
