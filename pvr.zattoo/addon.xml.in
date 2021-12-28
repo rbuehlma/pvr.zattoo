@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="20.1.0"
+       version="20.2.0"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
