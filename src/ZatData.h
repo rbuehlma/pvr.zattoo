@@ -25,10 +25,10 @@ struct PVRZattooChannelGroup
   std::vector<ZatChannel> channels;
 };
 
-class ATTRIBUTE_HIDDEN ZatData : public kodi::addon::CInstancePVRClient
+class ATTR_DLL_LOCAL ZatData : public kodi::addon::CInstancePVRClient
 {
 public:
-  ZatData(KODI_HANDLE instance, const std::string& version,
+  ZatData(const kodi::addon::IInstanceInfo& instance,
       const std::string& username, const std::string& password, bool favoritesOnly,
       const STREAM_TYPE& streamType, bool enableDolby, int provider,
       const std::string& parentalPin);

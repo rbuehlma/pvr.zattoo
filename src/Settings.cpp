@@ -9,21 +9,21 @@
 
 bool CSettings::Load()
 {
-  if (!kodi::CheckSettingString("username", m_zatUsername))
+  if (!kodi::addon::CheckSettingString("username", m_zatUsername))
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR, "Couldn't get 'username' setting");
     return false;
   }
 
-  if (!kodi::CheckSettingString("password", m_zatPassword))
+  if (!kodi::addon::CheckSettingString("password", m_zatPassword))
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR, "Couldn't get 'password' setting");
     return false;
   }
 
-  if (!kodi::CheckSettingBoolean("favoritesonly", m_zatFavoritesOnly))
+  if (!kodi::addon::CheckSettingBoolean("favoritesonly", m_zatFavoritesOnly))
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR,
@@ -31,7 +31,7 @@ bool CSettings::Load()
     m_zatFavoritesOnly = false;
   }
 
-  if (!kodi::CheckSettingBoolean("enableDolby", m_zatEnableDolby))
+  if (!kodi::addon::CheckSettingBoolean("enableDolby", m_zatEnableDolby))
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR,
@@ -39,21 +39,21 @@ bool CSettings::Load()
     m_zatEnableDolby = true;
   }
 
-  if (!kodi::CheckSettingEnum<STREAM_TYPE>("streamtype", m_streamType))
+  if (!kodi::addon::CheckSettingEnum<STREAM_TYPE>("streamtype", m_streamType))
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR, "Couldn't get 'streamtype' setting, falling back to 'DASH' as default");
     m_streamType = DASH;
   }
 
-  if (!kodi::CheckSettingString("parentalPin", m_parentalPin))
+  if (!kodi::addon::CheckSettingString("parentalPin", m_parentalPin))
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR, "Couldn't get 'parentalPin' setting, falling back to 'empty' as default");
     m_parentalPin = "";
   }
 
-  if (!kodi::CheckSettingInt("provider", m_provider))
+  if (!kodi::addon::CheckSettingInt("provider", m_provider))
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR,
@@ -65,7 +65,7 @@ bool CSettings::Load()
 }
 
 ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
-                                   const kodi::CSettingValue& settingValue)
+                                   const kodi::addon::CSettingValue& settingValue)
 {
   if (settingName == "username")
   {

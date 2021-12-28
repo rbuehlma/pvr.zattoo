@@ -7,19 +7,16 @@
 
 class ZatData;
 
-class ATTRIBUTE_HIDDEN CZattooTVAddon : public kodi::addon::CAddonBase
+class ATTR_DLL_LOCAL CZattooTVAddon : public kodi::addon::CAddonBase
 {
 public:
   CZattooTVAddon() = default;
 
-  ADDON_STATUS CreateInstance(int instanceType,
-                              const std::string& instanceID,
-                              KODI_HANDLE instance,
-                              const std::string& version,
-                              KODI_HANDLE& addonInstance) override;
+  ADDON_STATUS CreateInstance(const kodi::addon::IInstanceInfo& instance,
+                              KODI_ADDON_INSTANCE_HDL& hdl) override;
 
   ADDON_STATUS SetSetting(const std::string& settingName,
-                          const kodi::CSettingValue& settingValue) override;
+                          const kodi::addon::CSettingValue& settingValue) override;
 
 private:
   CSettings m_settings;
