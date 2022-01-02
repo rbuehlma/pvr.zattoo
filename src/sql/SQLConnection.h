@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string>
-#include "sqlite/sqlite3.h"
 #include "../client.h"
+#include <sqlite3.h>
+#include <string>
 
 class ProcessRowCallback {
 public:
