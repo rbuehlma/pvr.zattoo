@@ -388,11 +388,11 @@ PVR_ERROR ZatData::GetChannelGroupsAmount(int& amount)
   return PVR_ERROR_NO_ERROR;
 }
 
-ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
+ZatData::ZatData(const kodi::addon::IInstanceInfo& instance,
       const std::string& u, const std::string& p, bool favoritesOnly,
       const STREAM_TYPE& streamType, bool enableDolby, int provider,
       const std::string& parentalPin) :
-    kodi::addon::CInstancePVRClient(instance, version),
+    kodi::addon::CInstancePVRClient(instance),
     m_favoritesOnly(favoritesOnly),
     m_enableDolby(enableDolby),
     m_streamType(streamType),

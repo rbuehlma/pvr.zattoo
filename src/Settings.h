@@ -16,13 +16,13 @@ enum STREAM_TYPE : int
   DASH_WIDEVINE
 };
 
-class ATTRIBUTE_HIDDEN CSettings
+class ATTR_DLL_LOCAL CSettings
 {
 public:
   CSettings() = default;
 
   bool Load();
-  ADDON_STATUS SetSetting(const std::string& settingName, const kodi::CSettingValue& settingValue);
+  ADDON_STATUS SetSetting(const std::string& settingName, const kodi::addon::CSettingValue& settingValue);
 
   const std::string& GetZatUsername() const { return m_zatUsername; }
   const std::string& GetZatPassword() const { return m_zatPassword; }

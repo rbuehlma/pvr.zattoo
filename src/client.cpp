@@ -4,20 +4,17 @@
 
 #include <kodi/General.h>
 
-ADDON_STATUS CZattooTVAddon::CreateInstance(int instanceType,
-                                            const std::string& instanceID,
-                                            KODI_HANDLE instance,
-                                            const std::string& version,
-                                            KODI_HANDLE& addonInstance)
+ADDON_STATUS CZattooTVAddon::CreateInstance(const kodi::addon::IInstanceInfo& instance,
+                                            KODI_ADDON_INSTANCE_HDL& hdl)
 {
-  if (instanceType)
+  if (instance.IsType(ADDON_INSTANCE_PVR))
   {
     m_settings.Load();
 
     if (m_settings.GetZatUsername().empty() || m_settings.GetZatPassword().empty())
     {
       kodi::Log(ADDON_LOG_INFO, "Username or password not set.");
-      kodi::QueueNotification(QUEUE_WARNING, "", kodi::GetLocalizedString(30200));
+      kodi::QueueNotification(QUEUE_WARNING, "", kodi::addon::GetLocalizedString(30200));
       return ADDON_STATUS_NEED_SETTINGS;
     }
 
@@ -31,8 +28,8 @@ ADDON_STATUS CZattooTVAddon::CreateInstance(int instanceType,
     int provider = m_settings.GetProvider();
     std::string parentalPin = m_settings.GetParentalPin();
 
-    ZatData* client = new ZatData(instance, version, zatUsername, zatPassword, zatFavoritesOnly, streamType, zatEnableDolby, provider, parentalPin);
-    addonInstance = client;
+    ZatData* client = new ZatData(instance, zatUsername, zatPassword, zatFavoritesOnly, streamType, zatEnableDolby, provider, parentalPin);
+    hdl = client;
     kodi::Log(ADDON_LOG_DEBUG, "Zattoo created");
 
     if (client->Initialize() && client->LoadChannels())
@@ -41,7 +38,7 @@ ADDON_STATUS CZattooTVAddon::CreateInstance(int instanceType,
     }
     else
     {
-      kodi::QueueNotification(QUEUE_WARNING, "", kodi::GetLocalizedString(37111));
+      kodi::QueueNotification(QUEUE_WARNING, "", kodi::addon::GetLocalizedString(37111));
       return ADDON_STATUS_LOST_CONNECTION;
     }
   }
@@ -50,7 +47,7 @@ ADDON_STATUS CZattooTVAddon::CreateInstance(int instanceType,
 }
 
 ADDON_STATUS CZattooTVAddon::SetSetting(const std::string& settingName,
-                                        const kodi::CSettingValue& settingValue)
+                                        const kodi::addon::CSettingValue& settingValue)
 {
   return m_settings.SetSetting(settingName, settingValue);
 }
