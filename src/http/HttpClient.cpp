@@ -6,7 +6,7 @@
 
 static const std::string USER_AGENT = std::string("Kodi/")
     + std::string(STR(KODI_VERSION)) + std::string(" pvr.zattoo/")
-    + std::string(STR(ZATTOO_VERSION)) + std::string(" (Kodi PVR addon)");
+    + std::string(STR(ZATTOO_VERSION));
 
 HttpClient::HttpClient(ParameterDB *parameterDB):
   m_parameterDB(parameterDB)

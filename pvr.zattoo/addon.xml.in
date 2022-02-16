@@ -6,6 +6,7 @@
   <requires>
     @ADDON_DEPENDS@
     <import addon="inputstream.adaptive" minversion="2.4.2"/>
+    <import addon="script.module.inputstreamhelper" version="0.5.8"/>
   </requires>
   <extension point="kodi.pvrclient" library_@PLATFORM@="@LIBRARY_FILENAME@"/>
   <extension point="xbmc.addon.metadata">
