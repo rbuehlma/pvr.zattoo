@@ -1126,9 +1126,6 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
     {
       kodi::addon::PVRRecording tag;
 
-      tag.SetSeriesNumber(PVR_RECORDING_INVALID_SERIES_EPISODE);
-      tag.SetEpisodeNumber(PVR_RECORDING_INVALID_SERIES_EPISODE);
-
       tag.SetIsDeleted(false);
 
       tag.SetRecordingId(std::to_string(recording["id"].GetInt()));
@@ -1152,6 +1149,9 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
         tag.SetGenreType(genre & 0xF0);
       }
 
+      if (Utils::JsonIntOrZero(recording, "tv_series_id")) {
+          tag.SetDirectory(tag.GetTitle());
+      }
       
       RecordingDBInfo recordingDBInfo = m_recordingsDB->Get(tag.GetRecordingId());
       tag.SetPlayCount(recordingDBInfo.playCount);
