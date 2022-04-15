@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.7.11"
+       version="19.7.12"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -33,6 +33,8 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.7.12
+ - Allow enabling/disabling directories for series recordings
 v19.7.11
  - Put series recordings into directories
 v19.7.10

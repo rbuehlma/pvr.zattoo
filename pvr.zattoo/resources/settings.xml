@@ -27,6 +27,11 @@
           <default>false</default>
           <control type="toggle" />
         </setting>
+        <setting id="recordedSeriesFolder" type="boolean" label="30008">
+          <level>0</level>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
         <setting id="streamtype" type="integer" label="30003">
           <level>0</level>
           <default>0</default>

@@ -25,7 +25,7 @@ const char data_file[] = "special://profile/addon_data/pvr.zattoo/data.json";
 
 std::string ZatData::GetManifestType()
 {
-  switch (m_streamType)
+  switch (m_settings.GetStreamType())
   {
     case HLS:
       return "hls";
@@ -36,7 +36,7 @@ std::string ZatData::GetManifestType()
 
 std::string ZatData::GetMimeType()
 {
-  switch (m_streamType)
+  switch (m_settings.GetStreamType())
   {
     case HLS:
       return "application/x-mpegURL";
@@ -54,7 +54,7 @@ void ZatData::SetStreamProperties(
   properties.emplace_back("inputstream.adaptive.manifest_type", GetManifestType());
   properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, GetMimeType());
 
-  if (m_streamType == DASH || m_streamType == DASH_WIDEVINE)
+  if (m_settings.GetStreamType() == DASH || m_settings.GetStreamType() == DASH_WIDEVINE)
   {
     properties.emplace_back("inputstream.adaptive.manifest_update_parameter", "full");
   }
@@ -197,8 +197,8 @@ Document ZatData::Login()
   kodi::Log(ADDON_LOG_DEBUG, "Try to login.");
 
   std::ostringstream dataStream;
-  dataStream << "login=" << Utils::UrlEncode(m_username) << "&password="
-      << Utils::UrlEncode(m_password) << "&format=json&remember=true";
+  dataStream << "login=" << Utils::UrlEncode(m_settings.GetZatUsername()) << "&password="
+      << Utils::UrlEncode(m_settings.GetZatPassword()) << "&format=json&remember=true";
   int statusCode;
   std::string jsonString = m_httpClient->HttpPost(m_providerUrl + "/zapi/v3/account/login", dataStream.str(), statusCode);
   Document doc;
@@ -361,7 +361,7 @@ bool ZatData::LoadChannels()
     }
   }
   
-  if (m_favoritesOnly) {
+  if (m_settings.GetZatFavoritesOnly()) {
     m_channelGroups.clear();
   }
 
@@ -389,16 +389,9 @@ PVR_ERROR ZatData::GetChannelGroupsAmount(int& amount)
 }
 
 ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
-      const std::string& u, const std::string& p, bool favoritesOnly,
-      const STREAM_TYPE& streamType, bool enableDolby, int provider,
-      const std::string& parentalPin) :
+      const CSettings& settings) :
     kodi::addon::CInstancePVRClient(instance, version),
-    m_favoritesOnly(favoritesOnly),
-    m_enableDolby(enableDolby),
-    m_streamType(streamType),
-    m_username(u),
-    m_password(p),
-    m_parentalPin(parentalPin)
+    m_settings(settings)
 {
   
   m_epgDB = new EpgDB(UserPath());
@@ -406,7 +399,7 @@ ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
   m_parameterDB = new ParameterDB(UserPath());
   m_httpClient = new HttpClient(m_parameterDB);
   
-  switch (provider)
+  switch (m_settings.GetProvider())
   {
   case 1:
     m_providerUrl = "https://www.netplus.tv";
@@ -683,7 +676,7 @@ std::string ZatData::GetStreamUrl(std::string& jsonString, std::vector<kodi::add
     const Value& watchUrl = (*itr);
     kodi::Log(ADDON_LOG_DEBUG, "Selected url for maxrate: %d", watchUrl["maxrate"].GetInt());
     url = Utils::JsonStringOrEmpty(watchUrl, "url");
-    if (m_streamType == DASH_WIDEVINE) {
+    if (m_settings.GetStreamType() == DASH_WIDEVINE) {
       std::string licenseUrl = Utils::JsonStringOrEmpty(watchUrl, "license_url");
       properties.emplace_back("inputstream.adaptive.license_key", licenseUrl + "||A{SSM}|");
       properties.emplace_back("inputstream.adaptive.license_type", "com.widevine.alpha");
@@ -1149,7 +1142,7 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
         tag.SetGenreType(genre & 0xF0);
       }
 
-      if (Utils::JsonIntOrZero(recording, "tv_series_id")) {
+      if (m_settings.GetRecordedSeriesFolder() && Utils::JsonIntOrZero(recording, "tv_series_id")) {
           tag.SetDirectory(tag.GetTitle());
       }
       
@@ -1205,18 +1198,18 @@ PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
 }
 
 std::string ZatData::GetStreamParameters() {
-  std::string params = m_enableDolby ? "&enable_eac3=true" : "";
+  std::string params = m_settings.GetZatEnableDolby() ? "&enable_eac3=true" : "";
   params += "&stream_type=" + GetStreamTypeString();
 
-  if (!m_parentalPin.empty()) {
-    params += "&youth_protection_pin=" + m_parentalPin;
+  if (!m_settings.GetParentalPin().empty()) {
+    params += "&youth_protection_pin=" + m_settings.GetParentalPin();
   }
 
   return params;
 }
 
 std::string ZatData::GetStreamTypeString() {
-  switch (m_streamType) {
+  switch (m_settings.GetStreamType()) {
     case HLS:
       return "hls7";
     case DASH_WIDEVINE:

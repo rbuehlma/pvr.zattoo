@@ -27,8 +27,16 @@ bool CSettings::Load()
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR,
-              "Couldn't get 'useradio' setting, falling back to 'false' as default");
+              "Couldn't get 'favoritesonly' setting, falling back to 'false' as default");
     m_zatFavoritesOnly = false;
+  }
+  
+  if (!kodi::CheckSettingBoolean("recordedSeriesFolder", m_recordedSeriesFolder))
+  {
+    /* If setting is unknown fallback to defaults */
+    kodi::Log(ADDON_LOG_ERROR,
+              "Couldn't get 'recordedSeriesFolder' setting, falling back to 'true' as default");
+    m_recordedSeriesFolder = true;
   }
 
   if (!kodi::CheckSettingBoolean("enableDolby", m_zatEnableDolby))
@@ -91,6 +99,15 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     if (m_zatFavoritesOnly != settingValue.GetBoolean())
     {
       m_zatFavoritesOnly = settingValue.GetBoolean();
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+  else if (settingName == "recordedSeriesFolder")
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'recordedSeriesFolder' from %u to %u", m_recordedSeriesFolder, settingValue.GetBoolean());
+    if (m_recordedSeriesFolder != settingValue.GetBoolean())
+    {
+      m_recordedSeriesFolder = settingValue.GetBoolean();
       return ADDON_STATUS_NEED_RESTART;
     }
   }

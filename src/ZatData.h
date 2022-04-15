@@ -5,6 +5,7 @@
 #include <mutex>
 #include "rapidjson/document.h"
 #include "ZatChannel.h"
+#include "Settings.h"
 #include "sql/EpgDB.h"
 #include "sql/RecordingsDB.h"
 #include "sql/ParameterDB.h"
@@ -28,10 +29,7 @@ struct PVRZattooChannelGroup
 class ATTRIBUTE_HIDDEN ZatData : public kodi::addon::CInstancePVRClient
 {
 public:
-  ZatData(KODI_HANDLE instance, const std::string& version,
-      const std::string& username, const std::string& password, bool favoritesOnly,
-      const STREAM_TYPE& streamType, bool enableDolby, int provider,
-      const std::string& parentalPin);
+  ZatData(KODI_HANDLE instance, const std::string& version, const CSettings& settings);
   ~ZatData();
   bool Initialize();
   bool LoadChannels();
@@ -80,11 +78,6 @@ public:
 
 private:
   bool m_initDone = false;
-  bool m_favoritesOnly;
-  bool m_enableDolby;
-  STREAM_TYPE m_streamType;
-  std::string m_username;
-  std::string m_password;
   std::string m_appToken;
   std::string m_powerHash;
   std::string m_countryCode;
@@ -98,12 +91,12 @@ private:
   std::vector<UpdateThread*> m_updateThreads;
   Categories m_categories;
   std::string m_providerUrl;
-  std::string m_parentalPin;
   EpgDB *m_epgDB;
   RecordingsDB *m_recordingsDB;
   ParameterDB *m_parameterDB;
   HttpClient *m_httpClient;
   EpgProvider *m_epgProvider = nullptr;
+  const CSettings& m_settings;
 
   bool LoadAppId();
   bool LoadAppTokenFromTokenJson(std::string tokenJsonPath);
