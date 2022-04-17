@@ -1,6 +1,6 @@
 #include "ZattooEpgProvider.h"
 #include "rapidjson/document.h"
-#include "../client.h"
+#include <kodi/AddonBase.h>
 #include "../Utils.h"
 #include <ctime>
 

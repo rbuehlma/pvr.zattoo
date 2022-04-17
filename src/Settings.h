@@ -23,11 +23,11 @@ public:
 
   bool Load();
   ADDON_STATUS SetSetting(const std::string& settingName, const kodi::CSettingValue& settingValue);
+  bool VerifySettings();
 
   const std::string& GetZatUsername() const { return m_zatUsername; }
   const std::string& GetZatPassword() const { return m_zatPassword; }
   bool GetZatFavoritesOnly() const { return m_zatFavoritesOnly; }
-  bool GetRecordedSeriesFolder() const { return m_recordedSeriesFolder; }
   bool GetZatEnableDolby() const { return m_zatEnableDolby; }
   STREAM_TYPE GetStreamType() const { return m_streamType; }
   const std::string GetParentalPin() const { return m_parentalPin; }
@@ -37,7 +37,6 @@ private:
   std::string m_zatUsername;
   std::string m_zatPassword;
   bool m_zatFavoritesOnly = false;
-  bool m_recordedSeriesFolder = false;
   bool m_zatEnableDolby = true;
   STREAM_TYPE m_streamType = DASH;
   std::string m_parentalPin;

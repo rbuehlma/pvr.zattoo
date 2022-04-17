@@ -2,7 +2,6 @@
 
 #include <string>
 #include "sqlite/sqlite3.h"
-#include "../client.h"
 
 class ProcessRowCallback {
 public:

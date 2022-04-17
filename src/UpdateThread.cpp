@@ -1,6 +1,6 @@
 #include "UpdateThread.h"
 #include <ctime>
-#include "client.h"
+#include <kodi/AddonBase.h>
 #include "ZatData.h"
 #include "http/Cache.h"
 
