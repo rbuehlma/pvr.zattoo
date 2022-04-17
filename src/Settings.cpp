@@ -6,6 +6,7 @@
  */
 
 #include "Settings.h"
+#include <kodi/General.h>
 
 bool CSettings::Load()
 {
@@ -31,14 +32,6 @@ bool CSettings::Load()
     m_zatFavoritesOnly = false;
   }
   
-  if (!kodi::CheckSettingBoolean("recordedSeriesFolder", m_recordedSeriesFolder))
-  {
-    /* If setting is unknown fallback to defaults */
-    kodi::Log(ADDON_LOG_ERROR,
-              "Couldn't get 'recordedSeriesFolder' setting, falling back to 'true' as default");
-    m_recordedSeriesFolder = true;
-  }
-
   if (!kodi::CheckSettingBoolean("enableDolby", m_zatEnableDolby))
   {
     /* If setting is unknown fallback to defaults */
@@ -102,15 +95,6 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
       return ADDON_STATUS_NEED_RESTART;
     }
   }
-  else if (settingName == "recordedSeriesFolder")
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'recordedSeriesFolder' from %u to %u", m_recordedSeriesFolder, settingValue.GetBoolean());
-    if (m_recordedSeriesFolder != settingValue.GetBoolean())
-    {
-      m_recordedSeriesFolder = settingValue.GetBoolean();
-      return ADDON_STATUS_NEED_RESTART;
-    }
-  }
   else if (settingName == "enableDolby")
   {
     kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'enableDolby' from %u to %u", m_zatEnableDolby, settingValue.GetBoolean());
@@ -149,4 +133,16 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
   }
 
   return ADDON_STATUS_OK;
+}
+
+bool CSettings::VerifySettings() {
+  std::string username = GetZatUsername();
+  std::string password = GetZatPassword();
+  if (username.empty() || password.empty()) {
+    kodi::Log(ADDON_LOG_INFO, "Username or password not set.");
+    kodi::QueueNotification(QUEUE_WARNING, "", kodi::GetLocalizedString(30200));
+
+    return false;
+  }
+  return true;
 }

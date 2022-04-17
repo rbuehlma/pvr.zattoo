@@ -1,5 +1,3 @@
-#include "client.h"
-
 #include <iostream>
 #include <string>
 #include "ZatData.h"
@@ -25,7 +23,7 @@ const char data_file[] = "special://profile/addon_data/pvr.zattoo/data.json";
 
 std::string ZatData::GetManifestType()
 {
-  switch (m_settings.GetStreamType())
+  switch (m_settings->GetStreamType())
   {
     case HLS:
       return "hls";
@@ -36,7 +34,7 @@ std::string ZatData::GetManifestType()
 
 std::string ZatData::GetMimeType()
 {
-  switch (m_settings.GetStreamType())
+  switch (m_settings->GetStreamType())
   {
     case HLS:
       return "application/x-mpegURL";
@@ -54,7 +52,7 @@ void ZatData::SetStreamProperties(
   properties.emplace_back("inputstream.adaptive.manifest_type", GetManifestType());
   properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, GetMimeType());
 
-  if (m_settings.GetStreamType() == DASH || m_settings.GetStreamType() == DASH_WIDEVINE)
+  if (m_settings->GetStreamType() == DASH || m_settings->GetStreamType() == DASH_WIDEVINE)
   {
     properties.emplace_back("inputstream.adaptive.manifest_update_parameter", "full");
   }
@@ -99,183 +97,10 @@ bool ZatData::ReadDataJson()
   return true;
 }
 
-bool ZatData::LoadAppId()
-{
-  if (!m_appToken.empty()) {
-    return true;
-  }
-  
-  if (!LoadAppTokenFromTokenJson("token.json")) {
-    int statusCode;
-    std::string html = m_httpClient->HttpGet(m_providerUrl + "/login", statusCode);
-  
-    if (!LoadAppTokenFromHtml(html)) {
-      if (!LoadAppTokenFromJson(html)) {
-        m_appToken = m_parameterDB->Get("appToken");
-        return !m_appToken.empty();
-      }
-    }
-  }
-  m_parameterDB->Set("appToken", m_appToken);
-  return true;
-}
-
-bool ZatData::LoadAppTokenFromTokenJson(std::string tokenJsonPath) {
-  int statusCode;
-  std::string jsonString = m_httpClient->HttpGet(m_providerUrl + "/" + tokenJsonPath, statusCode);
-
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["success"].GetBool())
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Failed to load json from %s", tokenJsonPath.c_str());
-    return false;
-  }
-
-  m_appToken = doc["session_token"].GetString();
-  return true;
-}
-
-bool ZatData::LoadAppTokenFromHtml(std::string html) {
-  size_t basePos = html.find("window.appToken = '") + 19;
-  if (basePos > 19)
-  {
-    size_t endPos = html.find("'", basePos);
-    m_appToken = html.substr(basePos, endPos - basePos);
-    return true;
-  }
-  return false;
-}
-
-bool ZatData::LoadAppTokenFromJson(std::string html) {
-  size_t basePos = html.find("src=\"/app-") + 5;
-  if (basePos < 6) {
-    kodi::Log(ADDON_LOG_ERROR, "Unable to find app-*.js");
-    return false;
-  }
-  size_t endPos = html.find("\"", basePos);
-  std::string appJsPath = html.substr(basePos, endPos - basePos);
-  int statusCode;
-  std::string content = m_httpClient->HttpGet(m_providerUrl + appJsPath, statusCode);
-
-  basePos = content.find("\"token-") + 1;
-  if (basePos < 6) {
-    kodi::Log(ADDON_LOG_ERROR, "Unable to find token-*.json in %s", appJsPath.c_str());
-    return false;
-  }
-  endPos = content.find("\"", basePos);
-  std::string tokenJsonPath = content.substr(basePos, endPos - basePos);
-  return LoadAppTokenFromTokenJson(tokenJsonPath);
-}
-
-bool ZatData::SendHello()
-{
-  std::string uuid = m_httpClient->GetUUID();
-  kodi::Log(ADDON_LOG_DEBUG, "Send hello.");
-  std::ostringstream dataStream;
-  dataStream << "uuid=" << uuid << "&lang=en&app_version=3.2038.0&format=json&client_app_token="
-      << m_appToken;
-  int statusCode;
-  std::string jsonString = m_httpClient->HttpPost(m_providerUrl + "/zapi/v3/session/hello", dataStream.str(), statusCode);
-
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (!doc.GetParseError() && doc["active"].GetBool())
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Hello was successful.");
-    return true;
-  }
-  else
-  {
-    kodi::Log(ADDON_LOG_INFO, "Hello failed.");
-    return false;
-  }
-}
-
-Document ZatData::Login()
-{
-  kodi::Log(ADDON_LOG_DEBUG, "Try to login.");
-
-  std::ostringstream dataStream;
-  dataStream << "login=" << Utils::UrlEncode(m_settings.GetZatUsername()) << "&password="
-      << Utils::UrlEncode(m_settings.GetZatPassword()) << "&format=json&remember=true";
-  int statusCode;
-  std::string jsonString = m_httpClient->HttpPost(m_providerUrl + "/zapi/v3/account/login", dataStream.str(), statusCode);
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  return doc;
-}
-
-bool ZatData::ReinitSession()
-{
-  m_httpClient->ClearSession();
-  m_appToken = "";
-  
-  return InitSession(true);
-}
-
-bool ZatData::InitSession(bool isReinit)
-{
-  if (!LoadAppId())
-  {
-    return isReinit ? false : ReinitSession();
-  }
-  
-  SendHello();
-  int statusCode;
-  std::string jsonString = m_httpClient->HttpGet(m_providerUrl + "/zapi/v3/session", statusCode);
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["active"].GetBool())
-  {
-    kodi::Log(ADDON_LOG_ERROR, "Initialize session failed.");
-    return isReinit ? false : ReinitSession();
-  }
-  
-  if (doc["account"].IsNull())
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Need to login.");
-    m_httpClient->ClearSession();
-    doc = Login();
-    if (doc.GetParseError() || !doc["active"].GetBool())
-    {
-      kodi::Log(ADDON_LOG_ERROR, "Login failed.");
-      return isReinit ? false : ReinitSession();
-    }
-    else
-    {
-      kodi::Log(ADDON_LOG_DEBUG, "Login was successful.");
-    }
-  }
-
-  const Value& account = doc["account"];
-  const Value& nonlive = doc["nonlive"];
-
-  m_countryCode = Utils::JsonStringOrEmpty(doc, "current_country");
-  m_serviceRegionCountry = Utils::JsonStringOrEmpty(account, "service_country");
-  m_recallEnabled = Utils::JsonStringOrEmpty(nonlive, "replay_availability") == "available";
-  m_recordingEnabled = Utils::JsonBoolOrFalse(nonlive, "recording_number_limit");
-  kodi::Log(ADDON_LOG_INFO, "Current country code: %s", m_countryCode.c_str());
-  kodi::Log(ADDON_LOG_INFO, "Service region country: %s",
-      m_serviceRegionCountry.c_str());
-  kodi::Log(ADDON_LOG_INFO, "Stream type: %s", GetStreamTypeString().c_str());
-  kodi::Log(ADDON_LOG_INFO, "Recall are %s",
-      m_recallEnabled ? "enabled" : "disabled");
-  kodi::Log(ADDON_LOG_INFO, "Recordings are %s",
-      m_recordingEnabled ? "enabled" : "disabled");
-  m_powerHash = Utils::JsonStringOrEmpty(doc, "power_guide_hash");
-  
-  if (m_epgProvider) {
-    delete m_epgProvider;
-  }
-  m_epgProvider = new ZattooEpgProvider(this, m_providerUrl, *m_epgDB, *m_httpClient, m_categories, m_visibleChannelsByCid, m_powerHash);
-  return true;
-}
-
 bool ZatData::LoadChannels()
 {
   std::map<std::string, ZatChannel> allChannels;
-  std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/channels/favorites");
+  std::string jsonString = HttpGetWithRetry(m_session->GetProviderUrl() + "/zapi/channels/favorites");
   Document favDoc;
   favDoc.Parse(jsonString.c_str());
 
@@ -286,7 +111,7 @@ bool ZatData::LoadChannels()
   const Value& favs = favDoc["favorites"];
 
   std::ostringstream urlStream;
-  urlStream << m_providerUrl + "/zapi/v3/cached/"  << m_powerHash << "/channels";
+  urlStream << m_session->GetProviderUrl() + "/zapi/v3/cached/"  << m_session->GetPowerHash() << "/channels";
   jsonString = HttpGetWithRetry(urlStream.str());
 
   Document doc;
@@ -361,7 +186,7 @@ bool ZatData::LoadChannels()
     }
   }
   
-  if (m_settings.GetZatFavoritesOnly()) {
+  if (m_settings->GetZatFavoritesOnly()) {
     m_channelGroups.clear();
   }
 
@@ -379,7 +204,7 @@ bool ZatData::LoadChannels()
 PVR_ERROR ZatData::GetChannelGroupsAmount(int& amount)
 {
   
-  if (!m_initDone)
+  if (!m_session->IsConnected())
   {
     return PVR_ERROR_SERVER_ERROR;
   }
@@ -388,72 +213,24 @@ PVR_ERROR ZatData::GetChannelGroupsAmount(int& amount)
   return PVR_ERROR_NO_ERROR;
 }
 
-ZatData::ZatData(KODI_HANDLE instance, const std::string& version,
-      const CSettings& settings) :
-    kodi::addon::CInstancePVRClient(instance, version),
-    m_settings(settings)
+ZatData::ZatData() :
+  m_settings(new CSettings())
 {
-  
+  UpdateConnectionState("Initializing", PVR_CONNECTION_STATE_CONNECTING, "");
+  m_settings->Load();
   m_epgDB = new EpgDB(UserPath());
   m_recordingsDB = new RecordingsDB(UserPath());
   m_parameterDB = new ParameterDB(UserPath());
   m_httpClient = new HttpClient(m_parameterDB);
-  
-  switch (m_settings.GetProvider())
-  {
-  case 1:
-    m_providerUrl = "https://www.netplus.tv";
-    break;
-  case 2:
-    m_providerUrl = "https://mobiltv.quickline.com";
-    break;
-  case 3:
-    m_providerUrl = "https://tvplus.m-net.de";
-    break;
-  case 4:
-    m_providerUrl = "https://player.waly.tv";
-    break;
-  case 5:
-    m_providerUrl = "https://www.meinewelt.cc";
-    break;
-  case 6:
-    m_providerUrl = "https://www.bbv-tv.net";
-    break;
-  case 7:
-    m_providerUrl = "https://www.vtxtv.ch";
-    break;
-  case 8:
-    m_providerUrl = "https://www.myvisiontv.ch";
-    break;
-  case 9:
-    m_providerUrl = "https://iptv.glattvision.ch";
-    break;
-  case 10:
-    m_providerUrl = "https://www.saktv.ch";
-    break;
-  case 11:
-    m_providerUrl = "https://nettv.netcologne.de";
-    break;
-  case 12:
-    m_providerUrl = "https://tvonline.ewe.de";
-    break;
-  case 13:
-    m_providerUrl = "https://www.quantum-tv.com";
-    break;
-  case 14:
-    m_providerUrl = "https://tv.salt.ch";
-    break;
-  case 15:
-    m_providerUrl = "https://tvonline.swb-gruppe.de";
-    break;
-  case 16:
-    m_providerUrl = "https://www.1und1.tv";
-    break;
-  default:
-    m_providerUrl = "https://zattoo.com";
-  }
+  m_session = new Session(m_httpClient, this, m_settings, m_parameterDB);
+  m_httpClient->SetStatusCodeHandler(m_session);
   
   ReadDataJson();
+  
+  for (int i = 0; i < 3; ++i)
+  {
+    m_updateThreads.emplace_back(new UpdateThread(*this, i, this));
+  }
 }
 
 ZatData::~ZatData()
@@ -467,25 +244,11 @@ ZatData::~ZatData()
   if (m_epgProvider) {
     delete m_epgProvider;
   }
+  delete m_session;
   delete m_httpClient;
   delete m_parameterDB;
   delete m_recordingsDB;
   delete m_epgDB;
-}
-
-bool ZatData::Initialize()
-{
-  if (!InitSession(false)) {
-    m_initDone = false;
-    return false;
-  }
-
-  for (int i = 0; i < 3; ++i)
-  {
-    m_updateThreads.emplace_back(new UpdateThread(*this, i, this));
-  }
-  m_initDone = true;
-  return true;
 }
 
 PVR_ERROR ZatData::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
@@ -501,8 +264,8 @@ PVR_ERROR ZatData::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
   capabilities.SetSupportsRecordingsLifetimeChange(false);
   capabilities.SetSupportsDescrambleInfo(false);
   capabilities.SetSupportsRecordingEdl(true);
-  capabilities.SetSupportsRecordings(m_recordingEnabled);
-  capabilities.SetSupportsTimers(m_recordingEnabled);
+  capabilities.SetSupportsRecordings(m_session->IsRecordingEnabled());
+  capabilities.SetSupportsTimers(m_session->IsRecordingEnabled());
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -527,7 +290,7 @@ PVR_ERROR ZatData::GetBackendHostname(std::string& hostname)
 
 PVR_ERROR ZatData::GetConnectionString(std::string& connection)
 {
-  connection = "connected";
+  connection = m_session->IsConnected() ? "connected" : "not connected";
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -536,7 +299,7 @@ PVR_ERROR ZatData::GetChannelGroups(bool radio, kodi::addon::PVRChannelGroupsRes
   if (radio)
     return PVR_ERROR_NOT_IMPLEMENTED;
   
-  if (!m_initDone)
+  if (!m_session->IsConnected())
   {
     return PVR_ERROR_SERVER_ERROR;
   }
@@ -570,7 +333,7 @@ PVR_ERROR ZatData::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& gr
                                           kodi::addon::PVRChannelGroupMembersResultSet& results)
 {
   
-  if (!m_initDone)
+  if (!m_session->IsConnected())
   {
     return PVR_ERROR_SERVER_ERROR;
   }
@@ -596,7 +359,7 @@ PVR_ERROR ZatData::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& gr
 
 PVR_ERROR ZatData::GetChannelsAmount(int& amount)
 {
-  if (!m_initDone)
+  if (!m_session->IsConnected())
   {
     return PVR_ERROR_SERVER_ERROR;
   }
@@ -610,7 +373,7 @@ PVR_ERROR ZatData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& re
   if (radio)
     return PVR_ERROR_NO_ERROR;
   
-  if (!m_initDone)
+  if (!m_session->IsConnected())
   {
     return PVR_ERROR_SERVER_ERROR;
   }
@@ -676,7 +439,7 @@ std::string ZatData::GetStreamUrl(std::string& jsonString, std::vector<kodi::add
     const Value& watchUrl = (*itr);
     kodi::Log(ADDON_LOG_DEBUG, "Selected url for maxrate: %d", watchUrl["maxrate"].GetInt());
     url = Utils::JsonStringOrEmpty(watchUrl, "url");
-    if (m_settings.GetStreamType() == DASH_WIDEVINE) {
+    if (m_settings->GetStreamType() == DASH_WIDEVINE) {
       std::string licenseUrl = Utils::JsonStringOrEmpty(watchUrl, "license_url");
       properties.emplace_back("inputstream.adaptive.license_key", licenseUrl + "||A{SSM}|");
       properties.emplace_back("inputstream.adaptive.license_type", "com.widevine.alpha");
@@ -698,7 +461,7 @@ PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& cha
   std::ostringstream dataStream;
   dataStream << GetStreamParameters() << "&format=json&timeshift=10800";
 
-  std::string jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/watch/live/" + ownChannel->cid, dataStream.str());
+  std::string jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + "/zapi/watch/live/" + ownChannel->cid, dataStream.str());
 
   std::string strUrl = GetStreamUrl(jsonString, properties);
   if (!strUrl.empty())
@@ -782,8 +545,8 @@ bool ZatData::ParseRecordingsTimers(const Value& recordings, std::map<int, ZatRe
   {
     int bucketSize = 100;
     std::ostringstream urlStream;
-    urlStream << m_providerUrl << "/zapi/v2/cached/program/power_details/"
-        << m_powerHash << "?complete=True&program_ids=";
+    urlStream << m_session->GetProviderUrl() << "/zapi/v2/cached/program/power_details/"
+        << m_session->GetPowerHash() << "?complete=True&program_ids=";
     while (bucketSize > 0 && recordingsItr != recordings.End())
     {
       const Value& recording = (*recordingsItr);
@@ -841,12 +604,12 @@ PVR_ERROR ZatData::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types)
 PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 {
   
-  if (!m_initDone)
+  if (!m_session->IsConnected())
   {
     return PVR_ERROR_SERVER_ERROR;
   }
   
-  std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/v2/playlist");
+  std::string jsonString = HttpGetWithRetry(m_session->GetProviderUrl() + "/zapi/v2/playlist");
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -951,12 +714,12 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 PVR_ERROR ZatData::GetTimersAmount(int& amount)
 {
   
-  if (!m_initDone)
+  if (!m_session->IsConnected())
   {
     return PVR_ERROR_SERVER_ERROR;
   }
   
-  std::string jsonString = HttpGetCachedWithRetry(m_providerUrl + "/zapi/v2/playlist", 60);
+  std::string jsonString = HttpGetCachedWithRetry(m_session->GetProviderUrl() + "/zapi/v2/playlist", 60);
 
   time_t current_time;
   time(&current_time);
@@ -1011,7 +774,7 @@ PVR_ERROR ZatData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDel
   int recordingId = -1;
   
   if (series) {  
-    std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/v2/playlist");
+    std::string jsonString = HttpGetWithRetry(m_session->GetProviderUrl() + "/zapi/v2/playlist");
 
     Document doc;
     doc.Parse(jsonString.c_str());
@@ -1047,7 +810,7 @@ PVR_ERROR ZatData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDel
 
   std::string path = series ? "/zapi/series_recording/remove" : "/zapi/playlist/remove";
 
-  std::string jsonString = HttpPostWithRetry(m_providerUrl + path, dataStream.str());
+  std::string jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + path, dataStream.str());
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -1066,12 +829,12 @@ void ZatData::AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int id
 PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results)
 {
   
-  if (!m_initDone)
+  if (!m_session->IsConnected())
   {
     return PVR_ERROR_SERVER_ERROR;
   }
   
-  std::string jsonString = HttpGetWithRetry(m_providerUrl + "/zapi/v2/playlist");
+  std::string jsonString = HttpGetWithRetry(m_session->GetProviderUrl() + "/zapi/v2/playlist");
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -1142,7 +905,7 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
         tag.SetGenreType(genre & 0xF0);
       }
 
-      if (m_settings.GetRecordedSeriesFolder() && Utils::JsonIntOrZero(recording, "tv_series_id")) {
+      if (Utils::JsonIntOrZero(recording, "tv_series_id")) {
           tag.SetDirectory(tag.GetTitle());
       }
       
@@ -1163,12 +926,12 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
 PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
 {
   
-  if (!m_initDone)
+  if (!m_session->IsConnected())
   {
     return PVR_ERROR_SERVER_ERROR;
   }
   
-  std::string jsonString = HttpGetCachedWithRetry(m_providerUrl + "/zapi/v2/playlist", 60);
+  std::string jsonString = HttpGetCachedWithRetry(m_session->GetProviderUrl() + "/zapi/v2/playlist", 60);
 
   time_t current_time;
   time(&current_time);
@@ -1198,18 +961,18 @@ PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
 }
 
 std::string ZatData::GetStreamParameters() {
-  std::string params = m_settings.GetZatEnableDolby() ? "&enable_eac3=true" : "";
+  std::string params = m_settings->GetZatEnableDolby() ? "&enable_eac3=true" : "";
   params += "&stream_type=" + GetStreamTypeString();
 
-  if (!m_settings.GetParentalPin().empty()) {
-    params += "&youth_protection_pin=" + m_settings.GetParentalPin();
+  if (!m_settings->GetParentalPin().empty()) {
+    params += "&youth_protection_pin=" + m_settings->GetParentalPin();
   }
 
   return params;
 }
 
 std::string ZatData::GetStreamTypeString() {
-  switch (m_settings.GetStreamType()) {
+  switch (m_settings->GetStreamType()) {
     case HLS:
       return "hls7";
     case DASH_WIDEVINE:
@@ -1227,7 +990,7 @@ PVR_ERROR ZatData::GetRecordingStreamProperties(const kodi::addon::PVRRecording&
   std::ostringstream dataStream;
   dataStream << GetStreamParameters();
 
-  std::string jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/watch/recording/" + recording.GetRecordingId(), dataStream.str());
+  std::string jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + "/zapi/watch/recording/" + recording.GetRecordingId(), dataStream.str());
 
   std::string strUrl = GetStreamUrl(jsonString, properties);
   PVR_ERROR ret = PVR_ERROR_FAILED;
@@ -1246,7 +1009,7 @@ bool ZatData::Record(int programId, bool series)
   
   dataStream << "program_id=" << programId << "&series_force=False&series=" << (series ? "True" : "False");
   
-  std::string jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/playlist/program", dataStream.str());
+  std::string jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + "/zapi/playlist/program", dataStream.str());
   Document doc;
   doc.Parse(jsonString.c_str());
   return !doc.GetParseError() && doc["success"].GetBool();
@@ -1257,7 +1020,7 @@ PVR_ERROR ZatData::DeleteRecording(const kodi::addon::PVRRecording& recording)
   std::ostringstream dataStream;
   dataStream << "recording_id=" << recording.GetRecordingId() << "";
 
-  std::string jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/playlist/remove", dataStream.str());
+  std::string jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + "/zapi/playlist/remove", dataStream.str());
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -1283,7 +1046,7 @@ PVR_ERROR ZatData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isP
 
 PVR_ERROR ZatData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable)
 {
-  if (!m_recordingEnabled)
+  if (!m_session->IsRecordingEnabled())
   {
     isRecordable = false;
   }
@@ -1308,7 +1071,7 @@ PVR_ERROR ZatData::GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, 
     kodi::Log(ADDON_LOG_WARNING, "Could not get url for channel %s and program %i. Try to get new EPG tag.", channel.cid.c_str(), tag.GetUniqueBroadcastId());
     time_t referenceTime = (tag.GetStartTime() / 2) + (tag.GetEndTime() / 2);
     std::ostringstream urlStream;
-    urlStream << m_providerUrl << "/zapi/v3/cached/" + m_powerHash + "/guide"
+    urlStream << m_session->GetProviderUrl() << "/zapi/v3/cached/" + m_session->GetPowerHash() + "/guide"
         << "?end=" << referenceTime << "&start=" << referenceTime
         << "&format=json";
 
@@ -1357,7 +1120,7 @@ std::string ZatData::GetStreamUrlForProgram(const std::string& cid, int programI
 
   dataStream << GetStreamParameters();
   dataStream << "&pre_padding=0&post_padding=0";
-  jsonString = HttpPostWithRetry(m_providerUrl + "/zapi/v3/watch/replay/" + cid + "/" + std::to_string(programId), dataStream.str());
+  jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + "/zapi/v3/watch/replay/" + cid + "/" + std::to_string(programId), dataStream.str());
 
   std::string strUrl = GetStreamUrl(jsonString, properties);
   return strUrl;
@@ -1383,41 +1146,67 @@ PVR_ERROR ZatData::GetRecordingEdl(const kodi::addon::PVRRecording& recording, s
   return PVR_ERROR_NO_ERROR;
 }
 
-bool ZatData::TryToReinitIf403(int statusCode) {
-  if (statusCode == 403)
-  {
-    kodi::Log(ADDON_LOG_ERROR, "Got 403. Try to re-init session.");
-    if (InitSession(false)) {
-      return true;
-    }
-    kodi::Log(ADDON_LOG_ERROR, "Re-init of session. Failed.");
-  }
-  return false;
-}
-
 std::string ZatData::HttpGetWithRetry(std::string url) {
   int statusCode;
   std::string ret = m_httpClient->HttpGet(url, statusCode);
-  if (TryToReinitIf403(statusCode)) {
-    ret = m_httpClient->HttpGet(url, statusCode);
-  }
+  ret = m_httpClient->HttpGet(url, statusCode);
   return ret;
 }
 
 std::string ZatData::HttpPostWithRetry(std::string url, const std::string& postData) {
   int statusCode;
   std::string ret = m_httpClient->HttpPost(url, postData, statusCode);
-  if (TryToReinitIf403(statusCode)) {
-    ret = m_httpClient->HttpPost(url, postData, statusCode);
-  }
+  ret = m_httpClient->HttpPost(url, postData, statusCode);
   return ret;
 }
 
 std::string ZatData::HttpGetCachedWithRetry(std::string url, time_t cacheDuration) {
   int statusCode;
   std::string ret = m_httpClient->HttpGetCached(url, cacheDuration, statusCode);
-  if (TryToReinitIf403(statusCode)) {
-    ret = m_httpClient->HttpGetCached(url, cacheDuration, statusCode);
-  }
+  ret = m_httpClient->HttpGetCached(url, cacheDuration, statusCode);
   return ret;
 }
+
+void ZatData::UpdateConnectionState(const std::string& connectionString, PVR_CONNECTION_STATE newState, const std::string& message) {
+  kodi::addon::CInstancePVRClient::ConnectionStateChange(connectionString, newState, message);
+}
+
+ADDON_STATUS ZatData::GetStatus() {
+  if (!m_session->IsConnected()) {
+    return ADDON_STATUS_LOST_CONNECTION;
+  }
+  return ADDON_STATUS_OK;
+}
+
+bool ZatData::SessionInitialized()
+{
+  if (m_epgProvider) {
+    delete m_epgProvider;
+  }
+  kodi::Log(ADDON_LOG_INFO, "Stream type: %s", GetStreamTypeString().c_str());
+  if (!LoadChannels()) {
+    return false;
+  }
+  m_epgProvider = new ZattooEpgProvider(this, m_session->GetProviderUrl(), *m_epgDB, *m_httpClient, m_categories, m_visibleChannelsByCid, m_session->GetPowerHash());
+  return true;
+}
+
+ADDON_STATUS ZatData::SetSetting(const std::string& settingName, const kodi::CSettingValue& settingValue)
+{
+  ADDON_STATUS result = m_settings->SetSetting(settingName, settingValue);
+  if (!m_settings->VerifySettings()) {
+    return ADDON_STATUS_NEED_SETTINGS;
+  }
+  if (result == ADDON_STATUS_OK) {
+    m_session->Reset();
+  }
+  return result;
+}
+
+ADDON_STATUS ZatData::Create()
+{
+  kodi::Log(ADDON_LOG_DEBUG, "%s - Creating the PVR Zattoo add-on", __FUNCTION__);
+  return m_session->Start();
+}
+
+ADDONCREATOR(ZatData);

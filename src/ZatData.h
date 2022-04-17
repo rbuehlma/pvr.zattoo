@@ -11,6 +11,7 @@
 #include "sql/ParameterDB.h"
 #include "http/HttpClient.h"
 #include "epg/EpgProvider.h"
+#include "Session.h"
 
 class CZattooTVAddon;
 
@@ -26,10 +27,12 @@ struct PVRZattooChannelGroup
   std::vector<ZatChannel> channels;
 };
 
-class ATTRIBUTE_HIDDEN ZatData : public kodi::addon::CInstancePVRClient
+class ATTRIBUTE_HIDDEN ZatData :  public kodi::addon::CAddonBase,
+                                  public kodi::addon::CInstancePVRClient
 {
 public:
-  ZatData(KODI_HANDLE instance, const std::string& version, const CSettings& settings);
+  ADDON_STATUS Create() override;
+  ZatData();
   ~ZatData();
   bool Initialize();
   bool LoadChannels();
@@ -73,38 +76,30 @@ public:
   void GetEPGForChannelAsync(int uniqueChannelId, time_t iStart, time_t iEnd);
   bool RecordingEnabled()
   {
-    return m_recordingEnabled;
+    return m_session->IsRecordingEnabled();
   }
+  ADDON_STATUS GetStatus() override;
+  void UpdateConnectionState(const std::string& connectionString, PVR_CONNECTION_STATE newState, const std::string& message);
+  bool SessionInitialized();
+  ADDON_STATUS SetSetting(const std::string& settingName,
+                          const kodi::CSettingValue& settingValue) override;
 
 private:
-  bool m_initDone = false;
-  std::string m_appToken;
-  std::string m_powerHash;
-  std::string m_countryCode;
-  std::string m_serviceRegionCountry;
-  bool m_recallEnabled = false;
-  bool m_recordingEnabled = false;
   std::vector<PVRZattooChannelGroup> m_channelGroups;
   std::map<int, ZatChannel> m_channelsByUid;
   std::map<std::string, ZatChannel> m_channelsByCid;
   std::map<std::string, ZatChannel> m_visibleChannelsByCid;
   std::vector<UpdateThread*> m_updateThreads;
   Categories m_categories;
-  std::string m_providerUrl;
   EpgDB *m_epgDB;
   RecordingsDB *m_recordingsDB;
   ParameterDB *m_parameterDB;
   HttpClient *m_httpClient;
   EpgProvider *m_epgProvider = nullptr;
-  const CSettings& m_settings;
+  CSettings* m_settings;
+  Session *m_session;
 
-  bool LoadAppId();
-  bool LoadAppTokenFromTokenJson(std::string tokenJsonPath);
-  bool LoadAppTokenFromFile();
-  bool LoadAppTokenFromJson(std::string html);
-  bool LoadAppTokenFromHtml(std::string html);
   bool ReadDataJson();
-  bool SendHello();
   rapidjson::Document Login();
   bool InitSession(bool isReinit);
   bool ReinitSession();

@@ -44,10 +44,6 @@ msgctxt "#30007"
 msgid "Parental pin"
 msgstr "Parental pin"
 
-msgctxt "#30008"
-msgid "Use folder for recorded series"
-msgstr "Use folder for recorded series"
-
 msgctxt "#30010"
 msgid "Enable Dolby"
 msgstr "Enable support for dolby"
@@ -139,4 +135,12 @@ msgstr "Missing username or password"
 msgctxt "#30201"
 msgid "Login failed!"
 msgstr "Login failed!"
+
+msgctxt "#30202"
+msgid "Connected"
+msgstr ""
+
+msgctxt "#30203"
+msgid "Server not reachable!"
+msgstr ""
 

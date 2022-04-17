@@ -3,6 +3,7 @@
 
 #include "Curl.h"
 #include "../sql/ParameterDB.h"
+#include "HttpStatusCodeHandler.h"
 
 class HttpClient
 {
@@ -15,6 +16,9 @@ public:
   std::string HttpPost(const std::string& url, const std::string& postData, int &statusCode);
   void ClearSession();
   std::string GetUUID();
+   void SetStatusCodeHandler(HttpStatusCodeHandler* statusCodeHandler) {
+    m_statusCodeHandler = statusCodeHandler;
+  }
 private:
   std::string HttpRequest(const std::string& action, const std::string& url, const std::string& postData, int &statusCode);
   std::string HttpRequestToCurl(Curl &curl, const std::string& action, const std::string& url, const std::string& postData, int &statusCode);
@@ -23,6 +27,7 @@ private:
   std::string m_zattooSession;
   std::string m_uuid;
   ParameterDB *m_parameterDB;
+  HttpStatusCodeHandler *m_statusCodeHandler = nullptr;
 };
 
 #endif /* SRC_HTTP_HTTPCLIENT_H_ */

@@ -21,7 +21,7 @@
  */
 
 #include "categories.h"
-#include "client.h"
+#include <kodi/AddonBase.h>
 #include <cstring>
 #include <iostream>
 #include <kodi/Filesystem.h>
