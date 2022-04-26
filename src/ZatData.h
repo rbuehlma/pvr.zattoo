@@ -116,7 +116,4 @@ private:
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties, const std::string& url);
   std::string GetStreamUrlForProgram(const std::string& cid, int programId, std::vector<kodi::addon::PVRStreamProperty>& properties);
   bool TryToReinitIf403(int statusCode);
-  std::string HttpGetWithRetry(std::string url);
-  std::string HttpPostWithRetry(std::string url, const std::string& postData);
-  std::string HttpGetCachedWithRetry(std::string url, time_t cacheDuration);
 };

@@ -100,7 +100,8 @@ bool ZatData::ReadDataJson()
 bool ZatData::LoadChannels()
 {
   std::map<std::string, ZatChannel> allChannels;
-  std::string jsonString = HttpGetWithRetry(m_session->GetProviderUrl() + "/zapi/channels/favorites");
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpGet(m_session->GetProviderUrl() + "/zapi/channels/favorites", statusCode);
   Document favDoc;
   favDoc.Parse(jsonString.c_str());
 
@@ -112,7 +113,7 @@ bool ZatData::LoadChannels()
 
   std::ostringstream urlStream;
   urlStream << m_session->GetProviderUrl() + "/zapi/v3/cached/"  << m_session->GetPowerHash() << "/channels";
-  jsonString = HttpGetWithRetry(urlStream.str());
+  jsonString = m_httpClient->HttpGet(urlStream.str(), statusCode);
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -461,7 +462,8 @@ PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& cha
   std::ostringstream dataStream;
   dataStream << GetStreamParameters() << "&format=json&timeshift=10800";
 
-  std::string jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + "/zapi/watch/live/" + ownChannel->cid, dataStream.str());
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/live/" + ownChannel->cid, dataStream.str(), statusCode);
 
   std::string strUrl = GetStreamUrl(jsonString, properties);
   if (!strUrl.empty())
@@ -558,8 +560,8 @@ bool ZatData::ParseRecordingsTimers(const Value& recordings, std::map<int, ZatRe
       ++recordingsItr;
       bucketSize--;
     }
-
-    std::string jsonString = HttpGetCachedWithRetry(urlStream.str(), 60 * 60 * 24 * 30);
+    int statusCode;
+    std::string jsonString = m_httpClient->HttpGetCached(urlStream.str(), 60 * 60 * 24 * 30, statusCode);
     Document detailDoc;
     detailDoc.Parse(jsonString.c_str());
     if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
@@ -609,7 +611,8 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     return PVR_ERROR_SERVER_ERROR;
   }
   
-  std::string jsonString = HttpGetWithRetry(m_session->GetProviderUrl() + "/zapi/v2/playlist");
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpGet(m_session->GetProviderUrl() + "/zapi/v2/playlist", statusCode);
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -718,8 +721,8 @@ PVR_ERROR ZatData::GetTimersAmount(int& amount)
   {
     return PVR_ERROR_SERVER_ERROR;
   }
-  
-  std::string jsonString = HttpGetCachedWithRetry(m_session->GetProviderUrl() + "/zapi/v2/playlist", 60);
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpGetCached(m_session->GetProviderUrl() + "/zapi/v2/playlist", 60, statusCode);
 
   time_t current_time;
   time(&current_time);
@@ -772,9 +775,10 @@ PVR_ERROR ZatData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDel
 {
   bool series = timer.GetTimerType() == 2;
   int recordingId = -1;
+  int statusCode;
   
   if (series) {  
-    std::string jsonString = HttpGetWithRetry(m_session->GetProviderUrl() + "/zapi/v2/playlist");
+    std::string jsonString = m_httpClient->HttpGet(m_session->GetProviderUrl() + "/zapi/v2/playlist", statusCode);
 
     Document doc;
     doc.Parse(jsonString.c_str());
@@ -805,12 +809,14 @@ PVR_ERROR ZatData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDel
     recordingId = timer.GetClientIndex();
   }
   
+  kodi::Log(ADDON_LOG_DEBUG, "Delete timer %d", recordingId);
+  
   std::ostringstream dataStream;
   dataStream << "remove_recording=false&recording_id=" << recordingId << "";
 
   std::string path = series ? "/zapi/series_recording/remove" : "/zapi/playlist/remove";
 
-  std::string jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + path, dataStream.str());
+  std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + path, dataStream.str(), statusCode);
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -833,8 +839,8 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
   {
     return PVR_ERROR_SERVER_ERROR;
   }
-  
-  std::string jsonString = HttpGetWithRetry(m_session->GetProviderUrl() + "/zapi/v2/playlist");
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpGet(m_session->GetProviderUrl() + "/zapi/v2/playlist", statusCode);
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -931,7 +937,8 @@ PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
     return PVR_ERROR_SERVER_ERROR;
   }
   
-  std::string jsonString = HttpGetCachedWithRetry(m_session->GetProviderUrl() + "/zapi/v2/playlist", 60);
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpGetCached(m_session->GetProviderUrl() + "/zapi/v2/playlist", 60, statusCode);
 
   time_t current_time;
   time(&current_time);
@@ -990,7 +997,8 @@ PVR_ERROR ZatData::GetRecordingStreamProperties(const kodi::addon::PVRRecording&
   std::ostringstream dataStream;
   dataStream << GetStreamParameters();
 
-  std::string jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + "/zapi/watch/recording/" + recording.GetRecordingId(), dataStream.str());
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/recording/" + recording.GetRecordingId(), dataStream.str(), statusCode);
 
   std::string strUrl = GetStreamUrl(jsonString, properties);
   PVR_ERROR ret = PVR_ERROR_FAILED;
@@ -1008,8 +1016,8 @@ bool ZatData::Record(int programId, bool series)
   std::ostringstream dataStream;
   
   dataStream << "program_id=" << programId << "&series_force=False&series=" << (series ? "True" : "False");
-  
-  std::string jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + "/zapi/playlist/program", dataStream.str());
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/playlist/program", dataStream.str(), statusCode);
   Document doc;
   doc.Parse(jsonString.c_str());
   return !doc.GetParseError() && doc["success"].GetBool();
@@ -1017,10 +1025,12 @@ bool ZatData::Record(int programId, bool series)
 
 PVR_ERROR ZatData::DeleteRecording(const kodi::addon::PVRRecording& recording)
 {
+  kodi::Log(ADDON_LOG_DEBUG, "Delete recording %s", recording.GetRecordingId().c_str());
   std::ostringstream dataStream;
   dataStream << "recording_id=" << recording.GetRecordingId() << "";
 
-  std::string jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + "/zapi/playlist/remove", dataStream.str());
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/playlist/remove", dataStream.str(), statusCode);
 
   Document doc;
   doc.Parse(jsonString.c_str());
@@ -1120,7 +1130,8 @@ std::string ZatData::GetStreamUrlForProgram(const std::string& cid, int programI
 
   dataStream << GetStreamParameters();
   dataStream << "&pre_padding=0&post_padding=0";
-  jsonString = HttpPostWithRetry(m_session->GetProviderUrl() + "/zapi/v3/watch/replay/" + cid + "/" + std::to_string(programId), dataStream.str());
+  int statusCode;
+  jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/v3/watch/replay/" + cid + "/" + std::to_string(programId), dataStream.str(), statusCode);
 
   std::string strUrl = GetStreamUrl(jsonString, properties);
   return strUrl;
@@ -1144,27 +1155,6 @@ PVR_ERROR ZatData::GetRecordingEdl(const kodi::addon::PVRRecording& recording, s
   entry.SetType(PVR_EDL_TYPE_COMBREAK);
   edl.emplace_back(entry);
   return PVR_ERROR_NO_ERROR;
-}
-
-std::string ZatData::HttpGetWithRetry(std::string url) {
-  int statusCode;
-  std::string ret = m_httpClient->HttpGet(url, statusCode);
-  ret = m_httpClient->HttpGet(url, statusCode);
-  return ret;
-}
-
-std::string ZatData::HttpPostWithRetry(std::string url, const std::string& postData) {
-  int statusCode;
-  std::string ret = m_httpClient->HttpPost(url, postData, statusCode);
-  ret = m_httpClient->HttpPost(url, postData, statusCode);
-  return ret;
-}
-
-std::string ZatData::HttpGetCachedWithRetry(std::string url, time_t cacheDuration) {
-  int statusCode;
-  std::string ret = m_httpClient->HttpGetCached(url, cacheDuration, statusCode);
-  ret = m_httpClient->HttpGetCached(url, cacheDuration, statusCode);
-  return ret;
 }
 
 void ZatData::UpdateConnectionState(const std::string& connectionString, PVR_CONNECTION_STATE newState, const std::string& message) {
