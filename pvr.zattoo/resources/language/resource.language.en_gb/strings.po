@@ -221,3 +221,11 @@ msgctxt "#30201"
 msgid "Login failed!"
 msgstr ""
 
+msgctxt "#30202"
+msgid "Connected"
+msgstr ""
+
+msgctxt "#30203"
+msgid "Server not reachable!"
+msgstr ""
+

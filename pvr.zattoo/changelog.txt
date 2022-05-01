@@ -10,6 +10,16 @@ v20.0.0
  - Fix some compile warnings by depends build of rapidjson
  - Cleanup language texts in strings.po and addon.xml
  - Add german translation
+v19.7.14
+ - Fix duplicate requests
+ - This also fixes the error when deleting a recording
+v19.7.13
+ - Refactor session handling
+ - Revert: "Allow enabling/disabling directories for series recordings"
+v19.7.12
+ - Allow enabling/disabling directories for series recordings
+v19.7.11
+ - Put series recordings into directories 
 v19.7.10
  - Return error if addon is not connected
 v19.7.9

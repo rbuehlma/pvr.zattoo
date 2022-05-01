@@ -1,3 +1,4 @@
+#include <kodi/AddonBase.h>
 #include "RecordingsDB.h"
 
 const int DB_VERSION = 1;
@@ -36,6 +37,9 @@ RecordingsDB::~RecordingsDB() {
 bool RecordingsDB::MigrateDbIfRequired() {
   int currentVersion = GetVersion();
   while (currentVersion < DB_VERSION) {
+    if (currentVersion < 0) {
+      return false;
+    }
     switch (currentVersion) {
     case 0:
       if (!Migrate0To1()) {

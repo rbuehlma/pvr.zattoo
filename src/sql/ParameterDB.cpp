@@ -1,3 +1,4 @@
+#include <kodi/AddonBase.h>
 #include "ParameterDB.h"
 
 const int DB_VERSION = 1;
@@ -33,6 +34,9 @@ ParameterDB::~ParameterDB() {
 bool ParameterDB::MigrateDbIfRequired() {
   int currentVersion = GetVersion();
   while (currentVersion < DB_VERSION) {
+    if (currentVersion < 0) {
+      return false;
+    }
     switch (currentVersion) {
     case 0:
       if (!Migrate0To1()) {
