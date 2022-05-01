@@ -6,18 +6,17 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR})
 find_package(PkgConfig)
 find_package(Kodi REQUIRED)
 find_package(RapidJSON 1.0.2 REQUIRED)
+find_package(Sqlite3 REQUIRED)
 find_package(TinyXML2 REQUIRED)
 
 include_directories(${KODI_INCLUDE_DIR}
                     ${RAPIDJSON_INCLUDE_DIRS}
+                    ${SQLITE3_INCLUDE_DIRS}
                     ${TINYXML2_INCLUDE_DIRS}
-                    ${PROJECT_SOURCE_DIR}/lib
 )
 
-add_subdirectory(lib/sqlite)
-
-set(DEPLIBS ${TINYXML2_LIBRARIES} sqlite
-)
+set(DEPLIBS ${SQLITE3_LIBRARIES}
+            ${TINYXML2_LIBRARIES})
 
 set(ZATTOO_SOURCES
     src/sql/SQLConnection.cpp
