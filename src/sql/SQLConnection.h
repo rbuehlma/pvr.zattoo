@@ -1,7 +1,7 @@
 #pragma once
 
+#include <sqlite3.h>
 #include <string>
-#include "sqlite/sqlite3.h"
 
 class ProcessRowCallback {
 public:
