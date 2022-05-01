@@ -30,9 +30,9 @@ set(ZATTOO_SOURCES
     src/epg/EpgProvider.cpp
     src/epg/ZattooEpgProvider.cpp
     src/Utils.cpp
-    src/client.cpp
     src/Settings.cpp
     src/ZatData.cpp
+    src/Session.cpp
     src/UpdateThread.cpp
     src/categories.cpp
     src/md5.cpp
@@ -53,8 +53,8 @@ set(ZATTOO_HEADERS
     src/Utils.h
     src/ZatChannel.h
     src/ZatData.h
+    src/Session.h
     src/categories.h
-    src/client.h
     src/windows.h
     src/md5.h
     src/to_string.h
@@ -72,7 +72,7 @@ if ( MSVC )
 endif ( MSVC )
 
 addon_version(pvr.zattoo ZATTOO)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DZATTOO_VERSION=${ZATTOO_VERSION} -DKODI_VERSION=${kodiplatform_VERSION}")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DZATTOO_VERSION=${ZATTOO_VERSION} -DKODI_VERSION=${APP_VERSION_CODE}")
 
 build_addon(pvr.zattoo ZATTOO DEPLIBS)
 

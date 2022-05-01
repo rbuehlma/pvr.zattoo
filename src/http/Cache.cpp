@@ -1,5 +1,5 @@
+#include <kodi/AddonBase.h>
 #include "Cache.h"
-#include "../client.h"
 #include <kodi/Filesystem.h>
 #include "../Utils.h"
 #include "rapidjson/writer.h"

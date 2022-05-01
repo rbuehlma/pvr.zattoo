@@ -2,11 +2,11 @@
 #include "Cache.h"
 #include <random>
 #include "../md5.h"
-#include "../client.h"
+#include <kodi/AddonBase.h>
 
 static const std::string USER_AGENT = std::string("Kodi/")
     + std::string(STR(KODI_VERSION)) + std::string(" pvr.zattoo/")
-    + std::string(STR(ZATTOO_VERSION)) + std::string(" (Kodi PVR addon)");
+    + std::string(STR(ZATTOO_VERSION));
 
 HttpClient::HttpClient(ParameterDB *parameterDB):
   m_parameterDB(parameterDB)
@@ -126,6 +126,9 @@ std::string HttpClient::HttpRequest(const std::string& action, const std::string
 
   if (statusCode >= 400 || statusCode < 200) {
     kodi::Log(ADDON_LOG_ERROR, "Open URL failed with %i.", statusCode);
+    if (m_statusCodeHandler != nullptr) {
+      m_statusCodeHandler->ErrorStatusCode(statusCode);
+    }
     return "";
   }
   std::string sessionId = curl.GetCookie("beaker.session.id");

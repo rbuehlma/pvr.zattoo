@@ -6,6 +6,7 @@
  */
 
 #include "Settings.h"
+#include <kodi/General.h>
 
 bool CSettings::Load()
 {
@@ -27,7 +28,7 @@ bool CSettings::Load()
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR,
-              "Couldn't get 'useradio' setting, falling back to 'false' as default");
+              "Couldn't get 'favoritesonly' setting, falling back to 'false' as default");
     m_zatFavoritesOnly = false;
   }
 
@@ -132,4 +133,16 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
   }
 
   return ADDON_STATUS_OK;
+}
+
+bool CSettings::VerifySettings() {
+  std::string username = GetZatUsername();
+  std::string password = GetZatPassword();
+  if (username.empty() || password.empty()) {
+    kodi::Log(ADDON_LOG_INFO, "Username or password not set.");
+    kodi::QueueNotification(QUEUE_WARNING, "", kodi::addon::GetLocalizedString(30200));
+
+    return false;
+  }
+  return true;
 }

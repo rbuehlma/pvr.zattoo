@@ -1,3 +1,4 @@
+#include <kodi/AddonBase.h>
 #include "EpgDB.h"
 
 const int DB_VERSION = 3;
@@ -75,6 +76,9 @@ EpgDB::~EpgDB() {
 bool EpgDB::MigrateDbIfRequired() {
   int currentVersion = GetVersion();
   while (currentVersion < DB_VERSION) {
+    if (currentVersion < 0) {
+      return false;
+    }
     switch (currentVersion) {
     case 0:
       if (!Migrate0To1()) {

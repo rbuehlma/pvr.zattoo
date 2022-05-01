@@ -23,6 +23,7 @@ public:
 
   bool Load();
   ADDON_STATUS SetSetting(const std::string& settingName, const kodi::addon::CSettingValue& settingValue);
+  bool VerifySettings();
 
   const std::string& GetZatUsername() const { return m_zatUsername; }
   const std::string& GetZatPassword() const { return m_zatPassword; }

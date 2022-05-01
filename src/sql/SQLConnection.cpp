@@ -1,3 +1,4 @@
+#include <kodi/AddonBase.h>
 #include "SQLConnection.h"
 
 class ProcessSingleIntRowCallback : public ProcessRowCallback {

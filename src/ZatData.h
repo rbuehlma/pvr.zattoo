@@ -5,11 +5,13 @@
 #include <mutex>
 #include "rapidjson/document.h"
 #include "ZatChannel.h"
+#include "Settings.h"
 #include "sql/EpgDB.h"
 #include "sql/RecordingsDB.h"
 #include "sql/ParameterDB.h"
 #include "http/HttpClient.h"
 #include "epg/EpgProvider.h"
+#include "Session.h"
 
 class CZattooTVAddon;
 
@@ -25,13 +27,12 @@ struct PVRZattooChannelGroup
   std::vector<ZatChannel> channels;
 };
 
-class ATTR_DLL_LOCAL ZatData : public kodi::addon::CInstancePVRClient
+class ATTR_DLL_LOCAL ZatData :  public kodi::addon::CAddonBase,
+                                public kodi::addon::CInstancePVRClient
 {
 public:
-  ZatData(const kodi::addon::IInstanceInfo& instance,
-      const std::string& username, const std::string& password, bool favoritesOnly,
-      const STREAM_TYPE& streamType, bool enableDolby, int provider,
-      const std::string& parentalPin);
+  ADDON_STATUS Create() override;
+  ZatData();
   ~ZatData();
   bool Initialize();
   bool LoadChannels();
@@ -69,48 +70,35 @@ public:
   PVR_ERROR IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable) override;
   PVR_ERROR GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, std::vector<kodi::addon::PVRStreamProperty>& properties) override;
   PVR_ERROR GetEPGTagEdl(const kodi::addon::PVREPGTag& tag, std::vector<kodi::addon::PVREDLEntry>& edl) override;
+  PVR_ERROR GetRecordingEdl(const kodi::addon::PVRRecording& recording, std::vector<kodi::addon::PVREDLEntry>& edl) override;  
 
   int GetRecallSeconds(const kodi::addon::PVREPGTag& tag);
   void GetEPGForChannelAsync(int uniqueChannelId, time_t iStart, time_t iEnd);
   bool RecordingEnabled()
   {
-    return m_recordingEnabled;
+    return m_session->IsRecordingEnabled();
   }
+  void UpdateConnectionState(const std::string& connectionString, PVR_CONNECTION_STATE newState, const std::string& message);
+  bool SessionInitialized();
+  ADDON_STATUS SetSetting(const std::string& settingName,
+                          const kodi::addon::CSettingValue& settingValue) override;
 
 private:
-  bool m_initDone = false;
-  bool m_favoritesOnly;
-  bool m_enableDolby;
-  STREAM_TYPE m_streamType;
-  std::string m_username;
-  std::string m_password;
-  std::string m_appToken;
-  std::string m_powerHash;
-  std::string m_countryCode;
-  std::string m_serviceRegionCountry;
-  bool m_recallEnabled = false;
-  bool m_recordingEnabled = false;
   std::vector<PVRZattooChannelGroup> m_channelGroups;
   std::map<int, ZatChannel> m_channelsByUid;
   std::map<std::string, ZatChannel> m_channelsByCid;
   std::map<std::string, ZatChannel> m_visibleChannelsByCid;
   std::vector<UpdateThread*> m_updateThreads;
   Categories m_categories;
-  std::string m_providerUrl;
-  std::string m_parentalPin;
   EpgDB *m_epgDB;
   RecordingsDB *m_recordingsDB;
   ParameterDB *m_parameterDB;
   HttpClient *m_httpClient;
   EpgProvider *m_epgProvider = nullptr;
+  CSettings* m_settings;
+  Session *m_session;
 
-  bool LoadAppId();
-  bool LoadAppTokenFromTokenJson(std::string tokenJsonPath);
-  bool LoadAppTokenFromFile();
-  bool LoadAppTokenFromJson(std::string html);
-  bool LoadAppTokenFromHtml(std::string html);
   bool ReadDataJson();
-  bool SendHello();
   rapidjson::Document Login();
   bool InitSession(bool isReinit);
   bool ReinitSession();
@@ -127,7 +115,4 @@ private:
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties, const std::string& url);
   std::string GetStreamUrlForProgram(const std::string& cid, int programId, std::vector<kodi::addon::PVRStreamProperty>& properties);
   bool TryToReinitIf403(int statusCode);
-  std::string HttpGetWithRetry(std::string url);
-  std::string HttpPostWithRetry(std::string url, const std::string& postData);
-  std::string HttpGetCachedWithRetry(std::string url, time_t cacheDuration);
 };
