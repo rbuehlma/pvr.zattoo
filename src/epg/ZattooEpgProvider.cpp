@@ -169,7 +169,9 @@ void ZattooEpgProvider::SendEpgDBInfo(EpgDBInfo &epgDBInfo) {
     tag.SetGenreDescription(genreStr);
   }
 
-  SendEpg(tag);
+  if (m_detailsThreadRunning) {
+    SendEpg(tag);  
+  }
 }
 
 void ZattooEpgProvider::CleanupAlreadyLoaded() {
@@ -277,7 +279,14 @@ void ZattooEpgProvider::DetailsThread()
       }
       m_epgDB.EndTransaction();
     }
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    for (int i = 0; i < 100; i++) {
+      if (!m_detailsThreadRunning) {
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
   }
+  kodi::Log(ADDON_LOG_DEBUG, "Details thread stopped");
 }
 

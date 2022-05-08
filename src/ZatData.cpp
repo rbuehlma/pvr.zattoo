@@ -236,7 +236,7 @@ ZatData::ZatData() :
 
 ZatData::~ZatData()
 {
-  for (auto const &updateThread : m_updateThreads)
+  for (auto updateThread : m_updateThreads)
   {
     delete updateThread;
   }
@@ -1186,9 +1186,6 @@ ADDON_STATUS ZatData::SetSetting(const std::string& settingName, const kodi::CSe
   ADDON_STATUS result = m_settings->SetSetting(settingName, settingValue);
   if (!m_settings->VerifySettings()) {
     return ADDON_STATUS_NEED_SETTINGS;
-  }
-  if (result == ADDON_STATUS_OK) {
-    m_session->Reset();
   }
   return result;
 }

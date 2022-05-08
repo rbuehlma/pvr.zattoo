@@ -66,7 +66,7 @@ void UpdateThread::Process()
       Cache::Cleanup();
     }
 
-    while (!loadEpgQueue.empty())
+    while (!loadEpgQueue.empty() && m_running)
     {
       std::unique_lock<std::mutex> lock(mutex);
       if (!loadEpgQueue.empty())
