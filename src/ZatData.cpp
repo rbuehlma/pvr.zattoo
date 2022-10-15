@@ -1139,21 +1139,25 @@ std::string ZatData::GetStreamUrlForProgram(const std::string& cid, int programI
 
 PVR_ERROR ZatData::GetEPGTagEdl(const kodi::addon::PVREPGTag& tag, std::vector<kodi::addon::PVREDLEntry>& edl)
 {
-  kodi::addon::PVREDLEntry entry;
-  entry.SetStart(0);
-  entry.SetEnd(300000);
-  entry.SetType(PVR_EDL_TYPE_COMBREAK);
-  edl.emplace_back(entry);
+  if (m_settings->GetSkipStartOfProgramme()) {
+    kodi::addon::PVREDLEntry entry;
+    entry.SetStart(0);
+    entry.SetEnd(300000);
+    entry.SetType(PVR_EDL_TYPE_COMBREAK);
+    edl.emplace_back(entry);
+  }
   return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR ZatData::GetRecordingEdl(const kodi::addon::PVRRecording& recording, std::vector<kodi::addon::PVREDLEntry>& edl)
 {
-  kodi::addon::PVREDLEntry entry;
-  entry.SetStart(0);
-  entry.SetEnd(300000);
-  entry.SetType(PVR_EDL_TYPE_COMBREAK);
-  edl.emplace_back(entry);
+  if (m_settings->GetSkipStartOfProgramme()) {
+    kodi::addon::PVREDLEntry entry;
+    entry.SetStart(0);
+    entry.SetEnd(300000);
+    entry.SetType(PVR_EDL_TYPE_COMBREAK);
+    edl.emplace_back(entry);
+  }
   return PVR_ERROR_NO_ERROR;
 }
 

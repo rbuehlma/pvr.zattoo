@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="pvr.zattoo"
-       version="19.7.15"
+       version="19.7.16"
        name="Zattoo PVR Client"
        provider-name="trummerjo,rbuehlma">
   <requires>
@@ -33,6 +33,8 @@
       <fanart>fanart.jpg</fanart>
     </assets>
     <news>
+v19.7.16
+ - Add setting to enable/disable skip of start of programme
 v19.7.15
  - Fix crash on settings update
 v19.7.14

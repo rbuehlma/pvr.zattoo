@@ -48,6 +48,11 @@ msgctxt "#30010"
 msgid "Enable Dolby"
 msgstr "Enable support for dolby"
 
+msgctxt "#30011"
+msgid "Skip to start of program"
+msgstr "Skip 5 minutes (to actual start time) for replay and recordings"
+
+
 msgctxt "#30014"
 msgid "Zattoo"
 msgstr ""
