@@ -84,6 +84,10 @@ msgctxt "#30011"
 msgid "Enable support for dolby."
 msgstr ""
 
+msgctxt "#30012"
+msgid "Skip to start of program"
+msgstr "Skip 5 minutes (to actual start time) for replay and recordings"
+
 #. Settings category label
 #: pvr.zattoo/resources/settings.xml
 msgctxt "#30014"
