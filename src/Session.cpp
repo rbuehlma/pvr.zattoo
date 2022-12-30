@@ -36,7 +36,11 @@ ADDON_STATUS Session::Start()
 void Session::LoginThread() {
   while (m_running) {
     
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    if (!m_running) {
+      return;
+    }
     
     if (m_isConnected) {
       continue;

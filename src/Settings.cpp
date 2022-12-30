@@ -40,6 +40,14 @@ bool CSettings::Load()
     m_zatEnableDolby = true;
   }
 
+  if (!kodi::addon::CheckSettingBoolean("skipStart", m_skipStartOfProgramme))
+  {
+    /* If setting is unknown fallback to defaults */
+    kodi::Log(ADDON_LOG_ERROR,
+              "Couldn't get 'skipStart' setting, falling back to 'true' as default");
+    m_skipStartOfProgramme = true;
+  }
+
   if (!kodi::addon::CheckSettingEnum<STREAM_TYPE>("streamtype", m_streamType))
   {
     /* If setting is unknown fallback to defaults */
@@ -101,6 +109,15 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     if (m_zatEnableDolby != settingValue.GetBoolean())
     {
       m_zatEnableDolby = settingValue.GetBoolean();
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+  else if (settingName == "skipStart")
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'skipStart' from %u to %u", m_skipStartOfProgramme, settingValue.GetBoolean());
+    if (m_skipStartOfProgramme != settingValue.GetBoolean())
+    {
+      m_skipStartOfProgramme = settingValue.GetBoolean();
       return ADDON_STATUS_NEED_RESTART;
     }
   }

@@ -7,6 +7,7 @@
 #include "Settings.h"
 
 #include <thread>
+#include <atomic>
 
 class ZatData;
 
@@ -59,7 +60,7 @@ private:
   ParameterDB *m_parameterDB;
   time_t m_nextLoginAttempt = 0;
   bool m_isConnected = false;
-  bool m_running = false;
+  std::atomic<bool> m_running = {false};
   std::thread m_thread;
   std::string m_appToken;
   std::string m_powerHash;
