@@ -1,3 +1,5 @@
+v20.3.3
+- Fix segfault during addon creation
 v20.3.2
 - Trigger addon build after release of Kodi Nexus
 v20.3.1

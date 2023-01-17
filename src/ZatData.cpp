@@ -217,7 +217,6 @@ PVR_ERROR ZatData::GetChannelGroupsAmount(int& amount)
 ZatData::ZatData() :
   m_settings(new CSettings())
 {
-  UpdateConnectionState("Initializing", PVR_CONNECTION_STATE_CONNECTING, "");
   m_settings->Load();
   m_epgDB = new EpgDB(UserPath());
   m_recordingsDB = new RecordingsDB(UserPath());
@@ -225,6 +224,8 @@ ZatData::ZatData() :
   m_httpClient = new HttpClient(m_parameterDB);
   m_session = new Session(m_httpClient, this, m_settings, m_parameterDB);
   m_httpClient->SetStatusCodeHandler(m_session);
+  
+  UpdateConnectionState("Initializing", PVR_CONNECTION_STATE_CONNECTING, "");
   
   ReadDataJson();
   
