@@ -70,6 +70,8 @@ void Session::LoginThread() {
     else
     {
       kodi::Log(ADDON_LOG_ERROR, "Login failed");
+      m_nextLoginAttempt = std::time(0) + 3600;
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30201));
     }
   }
 }
