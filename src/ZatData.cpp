@@ -636,16 +636,6 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     const Value& recording = (*itr);
     int programId = recording["program_id"].GetInt();
 
-    std::string cid = Utils::JsonStringOrEmpty(recording, "cid");
-    auto iterator = m_channelsByCid.find(cid);
-    if (iterator == m_channelsByCid.end())
-    {
-      kodi::Log(ADDON_LOG_ERROR, "Channel %s not found for recording: %i",
-          cid.c_str(), programId);
-      continue;
-    }
-    ZatChannel channel = iterator->second;
-
     auto detailIterator = detailsById.find(programId);
     bool hasDetails = detailIterator != detailsById.end();
 
@@ -672,7 +662,14 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
       tag.SetState(PVR_TIMER_STATE_SCHEDULED);
       tag.SetTimerType(1);
       tag.SetEPGUid(static_cast<unsigned int>(recording["program_id"].GetInt()));
-      tag.SetClientChannelUid(channel.iUniqueId);
+      std::string cid = Utils::JsonStringOrEmpty(recording, "cid");
+      auto iterator = m_channelsByCid.find(cid);
+      if (iterator != m_channelsByCid.end())
+      {
+        ZatChannel channel = iterator->second;
+        tag.SetClientChannelUid(channel.iUniqueId);
+      }
+      
       if (genre)
       {
         tag.SetGenreSubType(genre & 0x0F);
@@ -691,25 +688,21 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     {
       const Value& recording = (*itr);
       int tvSeriesId = recording["tv_series_id"].GetInt();
-  
-      std::string cid = Utils::JsonStringOrEmpty(recording, "cid");
-      auto iterator = m_channelsByCid.find(cid);
-      if (iterator == m_channelsByCid.end())
-      {
-        kodi::Log(ADDON_LOG_ERROR, "Channel %s not found for series recording: %i",
-            cid.c_str(), tvSeriesId);
-        continue;
-      }
-      ZatChannel channel = iterator->second;
-    
-      //genre
+      
       kodi::addon::PVRTimer tag;
 
+      std::string cid = Utils::JsonStringOrEmpty(recording, "cid");
+      auto iterator = m_channelsByCid.find(cid);
+      if (iterator != m_channelsByCid.end())
+      {
+        ZatChannel channel = iterator->second;
+        tag.SetClientChannelUid(channel.iUniqueId);
+      }
+      
       tag.SetClientIndex(static_cast<unsigned int>(tvSeriesId));
       tag.SetTitle(Utils::JsonStringOrEmpty(recording, "title"));
       tag.SetState(PVR_TIMER_STATE_SCHEDULED);
       tag.SetTimerType(2);
-      tag.SetClientChannelUid(channel.iUniqueId);
       results.Add(tag);
     }
   }
@@ -864,16 +857,6 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
     const Value& recording = (*itr);
     int programId = recording["program_id"].GetInt();
 
-    std::string cid = Utils::JsonStringOrEmpty(recording, "cid");
-    auto iterator = m_channelsByCid.find(cid);
-    if (iterator == m_channelsByCid.end())
-    {
-      kodi::Log(ADDON_LOG_ERROR, "Channel %s not found for recording: %i",
-          cid.c_str(), programId);
-      continue;
-    }
-    ZatChannel channel = iterator->second;
-
     auto detailIterator = detailsById.find(programId);
     bool hasDetails = detailIterator != detailsById.end();
 
@@ -900,8 +883,18 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
       std::string imageToken = Utils::JsonStringOrEmpty(recording, "image_token");
       std::string imageUrl = Utils::GetImageUrl(imageToken);;
       tag.SetIconPath(imageUrl);
-      tag.SetChannelUid(channel.iUniqueId);
-      tag.SetChannelName(channel.name);
+
+      std::string cid = Utils::JsonStringOrEmpty(recording, "cid");
+      auto iterator = m_channelsByCid.find(cid);
+      if (iterator != m_channelsByCid.end())
+      {
+        ZatChannel channel = iterator->second;
+        tag.SetChannelUid(channel.iUniqueId);
+        tag.SetChannelName(channel.name);
+      } else {
+        tag.SetChannelName(cid);
+      }      
+      
       time_t endTime = Utils::StringToTime(
           Utils::JsonStringOrEmpty(recording, "end").c_str());
       tag.SetRecordingTime(startTime);
