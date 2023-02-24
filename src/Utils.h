@@ -22,4 +22,5 @@ public:
   static std::string JsonStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName);
   static int JsonIntOrZero(const rapidjson::Value& jsonValue, const char* fieldName);
   static bool JsonBoolOrFalse(const rapidjson::Value& jsonValue, const char* fieldName);
+  static bool RunsOnLinux();
 };

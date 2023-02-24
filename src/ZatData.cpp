@@ -146,7 +146,8 @@ bool ZatData::LoadChannels()
     {
       const Value& qualityItem = (*itr2);
       std::string avail = Utils::JsonStringOrEmpty(qualityItem, "availability");
-      if (avail == "available")
+      bool drmRequired = qualityItem.HasMember("drm_required") ? qualityItem["drm_required"].GetBool() : false;
+      if (avail == "available" && (!drmRequired || !RequireChannelWithoutDRM()))
       {
         ZatChannel channel;
         channel.name = Utils::JsonStringOrEmpty(qualityItem, "title");
@@ -160,11 +161,13 @@ bool ZatData::LoadChannels()
         channel.recordingEnabled =
             channelItem.HasMember("recording") ?
                 channelItem["recording"].GetBool() : false;
+        channel.quality = Utils::JsonStringOrEmpty(qualityItem, "level");
         PVRZattooChannelGroup &group = m_channelGroups[channelItem["group_index"].GetInt()];
         group.channels.insert(group.channels.end(), channel);
         allChannels[cid] = channel;
         m_channelsByCid[channel.cid] = channel;
         m_channelsByUid[channel.iUniqueId] = channel;
+        kodi::Log(ADDON_LOG_ERROR, "Failed to load channels, %s:%s", channel.cid.c_str(), channel.quality.c_str());
         break;
       }
     }
@@ -462,7 +465,7 @@ PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& cha
   kodi::Log(ADDON_LOG_DEBUG, "Get live url for channel %s", ownChannel->cid.c_str());
 
   std::ostringstream dataStream;
-  dataStream << GetStreamParameters() << "&format=json&timeshift=10800";
+  dataStream << GetStreamParameters(ownChannel->cid) << "&format=json&timeshift=10800";
 
   int statusCode;
   std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/live/" + ownChannel->cid, dataStream.str(), statusCode);
@@ -789,7 +792,7 @@ PVR_ERROR ZatData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDel
     {
       const Value& recording = (*itr);
       
-      int seriesId = recording["tv_series_id"].GetInt();
+      unsigned int seriesId = recording["tv_series_id"].GetInt();
       
       if (seriesId == timer.GetClientIndex()) {
         recordingId = recording["id"].GetInt();
@@ -962,15 +965,28 @@ PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
   return PVR_ERROR_NO_ERROR;
 }
 
-std::string ZatData::GetStreamParameters() {
+std::string ZatData::GetStreamParameters(const std::string& cid) {
   std::string params = m_settings->GetZatEnableDolby() ? "&enable_eac3=true" : "";
   params += "&stream_type=" + GetStreamTypeString();
 
   if (!m_settings->GetParentalPin().empty()) {
     params += "&youth_protection_pin=" + m_settings->GetParentalPin();
   }
-
+  
+  auto iterator = m_channelsByCid.find(cid);
+  if (iterator != m_channelsByCid.end())
+  {
+    ZatChannel channel = iterator->second;
+    if (!channel.quality.empty()) {
+      params += "&quality=" + channel.quality;
+    }
+  }
+   
   return params;
+}
+
+bool ZatData::RequireChannelWithoutDRM() {
+  return m_session->GetServiceRegionCountry() == "CH" && Utils::RunsOnLinux();
 }
 
 std::string ZatData::GetStreamTypeString() {
@@ -988,9 +1004,9 @@ PVR_ERROR ZatData::GetRecordingStreamProperties(const kodi::addon::PVRRecording&
                                                 std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
   kodi::Log(ADDON_LOG_DEBUG, "Get url for recording %s", recording.GetRecordingId().c_str());
-
+  
   std::ostringstream dataStream;
-  dataStream << GetStreamParameters();
+  dataStream << GetStreamParameters("");
 
   int statusCode;
   std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/recording/" + recording.GetRecordingId(), dataStream.str(), statusCode);
@@ -1123,7 +1139,7 @@ std::string ZatData::GetStreamUrlForProgram(const std::string& cid, int programI
 
   kodi::Log(ADDON_LOG_DEBUG, "Get timeshift url for channel %s and program %i", cid.c_str(), programId);
 
-  dataStream << GetStreamParameters();
+  dataStream << GetStreamParameters(cid);
   dataStream << "&pre_padding=0&post_padding=0";
   int statusCode;
   jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/v3/watch/replay/" + cid + "/" + std::to_string(programId), dataStream.str(), statusCode);

@@ -106,7 +106,8 @@ private:
   PVRZattooChannelGroup* FindGroup(const std::string& strName);
   std::string GetStreamTypeString();
   std::string GetStreamUrl(std::string& jsonString, std::vector<kodi::addon::PVRStreamProperty>& properties);
-  std::string GetStreamParameters();
+  std::string GetStreamParameters(const std::string& cid);
+  bool RequireChannelWithoutDRM();
   bool ParseRecordingsTimers(const rapidjson::Value& recordings, std::map<int, ZatRecordingDetails>& detailsById);
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
   bool Record(int programId, bool series);
