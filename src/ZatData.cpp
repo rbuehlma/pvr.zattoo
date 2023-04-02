@@ -6,7 +6,6 @@
 #include <ctime>
 #include <utility>
 #include "Utils.h"
-#include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include <kodi/Filesystem.h>
@@ -139,38 +138,49 @@ bool ZatData::LoadChannels()
   for (Value::ConstValueIterator itr1 = channels.Begin();
       itr1 != channels.End(); ++itr1)
   {
+    
     const Value& channelItem = (*itr1);
+    
+    ZatChannel channel;
+    std::string cid = Utils::JsonStringOrEmpty(channelItem, "cid");
+    channel.iUniqueId = Utils::GetChannelId(cid.c_str());
+    channel.cid = cid;
+    channel.iChannelNumber = ++channelNumber;
+    channel.recordingEnabled =
+        channelItem.HasMember("recording") ?
+            channelItem["recording"].GetBool() : false;
+    
     const Value& qualities = channelItem["qualities"];
     for (Value::ConstValueIterator itr2 = qualities.Begin();
         itr2 != qualities.End(); ++itr2)
     {
       const Value& qualityItem = (*itr2);
       std::string avail = Utils::JsonStringOrEmpty(qualityItem, "availability");
+      if (avail != "available") {
+        continue;
+      }
       bool drmRequired = qualityItem.HasMember("drm_required") ? qualityItem["drm_required"].GetBool() : false;
-      if (avail == "available" && (!drmRequired || !RequireChannelWithoutDRM()))
-      {
-        ZatChannel channel;
-        channel.name = Utils::JsonStringOrEmpty(qualityItem, "title");
-        std::string cid = Utils::JsonStringOrEmpty(channelItem, "cid");
-        channel.iUniqueId = Utils::GetChannelId(cid.c_str());
-        channel.cid = cid;
-        channel.iChannelNumber = ++channelNumber;
-        channel.strLogoPath = "http://logos.zattic.com";
-        channel.strLogoPath.append(
-            Utils::JsonStringOrEmpty(qualityItem, "logo_white_84"));
-        channel.recordingEnabled =
-            channelItem.HasMember("recording") ?
-                channelItem["recording"].GetBool() : false;
-        channel.quality = Utils::JsonStringOrEmpty(qualityItem, "level");
-        PVRZattooChannelGroup &group = m_channelGroups[channelItem["group_index"].GetInt()];
-        group.channels.insert(group.channels.end(), channel);
-        allChannels[cid] = channel;
-        m_channelsByCid[channel.cid] = channel;
-        m_channelsByUid[channel.iUniqueId] = channel;
-        kodi::Log(ADDON_LOG_ERROR, "Failed to load channels, %s:%s", channel.cid.c_str(), channel.quality.c_str());
-        break;
+      if (drmRequired) {
+        if (channel.qualityWithDrm.empty()) {
+          channel.qualityWithDrm = Utils::JsonStringOrEmpty(qualityItem, "level");
+          channel.name = Utils::JsonStringOrEmpty(qualityItem, "title");
+          channel.strLogoPath = "http://logos.zattic.com" + Utils::JsonStringOrEmpty(qualityItem, "logo_white_84");
+        }
+      } else {
+        if (channel.qualityWithoutDrm.empty()) {
+          channel.qualityWithoutDrm = Utils::JsonStringOrEmpty(qualityItem, "level");
+          if (channel.name.empty()) {
+            channel.name = Utils::JsonStringOrEmpty(qualityItem, "title");
+            channel.strLogoPath = "http://logos.zattic.com" + Utils::JsonStringOrEmpty(qualityItem, "logo_white_84");
+          }
+        }  
       }
     }
+    PVRZattooChannelGroup &group = m_channelGroups[channelItem["group_index"].GetInt()];
+    group.channels.insert(group.channels.end(), channel);
+    allChannels[cid] = channel;
+    m_channelsByCid[channel.cid] = channel;
+    m_channelsByUid[channel.iUniqueId] = channel;
   }
 
   PVRZattooChannelGroup favGroup;
@@ -431,10 +441,12 @@ PVR_ERROR ZatData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& re
   return PVR_ERROR_NO_ERROR;
 }
 
-std::string ZatData::GetStreamUrl(std::string& jsonString, std::vector<kodi::addon::PVRStreamProperty>& properties) {
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc.HasMember("stream"))
+bool ZatData::IsDrmLimitApplied(Document& doc) {
+  return doc.HasMember("drm_limit_applied") && doc["drm_limit_applied"].GetBool();
+}
+
+std::string ZatData::GetStreamUrl(Document& doc, std::vector<kodi::addon::PVRStreamProperty>& properties) {
+  if (!doc.HasMember("stream"))
   {
     return "";
   }
@@ -463,14 +475,31 @@ PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& cha
 
   ZatChannel* ownChannel = FindChannel(channel.GetUniqueId());
   kodi::Log(ADDON_LOG_DEBUG, "Get live url for channel %s", ownChannel->cid.c_str());
+  
+  bool withoutDrm = false;
+  Document doc;
+  
+  while (true) {
+    std::ostringstream dataStream;
+    dataStream << GetStreamParameters(ownChannel->cid, withoutDrm) << "&format=json&timeshift=10800";
+    int statusCode;
+    std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/live/" + ownChannel->cid, dataStream.str(), statusCode);
+   
+    doc.Parse(jsonString.c_str());
+    if (doc.GetParseError())
+    {
+      return ret;
+    }
 
-  std::ostringstream dataStream;
-  dataStream << GetStreamParameters(ownChannel->cid) << "&format=json&timeshift=10800";
+    if (withoutDrm || !RequireChannelWithoutDRM() || !IsDrmLimitApplied(doc)) {
+      break;
+    }
+    withoutDrm = true;
+    doc.SetNull();
+    doc.GetAllocator().Clear();
+  }
 
-  int statusCode;
-  std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/live/" + ownChannel->cid, dataStream.str(), statusCode);
-
-  std::string strUrl = GetStreamUrl(jsonString, properties);
+  std::string strUrl = GetStreamUrl(doc, properties);
   if (!strUrl.empty())
   {
     SetStreamProperties(properties, strUrl);
@@ -965,35 +994,48 @@ PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
   return PVR_ERROR_NO_ERROR;
 }
 
-std::string ZatData::GetStreamParameters(const std::string& cid) {
+std::string ZatData::GetStreamParameters(const std::string& cid, bool withoutDrm) {
   std::string params = m_settings->GetZatEnableDolby() ? "&enable_eac3=true" : "";
-  params += "&stream_type=" + GetStreamTypeString();
-
-  if (!m_settings->GetParentalPin().empty()) {
-    params += "&youth_protection_pin=" + m_settings->GetParentalPin();
-  }
   
   auto iterator = m_channelsByCid.find(cid);
   if (iterator != m_channelsByCid.end())
   {
     ZatChannel channel = iterator->second;
-    if (!channel.quality.empty()) {
-      params += "&quality=" + channel.quality;
+    if (channel.qualityWithoutDrm == channel.qualityWithDrm || channel.qualityWithDrm.empty()) {
+      withoutDrm = true;
     }
+    if (withoutDrm) {
+      if (!channel.qualityWithoutDrm.empty()) {
+        params += "&quality=" + channel.qualityWithoutDrm;
+      }
+    } else {
+      if (!channel.qualityWithDrm.empty()) {
+        params += "&quality=" + channel.qualityWithDrm;
+      }
+    }
+  }
+  
+  params += "&stream_type=" + GetStreamTypeString(withoutDrm);
+
+  if (!m_settings->GetParentalPin().empty()) {
+    params += "&youth_protection_pin=" + m_settings->GetParentalPin();
   }
    
   return params;
 }
 
 bool ZatData::RequireChannelWithoutDRM() {
-  return m_session->GetServiceRegionCountry() == "CH" && Utils::RunsOnLinux();
+  return Utils::RunsOnLinux();
 }
 
-std::string ZatData::GetStreamTypeString() {
+std::string ZatData::GetStreamTypeString(bool withoutDrm) {
   switch (m_settings->GetStreamType()) {
     case HLS:
       return "hls7";
     case DASH_WIDEVINE:
+      if (withoutDrm) {
+        return "dash";
+      }
       return "dash_widevine";
     default:
       return "dash";
@@ -1004,15 +1046,40 @@ PVR_ERROR ZatData::GetRecordingStreamProperties(const kodi::addon::PVRRecording&
                                                 std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
   kodi::Log(ADDON_LOG_DEBUG, "Get url for recording %s", recording.GetRecordingId().c_str());
-  
-  std::ostringstream dataStream;
-  dataStream << GetStreamParameters("");
-
-  int statusCode;
-  std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/recording/" + recording.GetRecordingId(), dataStream.str(), statusCode);
-
-  std::string strUrl = GetStreamUrl(jsonString, properties);
   PVR_ERROR ret = PVR_ERROR_FAILED;
+  
+  std::string cid = "";
+  bool withoutDrm = RequireChannelWithoutDRM();
+  if (m_channelsByUid.count(recording.GetChannelUid())) {
+    ZatChannel& channel = m_channelsByUid[recording.GetChannelUid()];
+    cid = channel.cid;
+    withoutDrm = false;
+  }
+  
+  Document doc;
+  
+  while (true) {
+    std::ostringstream dataStream;
+    dataStream << GetStreamParameters(cid, withoutDrm);
+
+    int statusCode;
+    std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/recording/" + recording.GetRecordingId(), dataStream.str(), statusCode);
+    
+    doc.Parse(jsonString.c_str());
+    if (doc.GetParseError())
+    {
+      return ret;
+    }
+
+    if (withoutDrm || !RequireChannelWithoutDRM() || !IsDrmLimitApplied(doc)) {
+      break;
+    }
+    withoutDrm = true;
+    doc.SetNull();
+    doc.GetAllocator().Clear();
+  }
+                  
+  std::string strUrl = GetStreamUrl(doc, properties);
   if (!strUrl.empty())
   {
     SetStreamProperties(properties, strUrl);
@@ -1133,18 +1200,32 @@ PVR_ERROR ZatData::GetEPGTagStreamProperties(const kodi::addon::PVREPGTag& tag, 
 
 std::string ZatData::GetStreamUrlForProgram(const std::string& cid, int programId, std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
-  std::ostringstream dataStream;
-
-  std::string jsonString;
-
   kodi::Log(ADDON_LOG_DEBUG, "Get timeshift url for channel %s and program %i", cid.c_str(), programId);
+  
+  bool withoutDrm = false;
+  Document doc;
+  
+  while (true) {
+    std::ostringstream dataStream;
+    dataStream << GetStreamParameters(cid, withoutDrm);
+    dataStream << "&pre_padding=0&post_padding=0";
+    int statusCode;
+    std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/v3/watch/replay/" + cid + "/" + std::to_string(programId), dataStream.str(), statusCode);
+    doc.Parse(jsonString.c_str());
+    if (doc.GetParseError())
+    {
+      return "";
+    }
 
-  dataStream << GetStreamParameters(cid);
-  dataStream << "&pre_padding=0&post_padding=0";
-  int statusCode;
-  jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/v3/watch/replay/" + cid + "/" + std::to_string(programId), dataStream.str(), statusCode);
-
-  std::string strUrl = GetStreamUrl(jsonString, properties);
+    if (withoutDrm || !RequireChannelWithoutDRM() || !IsDrmLimitApplied(doc)) {
+      break;
+    }
+    withoutDrm = true;
+    doc.SetNull();
+    doc.GetAllocator().Clear();
+  }
+  
+  std::string strUrl = GetStreamUrl(doc, properties);
   return strUrl;
 }
 
@@ -1181,7 +1262,7 @@ bool ZatData::SessionInitialized()
   if (m_epgProvider) {
     delete m_epgProvider;
   }
-  kodi::Log(ADDON_LOG_INFO, "Stream type: %s", GetStreamTypeString().c_str());
+  kodi::Log(ADDON_LOG_INFO, "Stream type: %s", GetStreamTypeString(false).c_str());
   if (!LoadChannels()) {
     return false;
   }
