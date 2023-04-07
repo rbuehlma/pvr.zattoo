@@ -495,6 +495,7 @@ PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& cha
       break;
     }
     withoutDrm = true;
+    kodi::Log(ADDON_LOG_INFO, "Fallback to no-drm version.");
     doc.SetNull();
     doc.GetAllocator().Clear();
   }
@@ -1004,15 +1005,18 @@ std::string ZatData::GetStreamParameters(const std::string& cid, bool withoutDrm
     if (channel.qualityWithoutDrm == channel.qualityWithDrm || channel.qualityWithDrm.empty()) {
       withoutDrm = true;
     }
+    std::string quality;
     if (withoutDrm) {
       if (!channel.qualityWithoutDrm.empty()) {
-        params += "&quality=" + channel.qualityWithoutDrm;
+        quality = channel.qualityWithoutDrm;
       }
     } else {
       if (!channel.qualityWithDrm.empty()) {
-        params += "&quality=" + channel.qualityWithDrm;
+        quality = channel.qualityWithDrm;
       }
     }
+    params += "&quality=" + quality;
+    kodi::Log(ADDON_LOG_INFO, "Selected quality: %s", quality.c_str());
   }
   
   params += "&stream_type=" + GetStreamTypeString(withoutDrm);
@@ -1049,11 +1053,10 @@ PVR_ERROR ZatData::GetRecordingStreamProperties(const kodi::addon::PVRRecording&
   PVR_ERROR ret = PVR_ERROR_FAILED;
   
   std::string cid = "";
-  bool withoutDrm = RequireChannelWithoutDRM();
+  bool withoutDrm = false;
   if (m_channelsByUid.count(recording.GetChannelUid())) {
     ZatChannel& channel = m_channelsByUid[recording.GetChannelUid()];
     cid = channel.cid;
-    withoutDrm = false;
   }
   
   Document doc;
@@ -1075,6 +1078,7 @@ PVR_ERROR ZatData::GetRecordingStreamProperties(const kodi::addon::PVRRecording&
       break;
     }
     withoutDrm = true;
+    kodi::Log(ADDON_LOG_INFO, "Fallback to no-drm version.");
     doc.SetNull();
     doc.GetAllocator().Clear();
   }
@@ -1221,6 +1225,7 @@ std::string ZatData::GetStreamUrlForProgram(const std::string& cid, int programI
       break;
     }
     withoutDrm = true;
+    kodi::Log(ADDON_LOG_INFO, "Fallback to no-drm version.");
     doc.SetNull();
     doc.GetAllocator().Clear();
   }
