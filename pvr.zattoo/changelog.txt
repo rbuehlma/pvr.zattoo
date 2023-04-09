@@ -1,5 +1,13 @@
+v21.0.1
+- Merge changes from nexus
 v21.0.0
 - Initial version for Omega
+v20.3.7
+- Use dash without widevine if no DRM is required
+v20.3.6
+- Linux: Use channel quality without DRM requirement
+v20.3.5
+- Show recordings of removed channels
 v20.3.4
 - Show error if login fails
 v20.3.3

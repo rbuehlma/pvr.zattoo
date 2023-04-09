@@ -176,3 +176,12 @@ bool Utils::JsonBoolOrFalse(const rapidjson::Value& jsonValue, const char* field
 
   return false;
 }
+
+bool Utils::RunsOnLinux()
+{
+    #ifdef __linux__
+    return true;
+    #else
+    return false;
+    #endif
+}

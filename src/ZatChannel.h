@@ -8,6 +8,8 @@ struct ZatChannel
   int iUniqueId;
   int iChannelNumber;
   bool recordingEnabled;
+  std::string qualityWithDrm;
+  std::string qualityWithoutDrm;
   std::string name;
   std::string strLogoPath;
   std::string cid;
