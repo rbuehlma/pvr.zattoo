@@ -24,7 +24,6 @@ private:
   std::string HttpRequestToCurl(Curl &curl, const std::string& action, const std::string& url, const std::string& postData, int &statusCode);
   std::string GenerateUUID();
   std::string m_beakerSessionId;
-  std::string m_zattooSession;
   std::string m_uuid;
   ParameterDB *m_parameterDB;
   HttpStatusCodeHandler *m_statusCodeHandler = nullptr;

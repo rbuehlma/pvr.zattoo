@@ -14,7 +14,7 @@ HttpClient::HttpClient(ParameterDB *parameterDB):
   kodi::Log(ADDON_LOG_INFO, "Using useragent: %s", USER_AGENT.c_str());
 
   m_uuid = m_parameterDB->Get("uuid");
-  m_zattooSession = m_parameterDB->Get("zattooSession");  
+  m_beakerSessionId = m_parameterDB->Get("beakerSessionId");  
 }
 
 HttpClient::~HttpClient()
@@ -110,11 +110,6 @@ std::string HttpClient::HttpRequest(const std::string& action, const std::string
   {
     cookie += "uuid=" + m_uuid + "; ";
   }
-
-  if (!m_zattooSession.empty())
-  {
-    cookie += "zattoo.session=" + m_zattooSession + "; ";
-  }
   
   if (!cookie.empty()) {
     curl.AddOption("Cookie", cookie);
@@ -137,14 +132,7 @@ std::string HttpClient::HttpRequest(const std::string& action, const std::string
     kodi::Log(ADDON_LOG_DEBUG, "Got new beaker.session.id: %s..",
         sessionId.substr(0, 5).c_str());
     m_beakerSessionId = sessionId;
-  }
-
-  std::string zattooSession = curl.GetCookie("zattoo.session");
-  if (!zattooSession.empty() && m_zattooSession != zattooSession)
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Got new zattooSession: %s..", zattooSession.substr(0, 5).c_str());
-    m_zattooSession = zattooSession;
-    m_parameterDB->Set("zattooSession", zattooSession);
+    m_parameterDB->Set("beakerSessionId", sessionId);
   }
 
   return content;

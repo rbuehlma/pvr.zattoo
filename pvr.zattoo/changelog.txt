@@ -1,3 +1,5 @@
+v20.3.8
+- Adapt session handling
 v20.3.7
 - Use dash without widevine if no DRM is required
 v20.3.6
