@@ -476,7 +476,7 @@ PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& cha
   ZatChannel* ownChannel = FindChannel(channel.GetUniqueId());
   kodi::Log(ADDON_LOG_DEBUG, "Get live url for channel %s", ownChannel->cid.c_str());
   
-  bool withoutDrm = false;
+  bool withoutDrm = true;
   Document doc;
   
   while (true) {
@@ -1015,7 +1015,9 @@ std::string ZatData::GetStreamParameters(const std::string& cid, bool withoutDrm
         quality = channel.qualityWithDrm;
       }
     }
-    params += "&quality=" + quality;
+    if (!quality.empty()) {
+      params += "&quality=" + quality;
+    }
     kodi::Log(ADDON_LOG_INFO, "Selected quality: %s", quality.c_str());
   }
   
