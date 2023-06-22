@@ -27,18 +27,11 @@
           <default>false</default>
           <control type="toggle" />
         </setting>
-        <setting id="streamtype" type="integer" label="30004" help="30005">
+		<setting id="forceEnableWidevineL2" type="boolean" label="30016" help="30017">
           <level>0</level>
-          <default>0</default>
-          <constraints>
-            <options>
-              <option label="30006">0</option> <!-- dash -->
-              <option label="30007">1</option> <!-- hls -->
-              <option label="30008">2</option> <!-- dash_widevine -->
-            </options>
-          </constraints>
-          <control type="spinner" format="integer" />
-		</setting>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
 		<setting id="enableDolby" type="boolean" label="30010" help="30011">
           <level>0</level>
           <default>true</default>

@@ -32,6 +32,14 @@ bool CSettings::Load()
     m_zatFavoritesOnly = false;
   }
 
+  if (!kodi::addon::CheckSettingBoolean("forceEnableWidevineL2", m_forceEnableWidevineL2))
+  {
+    /* If setting is unknown fallback to defaults */
+    kodi::Log(ADDON_LOG_ERROR,
+              "Couldn't get 'forceEnableWidevineL2' setting, falling back to 'false' as default");
+    m_forceEnableWidevineL2 = false;
+  }
+
   if (!kodi::addon::CheckSettingBoolean("enableDolby", m_zatEnableDolby))
   {
     /* If setting is unknown fallback to defaults */
@@ -39,20 +47,13 @@ bool CSettings::Load()
               "Couldn't get 'enableDolby' setting, falling back to 'true' as default");
     m_zatEnableDolby = true;
   }
-
+  
   if (!kodi::addon::CheckSettingBoolean("skipStart", m_skipStartOfProgramme))
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR,
               "Couldn't get 'skipStart' setting, falling back to 'true' as default");
     m_skipStartOfProgramme = true;
-  }
-
-  if (!kodi::addon::CheckSettingEnum<STREAM_TYPE>("streamtype", m_streamType))
-  {
-    /* If setting is unknown fallback to defaults */
-    kodi::Log(ADDON_LOG_ERROR, "Couldn't get 'streamtype' setting, falling back to 'DASH' as default");
-    m_streamType = DASH;
   }
 
   if (!kodi::addon::CheckSettingString("parentalPin", m_parentalPin))
@@ -103,6 +104,15 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
       return ADDON_STATUS_NEED_RESTART;
     }
   }
+  else if (settingName == "forceEnableWidevineL2")
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'forceEnableWidevineL2' from %u to %u", m_forceEnableWidevineL2, settingValue.GetBoolean());
+    if (m_forceEnableWidevineL2 != settingValue.GetBoolean())
+    {
+      m_forceEnableWidevineL2 = settingValue.GetBoolean();
+      return ADDON_STATUS_OK;
+    }
+  }
   else if (settingName == "enableDolby")
   {
     kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'enableDolby' from %u to %u", m_zatEnableDolby, settingValue.GetBoolean());
@@ -118,16 +128,7 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     if (m_skipStartOfProgramme != settingValue.GetBoolean())
     {
       m_skipStartOfProgramme = settingValue.GetBoolean();
-      return ADDON_STATUS_NEED_RESTART;
-    }
-  }
-  else if (settingName == "streamtype")
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'streamtype' from %u to %u", m_streamType, settingValue.GetInt());
-    if (m_streamType != settingValue.GetEnum<STREAM_TYPE>())
-    {
-      m_streamType = settingValue.GetEnum<STREAM_TYPE>();
-      return ADDON_STATUS_NEED_RESTART;
+      return ADDON_STATUS_OK;
     }
   }
   else if (settingName == "parentalPin")
@@ -137,7 +138,7 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     tmp_sParentalPin = m_parentalPin;
     m_parentalPin = settingValue.GetString();
     if (tmp_sParentalPin != m_parentalPin)
-      return ADDON_STATUS_NEED_RESTART;
+      return ADDON_STATUS_OK;
   }
   else if (settingName == "provider")
   {

@@ -109,12 +109,10 @@ private:
   std::string GetStreamUrl(rapidjson::Document& doc, std::vector<kodi::addon::PVRStreamProperty>& properties);
   std::string GetBasicStreamParameters(bool withoutDrm);
   std::string GetQualityStreamParameter(const std::string& cid, bool withoutDrm);
-  bool RequireChannelWithoutDRM();
+  bool SystemDoesSupportWidevineL2();
   bool ParseRecordingsTimers(const rapidjson::Value& recordings, std::map<int, ZatRecordingDetails>& detailsById);
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
   bool Record(int programId, bool series);
-  std::string GetManifestType();
-  std::string GetMimeType();
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties, const std::string& url);
   std::string GetStreamUrlForProgram(const std::string& cid, int programId, std::vector<kodi::addon::PVRStreamProperty>& properties);
   bool TryToReinitIf403(int statusCode);
