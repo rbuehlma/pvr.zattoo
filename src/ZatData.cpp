@@ -481,7 +481,8 @@ PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& cha
   
   while (true) {
     std::ostringstream dataStream;
-    dataStream << GetStreamParameters(ownChannel->cid, withoutDrm) << "&format=json&timeshift=10800";
+    dataStream << GetBasicStreamParameters(withoutDrm) << "&format=json&timeshift=10800";
+    dataStream << GetQualityStreamParameter(ownChannel->cid, withoutDrm);
     int statusCode;
     std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/live/" + ownChannel->cid, dataStream.str(), statusCode);
    
@@ -995,9 +996,19 @@ PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
   return PVR_ERROR_NO_ERROR;
 }
 
-std::string ZatData::GetStreamParameters(const std::string& cid, bool withoutDrm) {
+std::string ZatData::GetBasicStreamParameters(bool withoutDrm) {
   std::string params = m_settings->GetZatEnableDolby() ? "&enable_eac3=true" : "";
   
+  params += "&stream_type=" + GetStreamTypeString(withoutDrm);
+
+  if (!m_settings->GetParentalPin().empty()) {
+    params += "&youth_protection_pin=" + m_settings->GetParentalPin();
+  }
+   
+  return params;
+}
+
+std::string ZatData::GetQualityStreamParameter(const std::string& cid, bool withoutDrm) {
   auto iterator = m_channelsByCid.find(cid);
   if (iterator != m_channelsByCid.end())
   {
@@ -1016,18 +1027,12 @@ std::string ZatData::GetStreamParameters(const std::string& cid, bool withoutDrm
       }
     }
     if (!quality.empty()) {
-      params += "&quality=" + quality;
+      kodi::Log(ADDON_LOG_INFO, "Selected quality: %s", quality.c_str());
+      return "&quality=" + quality;
     }
-    kodi::Log(ADDON_LOG_INFO, "Selected quality: %s", quality.c_str());
   }
   
-  params += "&stream_type=" + GetStreamTypeString(withoutDrm);
-
-  if (!m_settings->GetParentalPin().empty()) {
-    params += "&youth_protection_pin=" + m_settings->GetParentalPin();
-  }
-   
-  return params;
+  return "";
 }
 
 bool ZatData::RequireChannelWithoutDRM() {
@@ -1063,26 +1068,16 @@ PVR_ERROR ZatData::GetRecordingStreamProperties(const kodi::addon::PVRRecording&
   
   Document doc;
   
-  while (true) {
-    std::ostringstream dataStream;
-    dataStream << GetStreamParameters(cid, withoutDrm);
+  std::ostringstream dataStream;
+  dataStream << GetBasicStreamParameters(true);
 
-    int statusCode;
-    std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/recording/" + recording.GetRecordingId(), dataStream.str(), statusCode);
-    
-    doc.Parse(jsonString.c_str());
-    if (doc.GetParseError())
-    {
-      return ret;
-    }
-
-    if (withoutDrm || !RequireChannelWithoutDRM() || !IsDrmLimitApplied(doc)) {
-      break;
-    }
-    withoutDrm = true;
-    kodi::Log(ADDON_LOG_INFO, "Fallback to no-drm version.");
-    doc.SetNull();
-    doc.GetAllocator().Clear();
+  int statusCode;
+  std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/watch/recording/" + recording.GetRecordingId(), dataStream.str(), statusCode);
+  
+  doc.Parse(jsonString.c_str());
+  if (doc.GetParseError())
+  {
+    return ret;
   }
                   
   std::string strUrl = GetStreamUrl(doc, properties);
@@ -1213,7 +1208,8 @@ std::string ZatData::GetStreamUrlForProgram(const std::string& cid, int programI
   
   while (true) {
     std::ostringstream dataStream;
-    dataStream << GetStreamParameters(cid, withoutDrm);
+    dataStream << GetBasicStreamParameters(withoutDrm);
+    dataStream << GetQualityStreamParameter(cid, withoutDrm);
     dataStream << "&pre_padding=0&post_padding=0";
     int statusCode;
     std::string jsonString = m_httpClient->HttpPost(m_session->GetProviderUrl() + "/zapi/v3/watch/replay/" + cid + "/" + std::to_string(programId), dataStream.str(), statusCode);
