@@ -1,3 +1,5 @@
+v20.3.10
+- Fix playing recordings for RTL group
 v20.3.9
 - Fix fetching SD stream by not setting empty quality parameter
 v20.3.8

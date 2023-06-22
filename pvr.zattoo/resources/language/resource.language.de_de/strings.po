@@ -48,24 +48,6 @@ msgctxt "#30005"
 msgid "To select wanted encrypted stream type."
 msgstr "Um den gewünschten verschlüsselten Stream-Typ auszuwählen."
 
-#. Selection value for setting defined with id #30004
-#: pvr.zattoo/resources/settings.xml
-msgctxt "#30006"
-msgid "dash"
-msgstr "dash"
-
-#. Selection value for setting defined with id #30004
-#: pvr.zattoo/resources/settings.xml
-msgctxt "#30007"
-msgid "hls"
-msgstr "hls"
-
-#. Selection value for setting defined with id #30004
-#: pvr.zattoo/resources/settings.xml
-msgctxt "#30008"
-msgid "dash_widevine"
-msgstr "dash_widevine"
-
 #. Text setting to set used parental pin
 #: pvr.zattoo/resources/settings.xml
 msgctxt "#30009"
@@ -95,6 +77,18 @@ msgstr "Zattoo"
 msgctxt "#30015"
 msgid "General"
 msgstr "Allgemein"
+
+#. Boolean setting to enforce widevine for recordings
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30016"
+msgid "Widevine L2 forcieren"
+msgstr ""
+
+#. Help text to setting #30016
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30017"
+msgid "Falls das System Widevine L2, kann dies die Qualität erhöhen. Wird Widevine L2 nicht unterstützt, können einige Sender oder Aufnahmen nicht mehr abgespielt werden."
+msgstr ""
 
 #. Selection list on settings to get wanted stream provider
 #: pvr.zattoo/resources/settings.xml

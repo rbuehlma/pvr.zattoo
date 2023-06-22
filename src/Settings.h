@@ -9,13 +9,6 @@
 
 #include <kodi/AddonBase.h>
 
-enum STREAM_TYPE : int
-{
-  DASH,
-  HLS,
-  DASH_WIDEVINE
-};
-
 class ATTR_DLL_LOCAL CSettings
 {
 public:
@@ -30,7 +23,7 @@ public:
   bool GetZatFavoritesOnly() const { return m_zatFavoritesOnly; }
   bool GetZatEnableDolby() const { return m_zatEnableDolby; }
   bool GetSkipStartOfProgramme() const { return m_skipStartOfProgramme; }
-  STREAM_TYPE GetStreamType() const { return m_streamType; }
+  bool ForceEnableWidevineL2() const { return m_forceEnableWidevineL2; }
   const std::string GetParentalPin() const { return m_parentalPin; }
   int GetProvider() const { return m_provider; }
 
@@ -40,7 +33,7 @@ private:
   bool m_zatFavoritesOnly = false;
   bool m_zatEnableDolby = true;
   bool m_skipStartOfProgramme = true;
-  STREAM_TYPE m_streamType = DASH;
+  bool m_forceEnableWidevineL2 = false;
   std::string m_parentalPin;
   int m_provider = 0;
 };
