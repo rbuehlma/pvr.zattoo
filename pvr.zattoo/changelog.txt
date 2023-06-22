@@ -1,5 +1,7 @@
 v20.3.10
 - Fix playing recordings for RTL group
+- Remove option to select stream type. Always use dash (widevine)
+- Add option to force enabling DRM (widevine) L2 for Linux systems
 v20.3.9
 - Fix fetching SD stream by not setting empty quality parameter
 v20.3.8
