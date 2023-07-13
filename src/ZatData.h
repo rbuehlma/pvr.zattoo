@@ -104,11 +104,11 @@ private:
   bool ReinitSession();
   ZatChannel* FindChannel(int uniqueId);
   PVRZattooChannelGroup* FindGroup(const std::string& strName);
-  std::string GetStreamTypeString(bool withoutDrm);
+  std::string GetStreamTypeString(bool withDrm);
   bool IsDrmLimitApplied(rapidjson::Document& doc);
   std::string GetStreamUrl(rapidjson::Document& doc, std::vector<kodi::addon::PVRStreamProperty>& properties);
-  std::string GetBasicStreamParameters(bool withoutDrm);
-  std::string GetQualityStreamParameter(const std::string& cid, bool withoutDrm);
+  std::string GetBasicStreamParameters(bool requiresDrm);
+  std::string GetQualityStreamParameter(const std::string& cid, bool withoutDrm, bool& requiresDrm);
   bool SystemDoesSupportWidevineL2();
   bool ParseRecordingsTimers(const rapidjson::Value& recordings, std::map<int, ZatRecordingDetails>& detailsById);
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);

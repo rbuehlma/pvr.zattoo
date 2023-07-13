@@ -2,14 +2,14 @@
 #define SRC_ZATCHANNEL_H_
 
 #include <string>
+#include <vector>
 
 struct ZatChannel
 {
   int iUniqueId;
   int iChannelNumber;
   bool recordingEnabled;
-  std::string qualityWithDrm;
-  std::string qualityWithoutDrm;
+  std::vector<std::pair<std::string, bool>> qualityWithDrm;
   std::string name;
   std::string strLogoPath;
   std::string cid;
