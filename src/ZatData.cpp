@@ -438,7 +438,7 @@ PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& cha
   ZatChannel* ownChannel = FindChannel(channel.GetUniqueId());
   kodi::Log(ADDON_LOG_DEBUG, "Get live url for channel %s", ownChannel->cid.c_str());
   
-  bool forceWithoutDrm = false;
+  bool forceWithoutDrm = GetDrmLevel() <= 0;
   Document doc;
   
   while (true) {
@@ -456,7 +456,7 @@ PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& cha
       return ret;
     }
 
-    if (forceWithoutDrm || SystemDoesSupportWidevineL2() || !IsDrmLimitApplied(doc)) {
+    if (forceWithoutDrm || !IsDrmLimitApplied(doc)) {
       break;
     }
     forceWithoutDrm = true;
@@ -964,6 +964,10 @@ std::string ZatData::GetBasicStreamParameters(bool requiresDrm) {
   std::string params = m_settings->GetZatEnableDolby() ? "&enable_eac3=true" : "";
   
   params += "&stream_type=" + GetStreamTypeString(requiresDrm);
+  int drmLevel = GetDrmLevel();
+  if (drmLevel > 0) {
+    params += "&max_drm_lvl=" + std::to_string(drmLevel);
+  }
 
   if (!m_settings->GetParentalPin().empty()) {
     params += "&youth_protection_pin=" + m_settings->GetParentalPin();
@@ -996,8 +1000,13 @@ std::string ZatData::GetQualityStreamParameter(const std::string& cid, bool forc
   return "";
 }
 
-bool ZatData::SystemDoesSupportWidevineL2() {
-  return !Utils::RunsOnLinux() || m_settings->ForceEnableWidevineL2();
+int ZatData::GetDrmLevel() {
+  int drmLevel = m_settings->DrmLevel();
+  if (drmLevel == 0) {
+    return Utils::RunsOnLinux() ? 3 : 1;
+  } else {
+    return drmLevel;
+  }
 }
 
 std::string ZatData::GetStreamTypeString(bool withDrm) {
@@ -1021,7 +1030,7 @@ PVR_ERROR ZatData::GetRecordingStreamProperties(const kodi::addon::PVRRecording&
   
   Document doc;
   
-  bool useWidevine = SystemDoesSupportWidevineL2();
+  bool useWidevine = GetDrmLevel() > -1;
   
   std::ostringstream dataStream;
   dataStream << GetBasicStreamParameters(useWidevine);
@@ -1159,7 +1168,7 @@ std::string ZatData::GetStreamUrlForProgram(const std::string& cid, int programI
 {
   kodi::Log(ADDON_LOG_DEBUG, "Get timeshift url for channel %s and program %i", cid.c_str(), programId);
   
-  bool forceWithoutDrm = false;
+  bool forceWithoutDrm = GetDrmLevel() <= 0;
   Document doc;
   
   while (true) {
@@ -1177,7 +1186,7 @@ std::string ZatData::GetStreamUrlForProgram(const std::string& cid, int programI
       return "";
     }
 
-    if (forceWithoutDrm || SystemDoesSupportWidevineL2() || !IsDrmLimitApplied(doc)) {
+    if (forceWithoutDrm || !IsDrmLimitApplied(doc)) {
       break;
     }
     forceWithoutDrm = true;

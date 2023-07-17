@@ -23,7 +23,7 @@ public:
   bool GetZatFavoritesOnly() const { return m_zatFavoritesOnly; }
   bool GetZatEnableDolby() const { return m_zatEnableDolby; }
   bool GetSkipStartOfProgramme() const { return m_skipStartOfProgramme; }
-  bool ForceEnableWidevineL2() const { return m_forceEnableWidevineL2; }
+  int DrmLevel() const { return m_drmLevel; }
   const std::string GetParentalPin() const { return m_parentalPin; }
   int GetProvider() const { return m_provider; }
 
@@ -33,7 +33,7 @@ private:
   bool m_zatFavoritesOnly = false;
   bool m_zatEnableDolby = true;
   bool m_skipStartOfProgramme = true;
-  bool m_forceEnableWidevineL2 = false;
+  int m_drmLevel = 0;
   std::string m_parentalPin;
   int m_provider = 0;
 };

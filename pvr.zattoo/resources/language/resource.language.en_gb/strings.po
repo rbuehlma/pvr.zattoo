@@ -88,12 +88,6 @@ msgctxt "#30016"
 msgid "Enforce Widevine L2"
 msgstr ""
 
-#. Help text to setting #30016
-#: pvr.zattoo/resources/settings.xml
-msgctxt "#30017"
-msgid "If your system supports Widevine L2, this might increase the video quality. On Systems without Widevine support, some channels or recordings won't play."
-msgstr ""
-
 #. Selection list on settings to get wanted stream provider
 #: pvr.zattoo/resources/settings.xml
 msgctxt "#30098"
@@ -227,3 +221,44 @@ msgctxt "#30203"
 msgid "Server not reachable!"
 msgstr ""
 
+#. Selection value for setting defined with id #30398
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30300"
+msgid "Auto"
+msgstr ""
+
+#. Selection value for setting defined with id #30398
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30301"
+msgid "1"
+msgstr ""
+
+#. Selection value for setting defined with id #30398
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30302"
+msgid "2"
+msgstr ""
+
+#. Selection value for setting defined with id #30398
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30303"
+msgid "3"
+msgstr ""
+
+#. Selection value for setting defined with id #30398
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30304"
+msgid "Disable DRM"
+msgstr ""
+
+#. Selection list on settings to get wanted stream provider
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30398"
+msgid "DRM Level"
+msgstr ""
+
+#. Help text to setting #30098
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30399"
+msgid "Set the supported DRM level. Auto uses L3 for Linux and L2 otherwise."
+msgstr ""

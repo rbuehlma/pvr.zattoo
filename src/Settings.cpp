@@ -32,14 +32,6 @@ bool CSettings::Load()
     m_zatFavoritesOnly = false;
   }
 
-  if (!kodi::addon::CheckSettingBoolean("forceEnableWidevineL2", m_forceEnableWidevineL2))
-  {
-    /* If setting is unknown fallback to defaults */
-    kodi::Log(ADDON_LOG_ERROR,
-              "Couldn't get 'forceEnableWidevineL2' setting, falling back to 'false' as default");
-    m_forceEnableWidevineL2 = false;
-  }
-
   if (!kodi::addon::CheckSettingBoolean("enableDolby", m_zatEnableDolby))
   {
     /* If setting is unknown fallback to defaults */
@@ -69,6 +61,14 @@ bool CSettings::Load()
     kodi::Log(ADDON_LOG_ERROR,
               "Couldn't get 'provider' setting, falling back to '0' as default");
     m_provider = 0;
+  }
+  
+  if (!kodi::addon::CheckSettingInt("drmLevel", m_drmLevel))
+  {
+    /* If setting is unknown fallback to defaults */
+    kodi::Log(ADDON_LOG_ERROR,
+              "Couldn't get 'drmLevel' setting, falling back to 'auto' as default");
+    m_drmLevel = 0;
   }
 
   return true;
@@ -102,15 +102,6 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     {
       m_zatFavoritesOnly = settingValue.GetBoolean();
       return ADDON_STATUS_NEED_RESTART;
-    }
-  }
-  else if (settingName == "forceEnableWidevineL2")
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'forceEnableWidevineL2' from %u to %u", m_forceEnableWidevineL2, settingValue.GetBoolean());
-    if (m_forceEnableWidevineL2 != settingValue.GetBoolean())
-    {
-      m_forceEnableWidevineL2 = settingValue.GetBoolean();
-      return ADDON_STATUS_OK;
     }
   }
   else if (settingName == "enableDolby")
@@ -147,6 +138,15 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     {
       m_provider = settingValue.GetInt();
       return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+  else if (settingName == "drmLevel")
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'drmLevel' from %u to %u", m_drmLevel, settingValue.GetInt());
+    if (m_drmLevel != settingValue.GetInt())
+    {
+      m_drmLevel = settingValue.GetInt();
+      return ADDON_STATUS_OK;
     }
   }
 

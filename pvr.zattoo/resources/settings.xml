@@ -27,11 +27,20 @@
           <default>false</default>
           <control type="toggle" />
         </setting>
-		<setting id="forceEnableWidevineL2" type="boolean" label="30016" help="30017">
+		<setting id="drmLevel" type="integer" label="30398" help="30399">
           <level>0</level>
-          <default>false</default>
-          <control type="toggle" />
-        </setting>
+          <default>0</default>
+          <constraints>
+            <options>
+              <option label="30300">0</option> <!-- Auto -->
+              <option label="30301">1</option>
+              <option label="30302">2</option>
+              <option label="30303">3</option>
+              <option label="30304">-1</option> <!-- DRM disabled -->
+            </options>
+          </constraints>
+          <control type="list" format="integer" />
+		</setting>
 		<setting id="enableDolby" type="boolean" label="30010" help="30011">
           <level>0</level>
           <default>true</default>
