@@ -977,6 +977,7 @@ std::string ZatData::GetBasicStreamParameters(bool requiresDrm) {
 }
 
 std::string ZatData::GetQualityStreamParameter(const std::string& cid, bool forceWithoutDrm, bool& requiresDrm) {
+  requiresDrm = !forceWithoutDrm;
   auto iterator = m_channelsByCid.find(cid);
   if (iterator != m_channelsByCid.end())
   {
@@ -1232,7 +1233,7 @@ bool ZatData::SessionInitialized()
   if (m_epgProvider) {
     delete m_epgProvider;
   }
-  kodi::Log(ADDON_LOG_INFO, "Stream type: %s", GetStreamTypeString(true).c_str());
+  kodi::Log(ADDON_LOG_INFO, "DRM Level: %i", m_settings->DrmLevel());
   if (!LoadChannels()) {
     return false;
   }
