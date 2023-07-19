@@ -977,7 +977,7 @@ std::string ZatData::GetBasicStreamParameters(bool requiresDrm) {
 }
 
 std::string ZatData::GetQualityStreamParameter(const std::string& cid, bool forceWithoutDrm, bool& requiresDrm) {
-  requiresDrm = false;
+  requiresDrm = !forceWithoutDrm;
   auto iterator = m_channelsByCid.find(cid);
   if (iterator != m_channelsByCid.end())
   {
