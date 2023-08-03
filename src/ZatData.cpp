@@ -586,6 +586,9 @@ bool ZatData::ParseRecordingsTimers(const Value& recordings, std::map<int, ZatRe
           details.genre = "";
         }
         details.description = Utils::JsonStringOrEmpty(program, "d");
+        details.seriesNumber = program.HasMember("s_no") && !program["s_no"].IsNull() ? program["s_no"].GetInt() : EPG_TAG_INVALID_SERIES_EPISODE;
+        details.episodeNumber = program.HasMember("e_no") && !program["e_no"].IsNull() ? program["e_no"].GetInt() : EPG_TAG_INVALID_SERIES_EPISODE;
+
         detailsById.insert(
             std::pair<int, ZatRecordingDetails>(program["id"].GetInt(), details));
       }
@@ -876,7 +879,11 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
       tag.SetRecordingId(std::to_string(recording["id"].GetInt()));
       tag.SetTitle(Utils::JsonStringOrEmpty(recording, "title"));
       tag.SetEpisodeName(Utils::JsonStringOrEmpty(recording, "episode_title"));
-      tag.SetPlot(hasDetails ? detailIterator->second.description : "");
+      if (hasDetails) {
+        tag.SetPlot(detailIterator->second.description);
+        tag.SetSeriesNumber(detailIterator->second.seriesNumber);
+        tag.SetEpisodeNumber(detailIterator->second.episodeNumber);
+      }
 
       std::string imageToken = Utils::JsonStringOrEmpty(recording, "image_token");
       std::string imageUrl = Utils::GetImageUrl(imageToken);;

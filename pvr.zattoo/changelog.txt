@@ -1,3 +1,5 @@
+v20.3.14
+- Show episode number for recordings
 v20.3.13
 - Honor selection of no DRM in any case
 v20.3.12

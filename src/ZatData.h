@@ -19,6 +19,8 @@ struct ZatRecordingDetails
 {
   std::string genre;
   std::string description;
+  int seriesNumber = EPG_TAG_INVALID_SERIES_EPISODE;
+  int episodeNumber = EPG_TAG_INVALID_SERIES_EPISODE;
 };
 
 struct PVRZattooChannelGroup
