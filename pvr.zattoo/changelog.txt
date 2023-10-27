@@ -2,6 +2,22 @@ v21.0.1
 - Merge changes from nexus
 v21.0.0
 - Initial version for Omega
+v20.3.14
+- Show episode number for recordings
+v20.3.13
+- Honor selection of no DRM in any case
+v20.3.12
+- Allow setting DRM level or disable DRM completely
+v20.3.11
+- Use widevine only if required by selected quality
+v20.3.10
+- Fix playing recordings for RTL group
+- Remove option to select stream type. Always use dash (widevine)
+- Add option to force enabling DRM (widevine) L2 for Linux systems
+v20.3.9
+- Fix fetching SD stream by not setting empty quality parameter
+v20.3.8
+- Adapt session handling
 v20.3.7
 - Use dash without widevine if no DRM is required
 v20.3.6

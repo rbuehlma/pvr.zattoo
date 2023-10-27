@@ -39,20 +39,13 @@ bool CSettings::Load()
               "Couldn't get 'enableDolby' setting, falling back to 'true' as default");
     m_zatEnableDolby = true;
   }
-
+  
   if (!kodi::addon::CheckSettingBoolean("skipStart", m_skipStartOfProgramme))
   {
     /* If setting is unknown fallback to defaults */
     kodi::Log(ADDON_LOG_ERROR,
               "Couldn't get 'skipStart' setting, falling back to 'true' as default");
     m_skipStartOfProgramme = true;
-  }
-
-  if (!kodi::addon::CheckSettingEnum<STREAM_TYPE>("streamtype", m_streamType))
-  {
-    /* If setting is unknown fallback to defaults */
-    kodi::Log(ADDON_LOG_ERROR, "Couldn't get 'streamtype' setting, falling back to 'DASH' as default");
-    m_streamType = DASH;
   }
 
   if (!kodi::addon::CheckSettingString("parentalPin", m_parentalPin))
@@ -68,6 +61,14 @@ bool CSettings::Load()
     kodi::Log(ADDON_LOG_ERROR,
               "Couldn't get 'provider' setting, falling back to '0' as default");
     m_provider = 0;
+  }
+  
+  if (!kodi::addon::CheckSettingInt("drmLevel", m_drmLevel))
+  {
+    /* If setting is unknown fallback to defaults */
+    kodi::Log(ADDON_LOG_ERROR,
+              "Couldn't get 'drmLevel' setting, falling back to 'auto' as default");
+    m_drmLevel = 0;
   }
 
   return true;
@@ -118,16 +119,7 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     if (m_skipStartOfProgramme != settingValue.GetBoolean())
     {
       m_skipStartOfProgramme = settingValue.GetBoolean();
-      return ADDON_STATUS_NEED_RESTART;
-    }
-  }
-  else if (settingName == "streamtype")
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'streamtype' from %u to %u", m_streamType, settingValue.GetInt());
-    if (m_streamType != settingValue.GetEnum<STREAM_TYPE>())
-    {
-      m_streamType = settingValue.GetEnum<STREAM_TYPE>();
-      return ADDON_STATUS_NEED_RESTART;
+      return ADDON_STATUS_OK;
     }
   }
   else if (settingName == "parentalPin")
@@ -137,7 +129,7 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     tmp_sParentalPin = m_parentalPin;
     m_parentalPin = settingValue.GetString();
     if (tmp_sParentalPin != m_parentalPin)
-      return ADDON_STATUS_NEED_RESTART;
+      return ADDON_STATUS_OK;
   }
   else if (settingName == "provider")
   {
@@ -146,6 +138,15 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
     {
       m_provider = settingValue.GetInt();
       return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+  else if (settingName == "drmLevel")
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'drmLevel' from %u to %u", m_drmLevel, settingValue.GetInt());
+    if (m_drmLevel != settingValue.GetInt())
+    {
+      m_drmLevel = settingValue.GetInt();
+      return ADDON_STATUS_OK;
     }
   }
 

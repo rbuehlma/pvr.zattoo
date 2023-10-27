@@ -27,17 +27,19 @@
           <default>false</default>
           <control type="toggle" />
         </setting>
-        <setting id="streamtype" type="integer" label="30004" help="30005">
+		<setting id="drmLevel" type="integer" label="30398" help="30399">
           <level>0</level>
           <default>0</default>
           <constraints>
             <options>
-              <option label="30006">0</option> <!-- dash -->
-              <option label="30007">1</option> <!-- hls -->
-              <option label="30008">2</option> <!-- dash_widevine -->
+              <option label="30300">0</option> <!-- Auto -->
+              <option label="30301">1</option>
+              <option label="30302">2</option>
+              <option label="30303">3</option>
+              <option label="30304">-1</option> <!-- DRM disabled -->
             </options>
           </constraints>
-          <control type="spinner" format="integer" />
+          <control type="list" format="integer" />
 		</setting>
 		<setting id="enableDolby" type="boolean" label="30010" help="30011">
           <level>0</level>
