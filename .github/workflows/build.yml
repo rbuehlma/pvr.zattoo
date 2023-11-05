@@ -11,29 +11,25 @@ jobs:
       matrix:
         include:
         - name: "Debian package test"
-          os: ubuntu-22.04
+          os: ubuntu-latest
           CC: gcc
           CXX: g++
           DEBIAN_BUILD: true
-        - os: ubuntu-22.04
-          CC: gcc
-          CXX: g++
     steps:
-    - name: Install needed dependencies
+    - name: Install needed ubuntu depends
       env:
         DEBIAN_BUILD: ${{ matrix.DEBIAN_BUILD }}
       run: |
         if [[ $DEBIAN_BUILD == true ]]; then sudo add-apt-repository -y ppa:team-xbmc/xbmc-nightly; fi
         if [[ $DEBIAN_BUILD == true ]]; then sudo apt-get update; fi
         if [[ $DEBIAN_BUILD == true ]]; then sudo apt-get install fakeroot; fi
-        if [[ $RUNNER_OS == 'macOS' ]]; then brew install automake; fi
     - name: Checkout Kodi repo
       uses: actions/checkout@v2
       with:
         repository: xbmc/xbmc
         ref: master
         path: xbmc
-    - name: Checkout pvr.zattoo repo
+    - name: Checkout add-on repo
       uses: actions/checkout@v2
       with:
         path: ${{ env.app_id }}
