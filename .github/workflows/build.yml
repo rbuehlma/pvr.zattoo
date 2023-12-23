@@ -28,7 +28,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: xbmc/xbmc
-        ref: Nexus
+        ref: master
         path: xbmc
     - name: Checkout pvr.zattoo repo
       uses: actions/checkout@v2
