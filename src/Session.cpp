@@ -230,8 +230,15 @@ bool Session::SendHello()
   std::string uuid = m_httpClient->GetUUID();
   kodi::Log(ADDON_LOG_DEBUG, "Send hello.");
   std::ostringstream dataStream;
-  dataStream << "uuid=" << uuid << "&lang=en&app_version=3.2038.0&format=json&client_app_token="
-      << m_appToken;
+  dataStream << "lang=en&";
+  if (m_settings->GetSmartTV()) {
+    dataStream << "app_version=2.2409.1&"
+        << "app_tid=01054a65-1f0d-4a00-a441-44c2ec5fa357&"
+        << "device_type=android_bigscreen 30/zattoo_2.2409.1/NVIDIA/SHIELD Android TV/mdarcy/1920x1080";
+  } else {
+    dataStream << "app_version=3.2038.0&client_app_token=" << m_appToken;
+  }
+  dataStream << "&uuid=" << uuid << "&format=json";
   int statusCode;
   std::string jsonString = m_httpClient->HttpPost(m_providerUrl + "/zapi/v3/session/hello", dataStream.str(), statusCode);
 

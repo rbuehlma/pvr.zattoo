@@ -21,6 +21,7 @@ public:
   const std::string& GetZatUsername() const { return m_zatUsername; }
   const std::string& GetZatPassword() const { return m_zatPassword; }
   bool GetZatFavoritesOnly() const { return m_zatFavoritesOnly; }
+  bool GetSmartTV() const { return m_smartTV; }
   bool GetZatEnableDolby() const { return m_zatEnableDolby; }
   bool GetSkipStartOfProgramme() const { return m_skipStartOfProgramme; }
   int DrmLevel() const { return m_drmLevel; }
@@ -31,6 +32,7 @@ private:
   std::string m_zatUsername;
   std::string m_zatPassword;
   bool m_zatFavoritesOnly = false;
+  bool m_smartTV = false;
   bool m_zatEnableDolby = true;
   bool m_skipStartOfProgramme = true;
   int m_drmLevel = 0;

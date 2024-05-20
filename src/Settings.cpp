@@ -31,6 +31,14 @@ bool CSettings::Load()
               "Couldn't get 'favoritesonly' setting, falling back to 'false' as default");
     m_zatFavoritesOnly = false;
   }
+  
+  if (!kodi::addon::CheckSettingBoolean("smarttv", m_smartTV))
+  {
+    /* If setting is unknown fallback to defaults */
+    kodi::Log(ADDON_LOG_ERROR,
+              "Couldn't get 'smarttv' setting, falling back to 'false' as default");
+    m_smartTV = false;
+  }
 
   if (!kodi::addon::CheckSettingBoolean("enableDolby", m_zatEnableDolby))
   {
@@ -104,7 +112,15 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
       return ADDON_STATUS_NEED_RESTART;
     }
   }
-  else if (settingName == "enableDolby")
+  else if (settingName == "smarttv")
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'smarttv' from %u to %u", m_smartTV, settingValue.GetBoolean());
+    if (m_smartTV != settingValue.GetBoolean())
+    {
+      m_smartTV = settingValue.GetBoolean();
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }  else if (settingName == "enableDolby")
   {
     kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'enableDolby' from %u to %u", m_zatEnableDolby, settingValue.GetBoolean());
     if (m_zatEnableDolby != settingValue.GetBoolean())
