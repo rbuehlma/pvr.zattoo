@@ -1,3 +1,5 @@
+v21.0.2
+- Add smart tv option
 v21.0.1
 - Merge changes from nexus
 v21.0.0
