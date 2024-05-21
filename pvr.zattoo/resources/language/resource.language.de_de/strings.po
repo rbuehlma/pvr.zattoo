@@ -39,14 +39,14 @@ msgstr "Lädt nur Kanäle welche in favorisierter Liste enthalten sind."
 #. Selection spinner on settings to get wanted stream type
 #: pvr.zattoo/resources/settings.xml
 msgctxt "#30004"
-msgid "Stream type"
-msgstr "Stream-Typ"
+msgid "Smart TV"
+msgstr ""
 
 #. Help text to setting #30004
 #: pvr.zattoo/resources/settings.xml
 msgctxt "#30005"
-msgid "To select wanted encrypted stream type."
-msgstr "Um den gewünschten verschlüsselten Stream-Typ auszuwählen."
+msgid "Verwende Smart TV Abo"
+msgstr ""
 
 #. Text setting to set used parental pin
 #: pvr.zattoo/resources/settings.xml

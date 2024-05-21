@@ -39,13 +39,13 @@ msgstr ""
 #. Selection spinner on settings to get wanted stream type
 #: pvr.zattoo/resources/settings.xml
 msgctxt "#30004"
-msgid "Stream type"
+msgid "Smart TV"
 msgstr ""
 
 #. Help text to setting #30004
 #: pvr.zattoo/resources/settings.xml
 msgctxt "#30005"
-msgid "To select wanted encrypted stream type."
+msgid "Use Smart TV subscription"
 msgstr ""
 
 #. Text setting to set used parental pin
