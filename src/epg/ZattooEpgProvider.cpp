@@ -59,7 +59,7 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
     doc.Parse(jsonString.c_str());
     if (doc.GetParseError())
     {
-      kodi::Log(ADDON_LOG_ERROR, "Loading epg faild from %lu to %lu", iStart, iEnd);
+      kodi::Log(ADDON_LOG_ERROR, "Loading epg failed from %lu to %lu", iStart, iEnd);
       return false;
     }
     RegisterAlreadyLoaded(tempStart, tempEnd);
@@ -69,8 +69,6 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
     m_epgDB.BeginTransaction();
     for (Value::ConstMemberIterator iter = channels.MemberBegin(); iter != channels.MemberEnd(); ++iter) {
       std::string cid = iter->name.GetString();
-
-      int uniqueChannelId = Utils::GetChannelId(cid.c_str());
       
       if (m_visibleChannelsByCid.count(cid) == 0) {
         continue;
@@ -107,9 +105,6 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
         epgDBInfo.endTime = program["e"].GetInt();
         epgDBInfo.title = Utils::JsonStringOrEmpty(program, "t"); 
         epgDBInfo.subtitle = Utils::JsonStringOrEmpty(program, "et");
-        if (!epgDBInfo.detailsLoaded) {
-          epgDBInfo.description = Utils::JsonStringOrEmpty(program, "et");
-        }
         epgDBInfo.genre = genreString;
         epgDBInfo.imageToken = Utils::JsonStringOrEmpty(program, "i_t");
         epgDBInfo.cid = cid;
@@ -218,7 +213,7 @@ void ZattooEpgProvider::DetailsThread()
   kodi::Log(ADDON_LOG_DEBUG, "Details thread started");
   while (m_detailsThreadRunning)
   {
-    std::list<EpgDBInfo> epgDBInfos = m_epgDB.GetWithWhere("DETAILS_LOADED=0 order by abs(strftime('%s','now')-END_TIME) limit 300;");
+    std::list<EpgDBInfo> epgDBInfos = m_epgDB.GetWithWhere("DETAILS_LOADED=0 order by abs(strftime('%s','now')-END_TIME) limit 20;");
     kodi::Log(ADDON_LOG_DEBUG, "Loading details for %d epg entries.", epgDBInfos.size());
     if (epgDBInfos.size() > 0) {
       std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
@@ -266,8 +261,10 @@ void ZattooEpgProvider::DetailsThread()
           epgDBInfo->season = program.HasMember("s_no") && !program["s_no"].IsNull() ? program["s_no"].GetInt() : -1;
           epgDBInfo->episode = program.HasMember("e_no") && !program["e_no"].IsNull() ? program["e_no"].GetInt() : -1;
 
-          epgDBInfo->detailsLoaded=1;
-          m_epgDB.Update(*epgDBInfo);
+          epgDBInfo->detailsLoaded = 1;
+          if (!m_epgDB.Update(*epgDBInfo)) {
+            kodi::Log(ADDON_LOG_ERROR, "Failed to update epg data.");
+          }
           SendEpgDBInfo(*epgDBInfo);
         }
       }
@@ -280,7 +277,7 @@ void ZattooEpgProvider::DetailsThread()
       m_epgDB.EndTransaction();
     }
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
       if (!m_detailsThreadRunning) {
         break;
       }
