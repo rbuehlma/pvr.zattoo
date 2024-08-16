@@ -53,6 +53,7 @@ public:
                                    kodi::addon::PVRChannelGroupMembersResultSet& results) override;
   PVR_ERROR GetEPGForChannel(int channelUid, time_t start, time_t end, kodi::addon::PVREPGTagsResultSet& results) override;
   PVR_ERROR GetChannelStreamProperties(const kodi::addon::PVRChannel& channel,
+                                       PVR_SOURCE source,
                                        std::vector<kodi::addon::PVRStreamProperty>& properties) override;
   PVR_ERROR GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types) override;
   PVR_ERROR GetTimers(kodi::addon::PVRTimersResultSet& results) override;
