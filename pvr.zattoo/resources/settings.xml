@@ -90,6 +90,11 @@
           <default>true</default>
           <control type="toggle" />
         </setting>
+        <setting id="skipEnd" type="boolean" label="30013">
+          <level>0</level>
+          <default>true</default>
+          <control type="toggle" />
+        </setting>
       </group>
     </category>
   </section>

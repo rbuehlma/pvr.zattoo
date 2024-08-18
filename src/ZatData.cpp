@@ -1216,6 +1216,14 @@ PVR_ERROR ZatData::GetEPGTagEdl(const kodi::addon::PVREPGTag& tag, std::vector<k
     entry.SetType(PVR_EDL_TYPE_COMBREAK);
     edl.emplace_back(entry);
   }
+  if (m_settings->GetSkipEndOfProgramme()) {
+      kodi::addon::PVREDLEntry entry;
+      unsigned long duration = (tag.GetEndTime() - tag.GetStartTime() + 25 * 60) * 1000;
+      entry.SetStart(duration - 20 * 60 * 1000);
+      entry.SetEnd(duration + 2000);
+      entry.SetType(PVR_EDL_TYPE_COMBREAK);
+      edl.emplace_back(entry);
+    }
   return PVR_ERROR_NO_ERROR;
 }
 

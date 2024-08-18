@@ -56,6 +56,14 @@ bool CSettings::Load()
     m_skipStartOfProgramme = true;
   }
 
+  if (!kodi::addon::CheckSettingBoolean("skipEnd", m_skipEndOfProgramme))
+  {
+    /* If setting is unknown fallback to defaults */
+    kodi::Log(ADDON_LOG_ERROR,
+              "Couldn't get 'skipEnd' setting, falling back to 'true' as default");
+    m_skipEndOfProgramme = true;
+  }
+  
   if (!kodi::addon::CheckSettingString("parentalPin", m_parentalPin))
   {
     /* If setting is unknown fallback to defaults */
@@ -138,7 +146,15 @@ ADDON_STATUS CSettings::SetSetting(const std::string& settingName,
       return ADDON_STATUS_OK;
     }
   }
-  else if (settingName == "parentalPin")
+  else if (settingName == "skipEnd")
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'skipEnd' from %u to %u", m_skipEndOfProgramme, settingValue.GetBoolean());
+    if (m_skipEndOfProgramme != settingValue.GetBoolean())
+    {
+      m_skipEndOfProgramme = settingValue.GetBoolean();
+      return ADDON_STATUS_OK;
+    }
+  }  else if (settingName == "parentalPin")
   {
     std::string tmp_sParentalPin;
     kodi::Log(ADDON_LOG_DEBUG, "Changed Setting 'parentalPin'");

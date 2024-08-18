@@ -70,6 +70,10 @@ msgctxt "#30012"
 msgid "Skip to start of program"
 msgstr "Skip 5 minutes (to actual start time) for replay and recordings"
 
+msgctxt "#30012"
+msgid "Skip end of program"
+msgstr "Skip 20 minutes program overlap when watching an EPG tag and proceeding to the next tag."
+
 #. Settings category label
 #: pvr.zattoo/resources/settings.xml
 msgctxt "#30014"
