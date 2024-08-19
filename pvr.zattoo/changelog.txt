@@ -1,3 +1,7 @@
+v21.0.5
+- Translations updates from Weblate
+	- en_gb
+
 v21.0.4
 - Skip 20 minutes additional stream when playing EPG tag
 v21.0.3
