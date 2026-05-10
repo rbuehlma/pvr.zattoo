@@ -26,7 +26,6 @@ void ZatData::SetStreamProperties(
 {
   properties.emplace_back(PVR_STREAM_PROPERTY_STREAMURL, url);
   properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
-  properties.emplace_back("inputstream.adaptive.manifest_type", "mpd");
   properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/xml+dash");
 }
 
@@ -430,6 +429,7 @@ std::string ZatData::GetStreamUrl(Document& doc, std::vector<kodi::addon::PVRStr
 }
 
 PVR_ERROR ZatData::GetChannelStreamProperties(const kodi::addon::PVRChannel& channel,
+                                              PVR_SOURCE source,
                                               std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
   PVR_ERROR ret = PVR_ERROR_FAILED;

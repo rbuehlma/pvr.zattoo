@@ -1,3 +1,23 @@
+v22.2.3
+- Translations updates from Weblate
+	- de_de, en_gb
+
+v22.2.2
+- Merge changes from v21
+
+v22.2.1
+- Fix playing recordings on linux systems
+- Fix deprecation warning
+
+v22.2.0
+- PVR Add-on API v9.2.0
+
+v22.1.0
+- PVR Add-on API v9.0.0
+
+v22.0.0
+- Initial release for Piers (PVR Add-on API v8.4.0)
+
 v21.0.7
 - Add an option to skip commercial breaks
 
