@@ -52,11 +52,8 @@ bool ZatData::ReadDataJson()
 
   if (doc.HasMember("recordings")) {
     const Value& recordings = doc["recordings"];
-    for (Value::ConstValueIterator itr = recordings.Begin();
-        itr != recordings.End(); ++itr)
+    for (const auto& recording : recordings)
     {
-      const Value& recording = (*itr);
-
       RecordingDBInfo recordingDBInfo;
       recordingDBInfo.recordingId = Utils::JsonStringOrEmpty(recording, "recordingId");
       recordingDBInfo.playCount = recording["playCount"].GetInt();
@@ -98,21 +95,15 @@ bool ZatData::LoadChannels()
   const Value& groups = doc["groups"];
 
   //Load the channel groups and channels
-  for (Value::ConstValueIterator itr = groups.Begin(); itr != groups.End();
-      ++itr)
+  for (const auto& groupItem : groups)
   {
     PVRZattooChannelGroup group;
-    const Value& groupItem = (*itr);
     group.name = Utils::JsonStringOrEmpty(groupItem, "name");
     m_channelGroups.insert(m_channelGroups.end(), group);
   }
   const Value& channels = doc["channels"];
-  for (Value::ConstValueIterator itr1 = channels.Begin();
-      itr1 != channels.End(); ++itr1)
+  for (const auto& channelItem : channels)
   {
-
-    const Value& channelItem = (*itr1);
-
     ZatChannel channel;
     std::string cid = Utils::JsonStringOrEmpty(channelItem, "cid");
     channel.iUniqueId = Utils::GetChannelId(cid.c_str());
@@ -123,10 +114,8 @@ bool ZatData::LoadChannels()
             channelItem["recording"].GetBool() : false;
 
     const Value& qualities = channelItem["qualities"];
-    for (Value::ConstValueIterator itr2 = qualities.Begin();
-        itr2 != qualities.End(); ++itr2)
+    for (const auto& qualityItem : qualities)
     {
-      const Value& qualityItem = (*itr2);
       std::string avail = Utils::JsonStringOrEmpty(qualityItem, "availability");
       if (avail != "available") {
         continue;
@@ -148,9 +137,8 @@ bool ZatData::LoadChannels()
   PVRZattooChannelGroup favGroup;
   favGroup.name = "Favoriten";
 
-  for (Value::ConstValueIterator itr = favs.Begin(); itr != favs.End(); ++itr)
+  for (const auto& favItem : favs)
   {
-    const Value& favItem = (*itr);
     std::string favCid = favItem.GetString();
     if (allChannels.find(favCid) != allChannels.end())
     {
@@ -414,9 +402,8 @@ std::string ZatData::GetStreamUrl(Document& doc, std::vector<kodi::addon::PVRStr
   }
   const Value& watchUrls = doc["stream"]["watch_urls"];
   std::string url = Utils::JsonStringOrEmpty(doc["stream"], "url");
-  for (Value::ConstValueIterator itr = watchUrls.Begin(); itr != watchUrls.End(); ++itr)
+  for (const auto& watchUrl : watchUrls)
   {
-    const Value& watchUrl = (*itr);
     kodi::Log(ADDON_LOG_DEBUG, "Selected url for maxrate: %d", watchUrl["maxrate"].GetInt());
     url = Utils::JsonStringOrEmpty(watchUrl, "url");
     std::string licenseUrl = Utils::JsonStringOrEmpty(watchUrl, "license_url");
@@ -569,10 +556,8 @@ bool ZatData::ParseRecordingsTimers(const Value& recordings, std::map<int, ZatRe
     else
     {
       const Value& programs = detailDoc["programs"];
-      for (Value::ConstValueIterator progItr = programs.Begin();
-          progItr != programs.End(); ++progItr)
+      for (const auto& program : programs)
       {
-        const Value &program = *progItr;
         ZatRecordingDetails details;
         if (program.HasMember("g") && program["g"].IsArray()
             && program["g"].Begin() != program["g"].End())
@@ -629,10 +614,8 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
   time_t current_time;
   time(&current_time);
 
-  for (Value::ConstValueIterator itr = recordings.Begin();
-      itr != recordings.End(); ++itr)
+  for (const auto& recording : recordings)
   {
-    const Value& recording = (*itr);
     int programId = recording["program_id"].GetInt();
 
     auto detailIterator = detailsById.find(programId);
@@ -682,10 +665,8 @@ PVR_ERROR ZatData::GetTimers(kodi::addon::PVRTimersResultSet& results)
   if (doc.HasMember("recorded_tv_series")) {
     const Value& recordingsTvSeries = doc["recorded_tv_series"];
 
-    for (Value::ConstValueIterator itr = recordingsTvSeries.Begin();
-        itr != recordingsTvSeries.End(); ++itr)
+    for (const auto& recording : recordingsTvSeries)
     {
-      const Value& recording = (*itr);
       int tvSeriesId = recording["tv_series_id"].GetInt();
 
       kodi::addon::PVRTimer tag;
@@ -731,10 +712,8 @@ PVR_ERROR ZatData::GetTimersAmount(int& amount)
   const Value& recordings = doc["recordings"];
 
   amount = 0;
-  for (Value::ConstValueIterator itr = recordings.Begin();
-      itr != recordings.End(); ++itr)
+  for (const auto& recording : recordings)
   {
-    const Value& recording = (*itr);
     time_t startTime = Utils::StringToTime(
         Utils::JsonStringOrEmpty(recording, "start"));
     if (startTime > current_time)
@@ -783,11 +762,8 @@ PVR_ERROR ZatData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDel
 
     const Value& recordings = doc["recordings"];
 
-    for (Value::ConstValueIterator itr = recordings.Begin();
-        itr != recordings.End(); ++itr)
+    for (const auto& recording : recordings)
     {
-      const Value& recording = (*itr);
-
       unsigned int seriesId = recording["tv_series_id"].GetInt();
 
       if (seriesId == timer.GetClientIndex()) {
@@ -850,10 +826,8 @@ PVR_ERROR ZatData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultS
   time_t current_time;
   time(&current_time);
 
-  for (Value::ConstValueIterator itr = recordings.Begin();
-      itr != recordings.End(); ++itr)
+  for (const auto& recording : recordings)
   {
-    const Value& recording = (*itr);
     int programId = recording["program_id"].GetInt();
 
     auto detailIterator = detailsById.find(programId);
@@ -951,10 +925,8 @@ PVR_ERROR ZatData::GetRecordingsAmount(bool deleted, int& amount)
   const Value& recordings = doc["recordings"];
 
   amount = 0;
-  for (Value::ConstValueIterator itr = recordings.Begin();
-      itr != recordings.End(); ++itr)
+  for (const auto& recording : recordings)
   {
-    const Value& recording = (*itr);
     time_t startTime = Utils::StringToTime(
         Utils::JsonStringOrEmpty(recording, "start"));
     if (startTime <= current_time)
@@ -1274,12 +1246,10 @@ void ZatData::AddCommercialBreaks(const Document& doc, std::vector<kodi::addon::
     return;
   }
   const Value& schedule = doc["stream"]["schedule"];
-  for (Value::ConstValueIterator sched_itr = schedule.Begin(); sched_itr != schedule.End(); ++sched_itr) {
-    const Value& schedule_item = (*sched_itr);
+  for (const auto& schedule_item : schedule) {
     if (schedule_item.HasMember("ad_breaks") && schedule_item["ad_breaks"].IsArray()) {
       const Value& ad_breaks = schedule_item["ad_breaks"];
-      for (Value::ConstValueIterator ad_itr = ad_breaks.Begin(); ad_itr != ad_breaks.End(); ++ad_itr) {
-        const Value& ad_break = (*ad_itr);
+      for (const auto& ad_break : ad_breaks) {
         if (ad_break.HasMember("start") && ad_break.HasMember("end")) {
           kodi::addon::PVREDLEntry entry;
           entry.SetStart(ad_break["start"].GetInt() + 5000);

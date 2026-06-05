@@ -75,11 +75,8 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
       }
 
       const Value& programs = iter->value;
-      for (Value::ConstValueIterator itr1 = programs.Begin();
-          itr1 != programs.End(); ++itr1)
+      for (const auto& program : programs)
       {
-        const Value& program = (*itr1);
-
         const Type& checkType = program["t"].GetType();
         if (checkType != kStringType)
           continue;
@@ -90,10 +87,9 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
 
         const Value& genres = program["g"];
         std::string genreString;
-        for (Value::ConstValueIterator itr2 = genres.Begin();
-            itr2 != genres.End(); ++itr2)
+        for (const auto& genre : genres)
         {
-          genreString = (*itr2).GetString();
+          genreString = genre.GetString();
           break;
         }
 
@@ -251,10 +247,8 @@ void ZattooEpgProvider::DetailsThread()
       else
       {
         const Value& programs = detailDoc["programs"];
-        for (Value::ConstValueIterator progItr = programs.Begin();
-            progItr != programs.End(); ++progItr)
+        for (const auto& program : programs)
         {
-          const Value &program = *progItr;
           int programId = program["id"].GetInt();
           EpgDBInfo *epgDBInfo = epgDBInfoById[programId];
           epgDBInfo->description = Utils::JsonStringOrEmpty(program, "d");
