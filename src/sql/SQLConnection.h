@@ -8,7 +8,7 @@ public:
   virtual ~ProcessRowCallback() {};
   virtual void ProcessRow(sqlite3_stmt* stmt) = 0;
 };
- 
+
 class SQLConnection
 {
 public:
@@ -21,10 +21,10 @@ protected:
   bool Query(std::string query, ProcessRowCallback& callback);
   bool Execute(std::string query);
   int GetVersion();
-  bool SetVersion(int newVersion);  
+  bool SetVersion(int newVersion);
   sqlite3* m_db;
   std::string m_name;
-  
+
 private:
   bool EnsureVersionTable();
 };

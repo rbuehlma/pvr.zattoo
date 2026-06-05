@@ -6,18 +6,18 @@ const int DB_VERSION = 1;
 class ProcessRecordingDBInfoRowCallback : public ProcessRowCallback {
 public:
   virtual ~ProcessRecordingDBInfoRowCallback() { }
-  
+
   void ProcessRow(sqlite3_stmt* stmt) {
     m_result.recordingId = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
     m_result.playCount = sqlite3_column_int(stmt, 1);
     m_result.lastPlayedPosition = sqlite3_column_int(stmt, 2);
     m_result.lastSeen = sqlite3_column_int(stmt, 3);
   }
-  
+
   RecordingDBInfo Result() {
     return m_result;
   }
-  
+
 private:
   RecordingDBInfo m_result;
 };
@@ -70,7 +70,7 @@ bool RecordingsDB::Migrate0To1() {
 void RecordingsDB::Cleanup() {
   time_t now;
   time(&now);
-  
+
   if (!Execute("delete from RECORDING_INFO where LAST_SEEN < " + std::to_string(now - 3600))) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to clean db", m_name.c_str());
   }
@@ -81,7 +81,7 @@ bool RecordingsDB::Set(RecordingDBInfo& recordingDBInfo) {
   time(&recordingDBInfo.lastSeen);
   std::string insert = "replace into RECORDING_INFO VALUES ";
   insert += "('" + recordingDBInfo.recordingId + "'," + std::to_string(recordingDBInfo.playCount) + "," + std::to_string(recordingDBInfo.lastPlayedPosition) + "," + std::to_string(recordingDBInfo.lastSeen) + ")";
-  
+
   if (!Execute(insert)) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to insert", m_name.c_str());
     return false;

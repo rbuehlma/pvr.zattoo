@@ -9,7 +9,7 @@
 class EpgProvider
 {
 public:
-  EpgProvider(kodi::addon::CInstancePVRClient *addon): m_addon(addon) {} 
+  EpgProvider(kodi::addon::CInstancePVRClient *addon): m_addon(addon) {}
   virtual ~EpgProvider() {};
   virtual bool LoadEPGForChannel(ZatChannel &zatChannel, time_t iStart, time_t iEnd) = 0;
 protected:

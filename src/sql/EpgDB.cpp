@@ -24,10 +24,10 @@ public:
     dbInfo.episode = sqlite3_column_int(stmt, 12);
     dbInfo.imageToken = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 13)));
     dbInfo.cid = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 14)));
-    
+
     m_result.push_back(dbInfo);
   }
-  
+
   EpgDBInfo SingleResult() {
     if (m_result.size() < 1) {
       EpgDBInfo dbInfo;
@@ -35,11 +35,11 @@ public:
     }
     return m_result.front();
   }
-  
+
   std::list<EpgDBInfo> Result() {
     return m_result;
   }
-  
+
 private:
   std::list<EpgDBInfo> m_result;
 };
@@ -52,7 +52,7 @@ EpgDB::EpgDB(std::string folder)
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to migrate DB to version: %i", m_name.c_str(), DB_VERSION);
   }
   Cleanup();
-  
+
   std::string str = "insert into EPG_INFO values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   int ret = sqlite3_prepare_v2(m_db, str.c_str(), str.size() + 1, &m_prepareInsertStatement, nullptr);
   if (ret != SQLITE_OK) {
@@ -151,7 +151,7 @@ bool EpgDB::Migrate1To2() {
   if (!Execute("alter table EPG_INFO add column CID text;")) {
     return false;
   }
-  
+
   return SetVersion(2);
 }
 
@@ -169,9 +169,9 @@ void EpgDB::Cleanup() {
   if (now < m_nextCleanupDue) {
     return;
   }
-  
+
   m_nextCleanupDue = now + 3600;
-  
+
   if (!Execute("delete from EPG_INFO where END_TIME < " + std::to_string(now - 60 * 60 * 24 * 7))) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to clean db", m_name.c_str());
   }
@@ -257,7 +257,7 @@ bool EpgDB::Insert(EpgDBInfo &epgDBInfo) {
   ret = sqlite3_step(m_prepareInsertStatement);
 
   sqlite3_reset(m_prepareInsertStatement);
-  
+
   return ret == SQLITE_DONE;
 }
 
@@ -341,7 +341,7 @@ bool EpgDB::Update(EpgDBInfo &epgDBInfo) {
   ret = sqlite3_step(m_prepareUpdateStatement);
 
   sqlite3_reset(m_prepareUpdateStatement);
-  
+
   return ret == SQLITE_DONE;
 }
 
