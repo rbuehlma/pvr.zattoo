@@ -64,12 +64,12 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
     }
     RegisterAlreadyLoaded(tempStart, tempEnd);
     const Value& channels = doc["channels"];
-    
+
     std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
     m_epgDB.BeginTransaction();
     for (Value::ConstMemberIterator iter = channels.MemberBegin(); iter != channels.MemberEnd(); ++iter) {
       std::string cid = iter->name.GetString();
-      
+
       if (m_visibleChannelsByCid.count(cid) == 0) {
         continue;
       }
@@ -83,11 +83,11 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
         const Type& checkType = program["t"].GetType();
         if (checkType != kStringType)
           continue;
-        
+
         int programId = program["id"].GetInt();
-        
+
         EpgDBInfo epgDBInfo = m_epgDB.Get(programId);
-        
+
         const Value& genres = program["g"];
         std::string genreString;
         for (Value::ConstValueIterator itr2 = genres.Begin();
@@ -96,20 +96,20 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
           genreString = (*itr2).GetString();
           break;
         }
-        
+
         epgDBInfo.programId = program["id"].GetInt();
         epgDBInfo.recordUntil = Utils::JsonIntOrZero(program, "rg_u");
         epgDBInfo.replayUntil = Utils::JsonIntOrZero(program, "sr_u");
         epgDBInfo.restartUntil = Utils::JsonIntOrZero(program, "ry_u");
         epgDBInfo.startTime = program["s"].GetInt();
         epgDBInfo.endTime = program["e"].GetInt();
-        epgDBInfo.title = Utils::JsonStringOrEmpty(program, "t"); 
+        epgDBInfo.title = Utils::JsonStringOrEmpty(program, "t");
         epgDBInfo.subtitle = Utils::JsonStringOrEmpty(program, "et");
         epgDBInfo.genre = genreString;
         epgDBInfo.imageToken = Utils::JsonStringOrEmpty(program, "i_t");
         epgDBInfo.cid = cid;
         m_epgDB.Insert(epgDBInfo);
-        
+
         SendEpgDBInfo(epgDBInfo);
       }
       m_epgDB.EndTransaction();
@@ -121,13 +121,13 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
 }
 
 void ZattooEpgProvider::SendEpgDBInfo(EpgDBInfo &epgDBInfo) {
-  
+
   if (m_visibleChannelsByCid.count(epgDBInfo.cid) == 0) {
     return;
   }
-  
+
   int uniqueChannelId = Utils::GetChannelId(epgDBInfo.cid.c_str());
-  
+
   kodi::addon::PVREPGTag tag;
   tag.SetUniqueBroadcastId(static_cast<unsigned int>(epgDBInfo.programId));
   tag.SetTitle(epgDBInfo.title);
@@ -147,9 +147,9 @@ void ZattooEpgProvider::SendEpgDBInfo(EpgDBInfo &epgDBInfo) {
   tag.SetParentalRating(0); /* not supported */
   tag.SetStarRating(0); /* not supported */
   tag.SetSeriesNumber(epgDBInfo.season);
-  tag.SetEpisodeNumber(epgDBInfo.episode);  
+  tag.SetEpisodeNumber(epgDBInfo.episode);
   tag.SetEpisodePartNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
-  
+
   std::string genreStr = epgDBInfo.genre;
   int genre = m_categories.Category(genreStr);
   if (genre)
@@ -165,7 +165,7 @@ void ZattooEpgProvider::SendEpgDBInfo(EpgDBInfo &epgDBInfo) {
   }
 
   if (m_detailsThreadRunning) {
-    SendEpg(tag);  
+    SendEpg(tag);
   }
 }
 
@@ -236,7 +236,7 @@ void ZattooEpgProvider::DetailsThread()
       std::ostringstream urlStream;
       urlStream << m_providerUrl << "/zapi/v2/cached/program/power_details/"
           << m_powerHash << "?complete=True&program_ids=" << ids.str();
-      
+
       int statusCode;
       std::string jsonString = m_httpClient.HttpGet(urlStream.str(), statusCode);
 
@@ -246,7 +246,7 @@ void ZattooEpgProvider::DetailsThread()
       {
         kodi::Log(ADDON_LOG_ERROR, "Failed to load details for program.");
         m_detailsThreadRunning = false;
-        
+
       }
       else
       {

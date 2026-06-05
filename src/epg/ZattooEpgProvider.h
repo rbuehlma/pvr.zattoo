@@ -22,11 +22,11 @@ class ZattooEpgProvider: public EpgProvider
 public:
   ZattooEpgProvider(
       kodi::addon::CInstancePVRClient *addon,
-      std::string providerUrl, 
-      EpgDB &epgDB, 
-      HttpClient &httpClient, 
+      std::string providerUrl,
+      EpgDB &epgDB,
+      HttpClient &httpClient,
       Categories &categories,
-      std::map<std::string, ZatChannel> &visibleChannelsByCid, 
+      std::map<std::string, ZatChannel> &visibleChannelsByCid,
       std::string powerHash
   );
   virtual ~ZattooEpgProvider();

@@ -6,15 +6,15 @@ const int DB_VERSION = 1;
 class ProcessParameterRowCallback : public ProcessRowCallback {
 public:
   virtual ~ProcessParameterRowCallback() { }
-  
+
   void ProcessRow(sqlite3_stmt* stmt) {
     m_result = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
   }
-  
+
   std::string Result() {
     return m_result;
   }
-  
+
 private:
   std::string m_result = "";
 };
@@ -65,7 +65,7 @@ bool ParameterDB::Migrate0To1() {
 bool ParameterDB::Set(std::string key, std::string value) {
   std::string insert = "replace into PARAMETER VALUES ";
   insert += "('" + key + "','" + value + "')";
-  
+
   if (!Execute(insert)) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to insert", m_name.c_str());
     return false;

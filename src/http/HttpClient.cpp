@@ -14,17 +14,17 @@ HttpClient::HttpClient(ParameterDB *parameterDB):
   kodi::Log(ADDON_LOG_INFO, "Using useragent: %s", USER_AGENT.c_str());
 
   m_uuid = m_parameterDB->Get("uuid");
-  m_beakerSessionId = m_parameterDB->Get("beakerSessionId");  
+  m_beakerSessionId = m_parameterDB->Get("beakerSessionId");
 }
 
 HttpClient::~HttpClient()
 {
-  
+
 }
 
 void HttpClient::ClearSession() {
   m_uuid = GetUUID();
-  m_beakerSessionId = "";  
+  m_beakerSessionId = "";
 }
 
 std::string HttpClient::GetUUID()
@@ -47,14 +47,14 @@ std::string HttpClient::GenerateUUID()
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
         "-";
-    
+
     srand( (unsigned) time(NULL));
-    
+
     for (int i = 0; i < 21; ++i)
     {
         tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
     }
-    
+
     return tmp_s;
 }
 
@@ -98,7 +98,7 @@ std::string HttpClient::HttpRequest(const std::string& action, const std::string
   Curl curl;
 
   curl.AddOption("acceptencoding", "gzip,deflate");
-  
+
   std::string cookie = "";
 
   if (!m_beakerSessionId.empty())
@@ -110,7 +110,7 @@ std::string HttpClient::HttpRequest(const std::string& action, const std::string
   {
     cookie += "uuid=" + m_uuid + "; ";
   }
-  
+
   if (!cookie.empty()) {
     curl.AddOption("Cookie", cookie);
   }

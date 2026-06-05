@@ -19,7 +19,7 @@ Session::~Session()
 {
   m_running = false;
   if (m_thread.joinable())
-    m_thread.join();  
+    m_thread.join();
 }
 
 ADDON_STATUS Session::Start()
@@ -27,7 +27,7 @@ ADDON_STATUS Session::Start()
   if (!m_settings->VerifySettings()) {
     return ADDON_STATUS_NEED_SETTINGS;
   }
-  
+
   m_running = true;
   m_thread = std::thread([&] { LoginThread(); });
   return ADDON_STATUS_OK;
@@ -35,26 +35,26 @@ ADDON_STATUS Session::Start()
 
 void Session::LoginThread() {
   while (m_running) {
-    
+
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    
+
     if (!m_running) {
       return;
     }
-    
+
     if (m_isConnected) {
       continue;
     }
-    
+
     if (m_nextLoginAttempt > std::time(0)) {
       continue;
     }
-    
+
     m_zatData->UpdateConnectionState("Zattoo Connecting", PVR_CONNECTION_STATE_CONNECTING, "");
-    
+
     std::string username = m_settings->GetZatUsername();
     std::string password = m_settings->GetZatPassword();
-    
+
     kodi::Log(ADDON_LOG_DEBUG, "Login Zattoo");
     if (Login(username, password))
     {
@@ -65,7 +65,7 @@ void Session::LoginThread() {
       m_isConnected = true;
       kodi::Log(ADDON_LOG_DEBUG, "Login done");
       m_zatData->UpdateConnectionState("Zattoo connection established", PVR_CONNECTION_STATE_CONNECTED, "");
-      kodi::QueueNotification(QUEUE_INFO, "", kodi::addon::GetLocalizedString(30202));      
+      kodi::QueueNotification(QUEUE_INFO, "", kodi::addon::GetLocalizedString(30202));
     }
     else
     {
@@ -78,7 +78,7 @@ void Session::LoginThread() {
 
 bool Session::Login(std::string u, std::string p)
 {
-  
+
   if (!LoadAppId())
   {
     Reset();
@@ -86,12 +86,12 @@ bool Session::Login(std::string u, std::string p)
     m_nextLoginAttempt = std::time(0) + 60;
     return false;
   }
-  
+
   SendHello();
-  
+
   int statusCode;
   std::string jsonString = m_httpClient->HttpGet(m_providerUrl + "/zapi/v3/session", statusCode);
-  
+
   if (statusCode != 200)
   {
     Reset();
@@ -108,12 +108,12 @@ bool Session::Login(std::string u, std::string p)
     m_nextLoginAttempt = std::time(0) + 300;
     return false;
   }
-  
+
   if (doc["account"].IsNull())
   {
      kodi::Log(ADDON_LOG_DEBUG, "Need to login.");
      m_httpClient->ClearSession();
-     
+
      kodi::Log(ADDON_LOG_DEBUG, "Try to login.");
 
      std::ostringstream dataStream;
@@ -121,8 +121,8 @@ bool Session::Login(std::string u, std::string p)
          << Utils::UrlEncode(m_settings->GetZatPassword()) << "&format=json&remember=true";
      int statusCode;
      std::string jsonString = m_httpClient->HttpPost(m_providerUrl + "/zapi/v3/account/login", dataStream.str(), statusCode);
-     doc.Parse(jsonString.c_str());     
-     
+     doc.Parse(jsonString.c_str());
+
      if (doc.GetParseError() || !doc["active"].GetBool())
      {
        kodi::Log(ADDON_LOG_ERROR, "Login failed.");
@@ -135,10 +135,10 @@ bool Session::Login(std::string u, std::string p)
        kodi::Log(ADDON_LOG_DEBUG, "Login was successful.");
      }
   }
-  
+
   const Value& account = doc["account"];
   const Value& nonlive = doc["nonlive"];
-  
+
   m_countryCode = Utils::JsonStringOrEmpty(doc, "current_country");
   m_serviceRegionCountry = Utils::JsonStringOrEmpty(account, "service_country");
   m_recallEnabled = Utils::JsonStringOrEmpty(nonlive, "replay_availability") == "available";
@@ -151,8 +151,8 @@ bool Session::Login(std::string u, std::string p)
   kodi::Log(ADDON_LOG_INFO, "Recordings are %s",
       m_recordingEnabled ? "enabled" : "disabled");
   m_powerHash = Utils::JsonStringOrEmpty(doc, "power_guide_hash");
-  
-  
+
+
   return true;
 }
 
@@ -161,11 +161,11 @@ bool Session::LoadAppId()
   if (!m_appToken.empty()) {
     return true;
   }
-  
+
   if (!LoadAppTokenFromTokenJson("token.json")) {
     int statusCode;
     std::string html = m_httpClient->HttpGet(m_providerUrl + "/login", statusCode);
-  
+
     if (!LoadAppTokenFromHtml(html)) {
       if (!LoadAppTokenFromJson(html)) {
         m_appToken = m_parameterDB->Get("appToken");

@@ -4,15 +4,15 @@
 class ProcessSingleIntRowCallback : public ProcessRowCallback {
 public:
   virtual ~ProcessSingleIntRowCallback() { }
-  
+
   void ProcessRow(sqlite3_stmt* stmt) {
     m_result = sqlite3_column_int(stmt, 0);
   }
-  
+
   int GetResult() {
     return m_result;
   }
-  
+
 private:
   int m_result = -1;
 };
@@ -48,13 +48,13 @@ bool SQLConnection::Open(std::string& file) {
 bool SQLConnection::Query(std::string query, ProcessRowCallback& callback) {
   sqlite3_stmt* stmt;
   int ret = sqlite3_prepare(m_db, query.c_str(), query.length(), &stmt, NULL);
-  
+
   if (ret != SQLITE_OK) {
     sqlite3_finalize(stmt);
     kodi::Log(ADDON_LOG_ERROR, "%s: Query failed: %s", m_name.c_str(), sqlite3_errmsg(m_db));
     return false;
   }
-  
+
   bool err = false;
   bool done = false;
   while (!done) {
@@ -62,7 +62,7 @@ bool SQLConnection::Query(std::string query, ProcessRowCallback& callback) {
     case SQLITE_ROW:
       callback.ProcessRow(stmt);
       break;
-      
+
     case SQLITE_DONE:
       done = true;
       break;
@@ -73,7 +73,7 @@ bool SQLConnection::Query(std::string query, ProcessRowCallback& callback) {
       done = true;
     }
   }
-  
+
   sqlite3_finalize(stmt);
   return !err;
 }
@@ -88,15 +88,15 @@ bool SQLConnection::EnsureVersionTable() {
   if (!Query("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='SCHEMA_VERSION'", callback)) {
     return false;
   }
-  
+
   if (callback.GetResult() == 0) {
     kodi::Log(ADDON_LOG_INFO, "%s: SCHEMA_VERSION does not exist. Creating Table.", m_name.c_str());
     if (!Execute("create table SCHEMA_VERSION (VERSION integer NOT NULL)")) {
       return false;
     }
     return Execute("insert into SCHEMA_VERSION VALUES (0)");
-  }  
-  
+  }
+
   return true;
 }
 

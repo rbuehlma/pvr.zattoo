@@ -31,7 +31,7 @@ bool CSettings::Load()
               "Couldn't get 'favoritesonly' setting, falling back to 'false' as default");
     m_zatFavoritesOnly = false;
   }
-  
+
   if (!kodi::addon::CheckSettingBoolean("smarttv", m_smartTV))
   {
     /* If setting is unknown fallback to defaults */
@@ -47,7 +47,7 @@ bool CSettings::Load()
               "Couldn't get 'enableDolby' setting, falling back to 'true' as default");
     m_zatEnableDolby = true;
   }
-  
+
   if (!kodi::addon::CheckSettingBoolean("skipStart", m_skipStartOfProgramme))
   {
     /* If setting is unknown fallback to defaults */
@@ -86,7 +86,7 @@ bool CSettings::Load()
               "Couldn't get 'provider' setting, falling back to '0' as default");
     m_provider = 0;
   }
-  
+
   if (!kodi::addon::CheckSettingInt("drmLevel", m_drmLevel))
   {
     /* If setting is unknown fallback to defaults */
