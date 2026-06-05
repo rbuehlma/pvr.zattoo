@@ -4,7 +4,6 @@
 #include "../Utils.h"
 #include <ctime>
 
-
 using json = nlohmann::json;
 
 std::mutex ZattooEpgProvider::loadedTimeslotsMutex;

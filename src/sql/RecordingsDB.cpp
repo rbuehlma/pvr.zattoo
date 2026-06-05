@@ -76,7 +76,6 @@ void RecordingsDB::Cleanup() {
   }
 }
 
-
 bool RecordingsDB::Set(RecordingDBInfo& recordingDBInfo) {
   time(&recordingDBInfo.lastSeen);
   std::string insert = "replace into RECORDING_INFO VALUES ";

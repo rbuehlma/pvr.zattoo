@@ -152,7 +152,6 @@ bool Session::Login(std::string u, std::string p)
       m_recordingEnabled ? "enabled" : "disabled");
   m_powerHash = Utils::JsonStringOrEmpty(doc, "power_guide_hash");
 
-
   return true;
 }
 

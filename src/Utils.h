@@ -5,7 +5,6 @@
 #include <vector>
 #include "nlohmann/json.hpp"
 
-
 class Utils
 {
 public:
