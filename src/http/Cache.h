@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "rapidjson/document.h"
+#include "nlohmann/json.hpp"
 
 class Cache
 {
@@ -11,6 +11,6 @@ public:
       time_t validUntil);
   static void Cleanup();
 private:
-  static bool IsStillValid(const rapidjson::Value& cache);
+  static bool IsStillValid(const nlohmann::json& cache);
   static time_t m_lastCleanup;
 };

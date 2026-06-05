@@ -139,39 +139,39 @@ std::string Utils::GetImageUrl(const std::string& imageToken) {
   return "https://images.zattic.com/cms/" + imageToken + "/format_640x360.jpg";
 }
 
-std::string Utils::JsonStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName)
+std::string Utils::JsonStringOrEmpty(const nlohmann::json& jsonValue, const char* fieldName)
 {
-  if (!jsonValue.HasMember(fieldName) || !jsonValue[fieldName].IsString())
+  if (!jsonValue.contains(fieldName) || !jsonValue[fieldName].is_string())
   {
     return "";
   }
-  return jsonValue[fieldName].GetString();
+  return jsonValue[fieldName].get<std::string>();
 }
 
-int Utils::JsonIntOrZero(const rapidjson::Value& jsonValue, const char* fieldName)
+int Utils::JsonIntOrZero(const nlohmann::json& jsonValue, const char* fieldName)
 {
-  if (!jsonValue.HasMember(fieldName) || !jsonValue[fieldName].IsInt())
+  if (!jsonValue.contains(fieldName) || !jsonValue[fieldName].is_number_integer())
   {
     return 0;
   }
-  return jsonValue[fieldName].GetInt();
+  return jsonValue[fieldName].get<int>();
 }
 
-bool Utils::JsonBoolOrFalse(const rapidjson::Value& jsonValue, const char* fieldName)
+bool Utils::JsonBoolOrFalse(const nlohmann::json& jsonValue, const char* fieldName)
 {
-  if (!jsonValue.HasMember(fieldName))
+  if (!jsonValue.contains(fieldName))
   {
     return false;
   }
 
-  if (jsonValue[fieldName].IsBool())
+  if (jsonValue[fieldName].is_boolean())
   {
-    return jsonValue[fieldName].GetBool();
+    return jsonValue[fieldName].get<bool>();
   }
 
-  if (jsonValue[fieldName].IsInt())
+  if (jsonValue[fieldName].is_number_integer())
   {
-    return jsonValue[fieldName].GetInt() != 0;
+    return jsonValue[fieldName].get<int>() != 0;
   }
 
   return false;

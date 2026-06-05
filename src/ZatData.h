@@ -3,7 +3,7 @@
 #include <map>
 #include <thread>
 #include <mutex>
-#include "rapidjson/document.h"
+#include "nlohmann/json.hpp"
 #include "ZatChannel.h"
 #include "Settings.h"
 #include "sql/EpgDB.h"
@@ -102,23 +102,23 @@ private:
   Session *m_session;
 
   bool ReadDataJson();
-  rapidjson::Document Login();
+  nlohmann::json Login();
   bool InitSession(bool isReinit);
   bool ReinitSession();
   ZatChannel* FindChannel(int uniqueId);
   PVRZattooChannelGroup* FindGroup(const std::string& strName);
   std::string GetStreamTypeString(bool withDrm);
-  bool IsDrmLimitApplied(rapidjson::Document& doc);
-  std::string GetStreamUrl(rapidjson::Document& doc, std::vector<kodi::addon::PVRStreamProperty>& properties);
+  bool IsDrmLimitApplied(nlohmann::json& doc);
+  std::string GetStreamUrl(nlohmann::json& doc, std::vector<kodi::addon::PVRStreamProperty>& properties);
   std::string GetBasicStreamParameters(bool requiresDrm);
   std::string GetQualityStreamParameter(const std::string& cid, bool withoutDrm, bool& requiresDrm);
   int GetDrmLevel();
-  bool ParseRecordingsTimers(const rapidjson::Value& recordings, std::map<int, ZatRecordingDetails>& detailsById);
+  bool ParseRecordingsTimers(const nlohmann::json& recordings, std::map<int, ZatRecordingDetails>& detailsById);
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
   bool Record(int programId, bool series);
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties, const std::string& url);
   std::string GetStreamUrlForProgram(const std::string& cid, int programId, std::vector<kodi::addon::PVRStreamProperty>& properties);
   bool TryToReinitIf403(int statusCode);
-  bool FetchStreamJsonForEDL(const std::string& type, const std::string& cid, int programId, rapidjson::Document& doc);
-  void AddCommercialBreaks(const rapidjson::Document& doc, std::vector<kodi::addon::PVREDLEntry>& edl);
+  bool FetchStreamJsonForEDL(const std::string& type, const std::string& cid, int programId, nlohmann::json& doc);
+  void AddCommercialBreaks(const nlohmann::json& doc, std::vector<kodi::addon::PVREDLEntry>& edl);
 };

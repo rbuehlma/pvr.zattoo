@@ -1,11 +1,11 @@
 #include "ZattooEpgProvider.h"
-#include "rapidjson/document.h"
+#include "nlohmann/json.hpp"
 #include <kodi/AddonBase.h>
 #include "../Utils.h"
 #include <ctime>
 
 
-using namespace rapidjson;
+using json = nlohmann::json;
 
 std::mutex ZattooEpgProvider::loadedTimeslotsMutex;
 
@@ -55,50 +55,46 @@ bool ZattooEpgProvider::LoadEPGForChannel(ZatChannel &notUsed, time_t iStart, ti
     int statusCode;
     std::string jsonString = m_httpClient.HttpGetCached(urlStream.str(), 86400, statusCode);
 
-    Document doc;
-    doc.Parse(jsonString.c_str());
-    if (doc.GetParseError())
+    json doc;
+    doc = json::parse(jsonString, nullptr, false);
+    if (doc.is_discarded())
     {
       kodi::Log(ADDON_LOG_ERROR, "Loading epg failed from %lu to %lu", iStart, iEnd);
       return false;
     }
     RegisterAlreadyLoaded(tempStart, tempEnd);
-    const Value& channels = doc["channels"];
+    const json& channels = doc["channels"];
 
     std::lock_guard<std::mutex> lock(sendEpgToKodiMutex);
     m_epgDB.BeginTransaction();
-    for (Value::ConstMemberIterator iter = channels.MemberBegin(); iter != channels.MemberEnd(); ++iter) {
-      std::string cid = iter->name.GetString();
-
+    for (const auto& [cid, programs] : channels.items()) {
       if (m_visibleChannelsByCid.count(cid) == 0) {
         continue;
       }
 
-      const Value& programs = iter->value;
       for (const auto& program : programs)
       {
-        const Type& checkType = program["t"].GetType();
-        if (checkType != kStringType)
+        if (!program["t"].is_string())
           continue;
 
-        int programId = program["id"].GetInt();
+        int programId = program["id"].get<int>();
 
         EpgDBInfo epgDBInfo = m_epgDB.Get(programId);
 
-        const Value& genres = program["g"];
+        const json& genres = program["g"];
         std::string genreString;
         for (const auto& genre : genres)
         {
-          genreString = genre.GetString();
+          genreString = genre.get<std::string>();
           break;
         }
 
-        epgDBInfo.programId = program["id"].GetInt();
+        epgDBInfo.programId = program["id"].get<int>();
         epgDBInfo.recordUntil = Utils::JsonIntOrZero(program, "rg_u");
         epgDBInfo.replayUntil = Utils::JsonIntOrZero(program, "sr_u");
         epgDBInfo.restartUntil = Utils::JsonIntOrZero(program, "ry_u");
-        epgDBInfo.startTime = program["s"].GetInt();
-        epgDBInfo.endTime = program["e"].GetInt();
+        epgDBInfo.startTime = program["s"].get<int>();
+        epgDBInfo.endTime = program["e"].get<int>();
         epgDBInfo.title = Utils::JsonStringOrEmpty(program, "t");
         epgDBInfo.subtitle = Utils::JsonStringOrEmpty(program, "et");
         epgDBInfo.genre = genreString;
@@ -236,9 +232,9 @@ void ZattooEpgProvider::DetailsThread()
       int statusCode;
       std::string jsonString = m_httpClient.HttpGet(urlStream.str(), statusCode);
 
-      Document detailDoc;
-      detailDoc.Parse(jsonString.c_str());
-      if (detailDoc.GetParseError() || !detailDoc["success"].GetBool())
+      json detailDoc;
+      detailDoc = json::parse(jsonString, nullptr, false);
+      if (detailDoc.is_discarded() || !detailDoc["success"].get<bool>())
       {
         kodi::Log(ADDON_LOG_ERROR, "Failed to load details for program.");
         m_detailsThreadRunning = false;
@@ -246,14 +242,14 @@ void ZattooEpgProvider::DetailsThread()
       }
       else
       {
-        const Value& programs = detailDoc["programs"];
+        const json& programs = detailDoc["programs"];
         for (const auto& program : programs)
         {
-          int programId = program["id"].GetInt();
+          int programId = program["id"].get<int>();
           EpgDBInfo *epgDBInfo = epgDBInfoById[programId];
           epgDBInfo->description = Utils::JsonStringOrEmpty(program, "d");
-          epgDBInfo->season = program.HasMember("s_no") && !program["s_no"].IsNull() ? program["s_no"].GetInt() : -1;
-          epgDBInfo->episode = program.HasMember("e_no") && !program["e_no"].IsNull() ? program["e_no"].GetInt() : -1;
+          epgDBInfo->season = program.contains("s_no") && !program["s_no"].is_null() ? program["s_no"].get<int>() : -1;
+          epgDBInfo->episode = program.contains("e_no") && !program["e_no"].is_null() ? program["e_no"].get<int>() : -1;
 
           epgDBInfo->detailsLoaded = 1;
           if (!m_epgDB.Update(*epgDBInfo)) {
