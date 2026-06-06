@@ -2,9 +2,9 @@
 #include <kodi/AddonBase.h>
 #include <kodi/General.h>
 #include "ZatData.h"
-#include "rapidjson/document.h"
+#include "nlohmann/json.hpp"
 
-using namespace rapidjson;
+using json = nlohmann::json;
 
 Session::Session(HttpClient* httpClient, ZatData* zatData, CSettings* settings, ParameterDB *parameterDB):
   m_httpClient(httpClient),
@@ -100,16 +100,16 @@ bool Session::Login(std::string u, std::string p)
     return false;
   }
 
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["active"].GetBool())
+  json doc;
+  doc = json::parse(jsonString, nullptr, false);
+  if (doc.is_discarded() || !doc["active"].get<bool>())
   {
     kodi::Log(ADDON_LOG_ERROR, "Initialize session failed.");
     m_nextLoginAttempt = std::time(0) + 300;
     return false;
   }
 
-  if (doc["account"].IsNull())
+  if (doc["account"].is_null())
   {
      kodi::Log(ADDON_LOG_DEBUG, "Need to login.");
      m_httpClient->ClearSession();
@@ -121,9 +121,9 @@ bool Session::Login(std::string u, std::string p)
          << Utils::UrlEncode(m_settings->GetZatPassword()) << "&format=json&remember=true";
      int statusCode;
      std::string jsonString = m_httpClient->HttpPost(m_providerUrl + "/zapi/v3/account/login", dataStream.str(), statusCode);
-     doc.Parse(jsonString.c_str());
+     doc = json::parse(jsonString, nullptr, false);
 
-     if (doc.GetParseError() || !doc["active"].GetBool())
+     if (doc.is_discarded() || !doc["active"].get<bool>())
      {
        kodi::Log(ADDON_LOG_ERROR, "Login failed.");
            m_nextLoginAttempt = std::time(0) + 300;
@@ -136,8 +136,8 @@ bool Session::Login(std::string u, std::string p)
      }
   }
 
-  const Value& account = doc["account"];
-  const Value& nonlive = doc["nonlive"];
+  const json& account = doc["account"];
+  const json& nonlive = doc["nonlive"];
 
   m_countryCode = Utils::JsonStringOrEmpty(doc, "current_country");
   m_serviceRegionCountry = Utils::JsonStringOrEmpty(account, "service_country");
@@ -151,7 +151,6 @@ bool Session::Login(std::string u, std::string p)
   kodi::Log(ADDON_LOG_INFO, "Recordings are %s",
       m_recordingEnabled ? "enabled" : "disabled");
   m_powerHash = Utils::JsonStringOrEmpty(doc, "power_guide_hash");
-
 
   return true;
 }
@@ -181,15 +180,15 @@ bool Session::LoadAppTokenFromTokenJson(std::string tokenJsonPath) {
   int statusCode;
   std::string jsonString = m_httpClient->HttpGet(m_providerUrl + "/" + tokenJsonPath, statusCode);
 
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["success"].GetBool())
+  json doc;
+  doc = json::parse(jsonString, nullptr, false);
+  if (doc.is_discarded() || !doc["success"].get<bool>())
   {
     kodi::Log(ADDON_LOG_DEBUG, "Failed to load json from %s", tokenJsonPath.c_str());
     return false;
   }
 
-  m_appToken = doc["session_token"].GetString();
+  m_appToken = doc["session_token"].get<std::string>();
   return true;
 }
 
@@ -242,9 +241,9 @@ bool Session::SendHello()
   int statusCode;
   std::string jsonString = m_httpClient->HttpPost(m_providerUrl + "/zapi/v3/session/hello", dataStream.str(), statusCode);
 
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (!doc.GetParseError() && doc["active"].GetBool())
+  json doc;
+  doc = json::parse(jsonString, nullptr, false);
+  if (!doc.is_discarded() && doc["active"].get<bool>())
   {
     kodi::Log(ADDON_LOG_DEBUG, "Hello was successful.");
     return true;

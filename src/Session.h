@@ -71,6 +71,4 @@ private:
   std::string m_providerUrl;
 };
 
-
-
 #endif /* SRC_SESSION_H_ */

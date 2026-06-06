@@ -23,7 +23,6 @@ public:
   }
 };
 
-
 SQLConnection::SQLConnection(std::string name):
     m_db(nullptr),
     m_name(name) {

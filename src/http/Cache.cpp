@@ -2,8 +2,6 @@
 #include "Cache.h"
 #include <kodi/Filesystem.h>
 #include "../Utils.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
 
 #ifdef TARGET_WINDOWS
 #include "../windows.h"
@@ -15,7 +13,7 @@
 #endif
 #endif
 
-using namespace rapidjson;
+using json = nlohmann::json;
 
 constexpr char CACHE_DIR[] = "special://profile/addon_data/pvr.zattoo/cache/";
 
@@ -33,9 +31,8 @@ bool Cache::Read(const std::string& key, std::string& data)
   {
     return false;
   }
-  Document doc;
-  doc.Parse(jsonString.c_str());
-  if (doc.GetParseError())
+  json doc = json::parse(jsonString, nullptr, false);
+  if (doc.is_discarded())
   {
     if (kodi::vfs::FileExists(cacheFile, true))
     {
@@ -52,7 +49,7 @@ bool Cache::Read(const std::string& key, std::string& data)
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "Load from cache file [%s].", cacheFile.c_str());
-  data = doc["data"].GetString();
+  data = doc["data"].get<std::string>();
   return !data.empty();
 }
 
@@ -75,18 +72,12 @@ void Cache::Write(const std::string& key, const std::string& data, time_t validU
     return;
   }
 
-  Document d;
-  d.SetObject();
-  d.AddMember("validUntil", static_cast<uint64_t>(validUntil), d.GetAllocator());
-  Value value;
-  value.SetString(data.c_str(), static_cast<SizeType>(data.length()), d.GetAllocator());
-  d.AddMember("data", value, d.GetAllocator());
+  json d;
+  d["validUntil"] = static_cast<uint64_t>(validUntil);
+  d["data"] = data;
 
-  StringBuffer buffer;
-  Writer<StringBuffer> writer(buffer);
-  d.Accept(writer);
-  const char* output = buffer.GetString();
-  file.Write(output, strlen(output));
+  std::string output = d.dump();
+  file.Write(output.c_str(), output.size());
 }
 
 void Cache::Cleanup()
@@ -120,9 +111,8 @@ void Cache::Cleanup()
     {
       continue;
     }
-    Document doc;
-    doc.Parse(jsonString.c_str());
-    if (doc.GetParseError())
+    json doc = json::parse(jsonString, nullptr, false);
+    if (doc.is_discarded())
     {
       kodi::Log(ADDON_LOG_ERROR, "Parsing cache file [%s] failed. -> Delete", path.c_str());
       kodi::vfs::DeleteFile(path);
@@ -139,9 +129,9 @@ void Cache::Cleanup()
   }
 }
 
-bool Cache::IsStillValid(const Value& cache)
+bool Cache::IsStillValid(const json& cache)
 {
-  time_t validUntil = static_cast<time_t>(cache["validUntil"].GetUint64());
+  time_t validUntil = static_cast<time_t>(cache["validUntil"].get<uint64_t>());
   time_t current_time;
   time(&current_time);
   return validUntil >= current_time;
