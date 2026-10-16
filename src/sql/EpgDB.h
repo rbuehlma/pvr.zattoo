@@ -21,6 +21,10 @@ struct EpgDBInfo
   int episode = -1;
   std::string imageToken;
   std::string cid;
+  std::string cast;
+  std::string director;
+  int year = 0;
+  int parentalRating = 0;
 };
 
 class EpgDB : public SQLConnection
@@ -37,6 +41,7 @@ private:
   bool Migrate0To1();
   bool Migrate1To2();
   bool Migrate2To3();
+  bool Migrate3To4();
   void Cleanup();
   time_t m_nextCleanupDue = 0;
   sqlite3_stmt *m_prepareInsertStatement;

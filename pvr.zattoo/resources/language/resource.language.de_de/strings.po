@@ -268,3 +268,69 @@ msgstr ""
 msgctxt "#30399"
 msgid "Unterstütztes DRM level. Auto verwendet L3 für Linux, sonst L2."
 msgstr ""
+
+#. Channel group name for the Zattoo favourite channels
+#: src/ZatData.cpp
+msgctxt "#30017"
+msgid "Favourites"
+msgstr "Favoriten"
+
+#. Boolean setting to hide channels which are not part of the subscription
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30018"
+msgid "Hide channels not included in the subscription"
+msgstr "Nicht im Abonnement enthaltene Sender ausblenden"
+
+#. Help text to setting #30018
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30019"
+msgid "Channels which are not available with the current subscription are not shown in Kodi."
+msgstr "Sender, die mit dem aktuellen Abonnement nicht verfügbar sind, werden in Kodi nicht angezeigt."
+
+#. Connection state message shown while username or password are missing
+#: src/Session.cpp
+msgctxt "#30204"
+msgid "Please enter your Zattoo username and password in the add-on settings"
+msgstr "Bitte Zattoo-Benutzername und -Passwort in den Addon-Einstellungen eingeben"
+
+#. Selection list on settings to choose the colour of the channel logos
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30020"
+msgid "Channel logo variant"
+msgstr "Variante der Senderlogos"
+
+#. Help text to setting #30020
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30021"
+msgid "White logos suit dark skins, black logos suit light skins."
+msgstr "Weisse Logos passen zu dunklen Skins, schwarze zu hellen Skins."
+
+#. Selection value for setting defined with id #30020
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30022"
+msgid "White"
+msgstr "Weiss"
+
+#. Selection value for setting defined with id #30020
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30023"
+msgid "Black"
+msgstr "Schwarz"
+
+#. Boolean setting to add one channel group per language
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30024"
+msgid "Channel groups by language"
+msgstr "Sendergruppen nach Sprache"
+
+#. Help text to setting #30024
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30025"
+msgid "Adds one channel group per language (from a bundled table, markers like [fr] in the channel name, or well known names)."
+msgstr "Fügt pro Sprache eine Sendergruppe hinzu (aus einer mitgelieferten Tabelle, Kennzeichen wie [de] im Sendernamen oder bekannten Namen)."
+
+#. Prefix of the channel groups created per language
+#: src/ZatData.cpp
+msgctxt "#30026"
+msgid "Language"
+msgstr "Sprache"

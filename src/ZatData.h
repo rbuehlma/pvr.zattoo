@@ -15,10 +15,14 @@
 
 class CZattooTVAddon;
 
+/* Unique id of the single PVR provider reported to Kodi. */
+static const int ZATTOO_PROVIDER_UID = 1;
+
 struct ZatRecordingDetails
 {
   std::string genre;
   std::string description;
+  int year = 0;
   int seriesNumber = EPG_TAG_INVALID_SERIES_EPISODE;
   int episodeNumber = EPG_TAG_INVALID_SERIES_EPISODE;
 };
@@ -45,6 +49,8 @@ public:
   PVR_ERROR GetBackendHostname(std::string& hostname) override;
   PVR_ERROR GetConnectionString(std::string& connection) override;
 
+  PVR_ERROR GetProvidersAmount(int& amount) override;
+  PVR_ERROR GetProviders(kodi::addon::PVRProvidersResultSet& results) override;
   PVR_ERROR GetChannelsAmount(int& amount) override;
   PVR_ERROR GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& results) override;
   PVR_ERROR GetChannelGroupsAmount(int& amount) override;
@@ -118,6 +124,7 @@ private:
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties, const std::string& url);
   std::string GetStreamUrlForProgram(const std::string& cid, int programId, std::vector<kodi::addon::PVRStreamProperty>& properties);
   bool TryToReinitIf403(int statusCode);
+  static std::string BestLogoPath(const rapidjson::Value& qualityItem, const std::string& variant);
   bool FetchStreamJsonForEDL(const std::string& type, const std::string& cid, int programId, rapidjson::Document& doc);
   void AddCommercialBreaks(const rapidjson::Document& doc, std::vector<kodi::addon::PVREDLEntry>& edl);
 };

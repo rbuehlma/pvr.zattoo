@@ -1,3 +1,33 @@
+v21.4.0
+- Channel groups by language now work without API support: bundled cid table, user override file, [xx] markers and known channel names
+
+v21.3.0
+- Optional channel groups per language, based on the language field of the channel list when Zattoo provides it
+- Log the fields of the channel list once per session to ease diagnostics
+
+v21.2.0
+- Fanart in original resolution and thumbnails for recordings
+- Mark programs with a season or episode number as series, mark series recordings
+- Link recordings to their EPG event so that Kodi shows the full details
+- Report the channel group order of Zattoo
+- Add a setting to choose white or black channel logos
+- Do not announce recording renaming, the API does not offer it
+
+v21.1.0
+- Add a French translation
+- Localise the name of the favourites channel group
+- Use the largest channel logo offered by the API when no bundled logo exists
+- Add a setting to hide channels not included in the subscription
+- Fill cast, director, year and parental rating of EPG entries from the program details
+- Report a PVR provider for channels and recordings
+- Do not advertise radio support, no radio channels are delivered
+- Start in "access denied" state when credentials are missing instead of blocking the PVR manager
+- Retry failed logins with an increasing delay and report rejected credentials
+- Use an HTTP connection timeout
+
+v21.0.8
+- Create the add-on user data directory before opening the databases
+
 v21.0.7
 - Add an option to skip commercial breaks
 

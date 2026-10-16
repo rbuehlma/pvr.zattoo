@@ -98,6 +98,8 @@ std::string HttpClient::HttpRequest(const std::string& action, const std::string
   Curl curl;
 
   curl.AddOption("acceptencoding", "gzip,deflate");
+  /* Fail fast instead of blocking the PVR threads when the backend does not answer. */
+  curl.AddOption("connection-timeout", "15");
   
   std::string cookie = "";
 

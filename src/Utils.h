@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <map>
 #include "rapidjson/document.h"
 
 
@@ -19,8 +20,16 @@ public:
   static time_t StringToTime(const std::string &timeString);
   static int GetChannelId(const char * strChannelName);
   static std::string GetImageUrl(const std::string& imageToken);
+  static std::string GetImageUrlOriginal(const std::string& imageToken);
   static std::string JsonStringOrEmpty(const rapidjson::Value& jsonValue, const char* fieldName);
   static int JsonIntOrZero(const rapidjson::Value& jsonValue, const char* fieldName);
   static bool JsonBoolOrFalse(const rapidjson::Value& jsonValue, const char* fieldName);
+  static int JsonNumberOrZero(const rapidjson::Value& jsonValue, const char* fieldName);
+  static std::string JsonCredits(const rapidjson::Value& program, const char* role, const std::string& separator);
+  static std::vector<std::string> JsonStringList(const rapidjson::Value& jsonValue, const char* fieldName);
+  static std::string JsonMemberNames(const rapidjson::Value& jsonValue);
+  static std::string LanguageName(const std::string& code);
+  static std::string GuessLanguage(const std::string& title, const std::string& cid);
+  static std::map<std::string, std::string> ParseLanguageTable(const std::string& content);
   static bool RunsOnLinux();
 };

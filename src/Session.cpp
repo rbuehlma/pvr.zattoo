@@ -3,6 +3,7 @@
 #include <kodi/General.h>
 #include "ZatData.h"
 #include "rapidjson/document.h"
+#include <algorithm>
 
 using namespace rapidjson;
 
@@ -25,7 +26,13 @@ Session::~Session()
 ADDON_STATUS Session::Start()
 {
   if (!m_settings->VerifySettings()) {
-    return ADDON_STATUS_NEED_SETTINGS;
+    /* Do not return ADDON_STATUS_NEED_SETTINGS here: Kodi then keeps the add-on
+     * half initialised and the next instance creation fails with "Not implemented",
+     * which leaves the PVR manager stuck. Report the missing credentials as a
+     * connection state instead; a settings change restarts the add-on. */
+    m_zatData->UpdateConnectionState("Missing credentials", PVR_CONNECTION_STATE_ACCESS_DENIED,
+        kodi::addon::GetLocalizedString(30204));
+    return ADDON_STATUS_OK;
   }
   
   m_running = true;
@@ -56,6 +63,7 @@ void Session::LoginThread() {
     std::string password = m_settings->GetZatPassword();
     
     kodi::Log(ADDON_LOG_DEBUG, "Login Zattoo");
+    m_credentialsRejected = false;
     if (Login(username, password))
     {
       if (!m_zatData->SessionInitialized()) {
@@ -63,15 +71,29 @@ void Session::LoginThread() {
         continue;
       }
       m_isConnected = true;
+      m_transientFailures = 0;
       kodi::Log(ADDON_LOG_DEBUG, "Login done");
       m_zatData->UpdateConnectionState("Zattoo connection established", PVR_CONNECTION_STATE_CONNECTED, "");
       kodi::QueueNotification(QUEUE_INFO, "", kodi::addon::GetLocalizedString(30202));      
     }
-    else
+    else if (m_credentialsRejected)
     {
-      kodi::Log(ADDON_LOG_ERROR, "Login failed");
+      /* Wrong username or password: do not hammer the API, wait for an hour
+       * (a settings change restarts the add-on anyway). */
+      kodi::Log(ADDON_LOG_ERROR, "Login failed: credentials rejected. Next attempt in one hour.");
       m_nextLoginAttempt = std::time(0) + 3600;
       kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30201));
+    }
+    else
+    {
+      /* Transient failure (network, server): retry with an increasing delay,
+       * 30 s, 60 s, 120 s, 240 s, then every 480 s. Notify only once. */
+      m_transientFailures++;
+      int delay = std::min(480, 30 << std::min(m_transientFailures - 1, 4));
+      kodi::Log(ADDON_LOG_WARNING, "Login failed (attempt %d). Next attempt in %d seconds.", m_transientFailures, delay);
+      m_nextLoginAttempt = std::time(0) + delay;
+      if (m_transientFailures == 1)
+        kodi::QueueNotification(QUEUE_WARNING, "", kodi::addon::GetLocalizedString(30201));
     }
   }
 }
@@ -102,14 +124,14 @@ bool Session::Login(std::string u, std::string p)
 
   Document doc;
   doc.Parse(jsonString.c_str());
-  if (doc.GetParseError() || !doc["active"].GetBool())
+  if (doc.GetParseError() || !Utils::JsonBoolOrFalse(doc, "active"))
   {
     kodi::Log(ADDON_LOG_ERROR, "Initialize session failed.");
     m_nextLoginAttempt = std::time(0) + 300;
     return false;
   }
   
-  if (doc["account"].IsNull())
+  if (!doc.HasMember("account") || doc["account"].IsNull())
   {
      kodi::Log(ADDON_LOG_DEBUG, "Need to login.");
      m_httpClient->ClearSession();
@@ -123,11 +145,17 @@ bool Session::Login(std::string u, std::string p)
      std::string jsonString = m_httpClient->HttpPost(m_providerUrl + "/zapi/v3/account/login", dataStream.str(), statusCode);
      doc.Parse(jsonString.c_str());     
      
-     if (doc.GetParseError() || !doc["active"].GetBool())
+     if (doc.GetParseError() || !Utils::JsonBoolOrFalse(doc, "active"))
      {
-       kodi::Log(ADDON_LOG_ERROR, "Login failed.");
-           m_nextLoginAttempt = std::time(0) + 300;
+       kodi::Log(ADDON_LOG_ERROR, "Login failed (HTTP %d).", statusCode);
+       m_nextLoginAttempt = std::time(0) + 300;
        Reset();
+       if (statusCode == 400 || statusCode == 401 || statusCode == 403)
+       {
+         m_credentialsRejected = true;
+         m_zatData->UpdateConnectionState("Login rejected", PVR_CONNECTION_STATE_ACCESS_DENIED,
+             kodi::addon::GetLocalizedString(30201));
+       }
        return false;
      }
      else
@@ -136,6 +164,12 @@ bool Session::Login(std::string u, std::string p)
      }
   }
   
+  if (!doc.HasMember("account") || !doc["account"].IsObject() || !doc.HasMember("nonlive") || !doc["nonlive"].IsObject())
+  {
+    kodi::Log(ADDON_LOG_ERROR, "Session response is missing account or nonlive data.");
+    m_nextLoginAttempt = std::time(0) + 300;
+    return false;
+  }
   const Value& account = doc["account"];
   const Value& nonlive = doc["nonlive"];
   

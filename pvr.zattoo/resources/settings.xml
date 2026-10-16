@@ -27,6 +27,27 @@
           <default>false</default>
           <control type="toggle" />
         </setting>
+        <setting id="hideUnavailable" type="boolean" label="30018" help="30019">
+          <level>0</level>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
+        <setting id="languageGroups" type="boolean" label="30024" help="30025">
+          <level>0</level>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
+        <setting id="logoVariant" type="integer" label="30020" help="30021">
+          <level>0</level>
+          <default>0</default>
+          <constraints>
+            <options>
+              <option label="30022">0</option> <!-- white -->
+              <option label="30023">1</option> <!-- black -->
+            </options>
+          </constraints>
+          <control type="list" format="integer" />
+        </setting>
         <setting id="smarttv" type="boolean" label="30004" help="30005">
           <level>0</level>
           <default>false</default>

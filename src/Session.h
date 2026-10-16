@@ -60,6 +60,8 @@ private:
   ParameterDB *m_parameterDB;
   time_t m_nextLoginAttempt = 0;
   bool m_isConnected = false;
+  int m_transientFailures = 0;
+  bool m_credentialsRejected = false;
   std::atomic<bool> m_running = {false};
   std::thread m_thread;
   std::string m_appToken;

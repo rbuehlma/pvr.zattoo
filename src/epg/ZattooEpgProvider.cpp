@@ -138,17 +138,19 @@ void ZattooEpgProvider::SendEpgDBInfo(EpgDBInfo &epgDBInfo) {
   tag.SetPlot(epgDBInfo.description);
   tag.SetEpisodeName(epgDBInfo.subtitle);
   tag.SetOriginalTitle(""); /* not supported */
-  tag.SetCast(""); /* not supported */
-  tag.SetDirector(""); /*SA not supported */
+  tag.SetCast(epgDBInfo.cast);
+  tag.SetDirector(epgDBInfo.director);
   tag.SetWriter(""); /* not supported */
-  tag.SetYear(0); /* not supported */
+  tag.SetYear(epgDBInfo.year);
   tag.SetIMDBNumber(""); /* not supported */
   tag.SetIconPath(Utils::GetImageUrl(epgDBInfo.imageToken));
-  tag.SetParentalRating(0); /* not supported */
+  tag.SetParentalRating(epgDBInfo.parentalRating);
   tag.SetStarRating(0); /* not supported */
   tag.SetSeriesNumber(epgDBInfo.season);
-  tag.SetEpisodeNumber(epgDBInfo.episode);  
+  tag.SetEpisodeNumber(epgDBInfo.episode);
   tag.SetEpisodePartNumber(EPG_TAG_INVALID_SERIES_EPISODE); /* not supported */
+  if (epgDBInfo.season > 0 || epgDBInfo.episode > 0)
+    tag.SetFlags(EPG_TAG_FLAG_IS_SERIES);
   
   std::string genreStr = epgDBInfo.genre;
   int genre = m_categories.Category(genreStr);
@@ -255,11 +257,22 @@ void ZattooEpgProvider::DetailsThread()
             progItr != programs.End(); ++progItr)
         {
           const Value &program = *progItr;
+          if (!program.IsObject() || !program.HasMember("id") || !program["id"].IsInt())
+            continue;
           int programId = program["id"].GetInt();
-          EpgDBInfo *epgDBInfo = epgDBInfoById[programId];
+          auto found = epgDBInfoById.find(programId);
+          if (found == epgDBInfoById.end())
+            continue;
+          EpgDBInfo *epgDBInfo = found->second;
           epgDBInfo->description = Utils::JsonStringOrEmpty(program, "d");
           epgDBInfo->season = program.HasMember("s_no") && !program["s_no"].IsNull() ? program["s_no"].GetInt() : -1;
           epgDBInfo->episode = program.HasMember("e_no") && !program["e_no"].IsNull() ? program["e_no"].GetInt() : -1;
+          epgDBInfo->cast = Utils::JsonCredits(program, "actor", EPG_STRING_TOKEN_SEPARATOR);
+          epgDBInfo->director = Utils::JsonCredits(program, "director", EPG_STRING_TOKEN_SEPARATOR);
+          epgDBInfo->year = Utils::JsonNumberOrZero(program, "year");
+          if (epgDBInfo->year == 0)
+            epgDBInfo->year = Utils::JsonNumberOrZero(program, "yr");
+          epgDBInfo->parentalRating = Utils::JsonNumberOrZero(program, "yp_r");
 
           epgDBInfo->detailsLoaded = 1;
           if (!m_epgDB.Update(*epgDBInfo)) {

@@ -104,6 +104,66 @@ msgctxt "#30016"
 msgid "Enforce Widevine L2"
 msgstr ""
 
+#. Channel group name for the Zattoo favourite channels
+#: src/ZatData.cpp
+msgctxt "#30017"
+msgid "Favourites"
+msgstr ""
+
+#. Boolean setting to hide channels which are not part of the subscription
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30018"
+msgid "Hide channels not included in the subscription"
+msgstr ""
+
+#. Help text to setting #30018
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30019"
+msgid "Channels which are not available with the current subscription are not shown in Kodi."
+msgstr ""
+
+#. Selection list on settings to choose the colour of the channel logos
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30020"
+msgid "Channel logo variant"
+msgstr ""
+
+#. Help text to setting #30020
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30021"
+msgid "White logos suit dark skins, black logos suit light skins."
+msgstr ""
+
+#. Selection value for setting defined with id #30020
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30022"
+msgid "White"
+msgstr ""
+
+#. Selection value for setting defined with id #30020
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30023"
+msgid "Black"
+msgstr ""
+
+#. Boolean setting to add one channel group per language
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30024"
+msgid "Channel groups by language"
+msgstr ""
+
+#. Help text to setting #30024
+#: pvr.zattoo/resources/settings.xml
+msgctxt "#30025"
+msgid "Adds one channel group per language (from a bundled table, markers like [fr] in the channel name, or well known names)."
+msgstr ""
+
+#. Prefix of the channel groups created per language
+#: src/ZatData.cpp
+msgctxt "#30026"
+msgid "Language"
+msgstr ""
+
 #. Selection list on settings to get wanted stream provider
 #: pvr.zattoo/resources/settings.xml
 msgctxt "#30098"
@@ -241,6 +301,12 @@ msgstr ""
 
 msgctxt "#30203"
 msgid "Server not reachable!"
+msgstr ""
+
+#. Connection state message shown while username or password are missing
+#: src/Session.cpp
+msgctxt "#30204"
+msgid "Please enter your Zattoo username and password in the add-on settings"
 msgstr ""
 
 #. Selection value for setting defined with id #30398

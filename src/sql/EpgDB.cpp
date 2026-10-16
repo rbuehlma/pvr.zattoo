@@ -1,7 +1,14 @@
 #include <kodi/AddonBase.h>
 #include "EpgDB.h"
 
-const int DB_VERSION = 3;
+const int DB_VERSION = 4;
+
+/* sqlite3_column_text returns NULL for NULL columns (e.g. rows created before a migration). */
+static std::string ColumnText(sqlite3_stmt* stmt, int column)
+{
+  const unsigned char* text = sqlite3_column_text(stmt, column);
+  return text ? std::string(reinterpret_cast<const char*>(text)) : std::string();
+}
 
 class ProcessEpgDBInfoRowCallback : public ProcessRowCallback {
 public:
@@ -16,14 +23,18 @@ public:
     dbInfo.startTime = sqlite3_column_int(stmt, 4);
     dbInfo.endTime = sqlite3_column_int(stmt, 5);
     dbInfo.detailsLoaded = sqlite3_column_int(stmt, 6) > 0;
-    dbInfo.genre = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7)));
-    dbInfo.title = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8)));
-    dbInfo.subtitle = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9)));
-    dbInfo.description = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10)));
+    dbInfo.genre = ColumnText(stmt, 7);
+    dbInfo.title = ColumnText(stmt, 8);
+    dbInfo.subtitle = ColumnText(stmt, 9);
+    dbInfo.description = ColumnText(stmt, 10);
     dbInfo.season = sqlite3_column_int(stmt, 11);
     dbInfo.episode = sqlite3_column_int(stmt, 12);
-    dbInfo.imageToken = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 13)));
-    dbInfo.cid = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 14)));
+    dbInfo.imageToken = ColumnText(stmt, 13);
+    dbInfo.cid = ColumnText(stmt, 14);
+    dbInfo.cast = ColumnText(stmt, 15);
+    dbInfo.director = ColumnText(stmt, 16);
+    dbInfo.year = sqlite3_column_int(stmt, 17);
+    dbInfo.parentalRating = sqlite3_column_int(stmt, 18);
     
     m_result.push_back(dbInfo);
   }
@@ -53,7 +64,7 @@ EpgDB::EpgDB(std::string folder)
   }
   Cleanup();
   
-  std::string str = "insert into EPG_INFO values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  std::string str = "insert into EPG_INFO values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   int ret = sqlite3_prepare_v2(m_db, str.c_str(), str.size() + 1, &m_prepareInsertStatement, nullptr);
   if (ret != SQLITE_OK) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to prepare insert statement.", m_name.c_str());
@@ -61,7 +72,7 @@ EpgDB::EpgDB(std::string folder)
 
   str =  "update EPG_INFO set RECORD_UNTIL = ?, REPLAY_UNTIL = ?, RESTART_UNTIL = ?, START_TIME = ?, END_TIME = ?, ";
   str += "DETAILS_LOADED = ?, GENRE = ?, TITLE = ?, SUBTITLE = ?, DESCRIPTION = ?, SEASON = ?, EPISODE = ?, ";
-  str += "IMAGE_TOKEN = ?, CID = ? where PROGRAM_ID = ?";
+  str += "IMAGE_TOKEN = ?, CID = ?, ACTORS = ?, DIRECTOR = ?, YEAR = ?, PARENTAL_RATING = ? where PROGRAM_ID = ?";
   ret = sqlite3_prepare_v2(m_db, str.c_str(), str.size() + 1, &m_prepareUpdateStatement, nullptr);
   if (ret != SQLITE_OK) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed to prepare update statement.", m_name.c_str());
@@ -92,6 +103,11 @@ bool EpgDB::MigrateDbIfRequired() {
       break;
     case 2:
       if (!Migrate2To3()) {
+        return false;
+      }
+      break;
+    case 3:
+      if (!Migrate3To4()) {
         return false;
       }
       break;
@@ -161,6 +177,27 @@ bool EpgDB::Migrate2To3() {
     return false;
   }
   return SetVersion(3);
+}
+
+bool EpgDB::Migrate3To4() {
+  kodi::Log(ADDON_LOG_INFO, "%s: Migrate to version 4.", m_name.c_str());
+  if (!Execute("alter table EPG_INFO add column ACTORS text;")) {
+    return false;
+  }
+  if (!Execute("alter table EPG_INFO add column DIRECTOR text;")) {
+    return false;
+  }
+  if (!Execute("alter table EPG_INFO add column YEAR integer not null default 0;")) {
+    return false;
+  }
+  if (!Execute("alter table EPG_INFO add column PARENTAL_RATING integer not null default 0;")) {
+    return false;
+  }
+  /* Reload the details so that the new columns get filled. */
+  if (!Execute("update EPG_INFO set DETAILS_LOADED = 0;")) {
+    return false;
+  }
+  return SetVersion(4);
 }
 
 void EpgDB::Cleanup() {
@@ -254,6 +291,27 @@ bool EpgDB::Insert(EpgDBInfo &epgDBInfo) {
     return false;
   }
 
+  ret = sqlite3_bind_text(m_prepareInsertStatement, 16, epgDBInfo.cast.c_str(), -1, nullptr);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 16.", m_name.c_str());
+    return false;
+  }
+  ret = sqlite3_bind_text(m_prepareInsertStatement, 17, epgDBInfo.director.c_str(), -1, nullptr);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 17.", m_name.c_str());
+    return false;
+  }
+  ret = sqlite3_bind_int(m_prepareInsertStatement, 18, epgDBInfo.year);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 18.", m_name.c_str());
+    return false;
+  }
+  ret = sqlite3_bind_int(m_prepareInsertStatement, 19, epgDBInfo.parentalRating);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 19.", m_name.c_str());
+    return false;
+  }
+
   ret = sqlite3_step(m_prepareInsertStatement);
 
   sqlite3_reset(m_prepareInsertStatement);
@@ -262,9 +320,9 @@ bool EpgDB::Insert(EpgDBInfo &epgDBInfo) {
 }
 
 bool EpgDB::Update(EpgDBInfo &epgDBInfo) {
-  int ret = sqlite3_bind_int(m_prepareUpdateStatement, 15, epgDBInfo.programId);
+  int ret = sqlite3_bind_int(m_prepareUpdateStatement, 19, epgDBInfo.programId);
   if (ret != SQLITE_OK) {
-    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 15.", m_name.c_str());
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 19.", m_name.c_str());
     return false;
   }
   ret = sqlite3_bind_int(m_prepareUpdateStatement, 1, epgDBInfo.recordUntil);
@@ -335,6 +393,27 @@ bool EpgDB::Update(EpgDBInfo &epgDBInfo) {
   ret = sqlite3_bind_text(m_prepareUpdateStatement, 14, epgDBInfo.cid.c_str(), -1, nullptr);
   if (ret != SQLITE_OK) {
     kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 14.", m_name.c_str());
+    return false;
+  }
+
+  ret = sqlite3_bind_text(m_prepareUpdateStatement, 15, epgDBInfo.cast.c_str(), -1, nullptr);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 15.", m_name.c_str());
+    return false;
+  }
+  ret = sqlite3_bind_text(m_prepareUpdateStatement, 16, epgDBInfo.director.c_str(), -1, nullptr);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 16.", m_name.c_str());
+    return false;
+  }
+  ret = sqlite3_bind_int(m_prepareUpdateStatement, 17, epgDBInfo.year);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 17.", m_name.c_str());
+    return false;
+  }
+  ret = sqlite3_bind_int(m_prepareUpdateStatement, 18, epgDBInfo.parentalRating);
+  if (ret != SQLITE_OK) {
+    kodi::Log(ADDON_LOG_ERROR, "%s: Failed bind value 18.", m_name.c_str());
     return false;
   }
 
